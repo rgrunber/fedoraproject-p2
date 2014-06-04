@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.equinox.p2.artifact.repository.artifactRepositories">
+      <factory
+            class="org.fedoraproject.p2.FedoraArtifactRepositoryFactory">
+      </factory>
+      <filter
+            suffix="fedora-artifacts.xml"></filter>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.p2.metadata.repository.metadataRepositories">
+      <factory
+            class="org.fedoraproject.p2.FedoraMetadataRepositoryFactory">
+      </factory>
+      <filter
+            suffix="fedora-content.xml"></filter>
+   </extension>
+
+</plugin>
