@@ -46,6 +46,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 
 	private IProvisioningAgent agent;
 	private File location;
+	private FedoraBundleIndex index;
 
 	public FedoraMetadataRepository(IProvisioningAgent agent, File location) {
 		this.agent = agent;
@@ -134,8 +135,9 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 		FeatureParser parser = new FeatureParser();
 		Set<IInstallableUnit> allIUs = new HashSet<IInstallableUnit>();
 
-		Collection<File> bundlePlugins = FedoraBundleIndex.getInstance().getAllBundles(new File(getLocation()), "osgi.bundle");
-		Collection<File> bundleFeatures = FedoraBundleIndex.getInstance().getAllBundles(new File(getLocation()), "org.eclipse.update.feature");
+		index = new FedoraBundleIndex(new File(getLocation()));
+		Collection<File> bundlePlugins = index.getAllBundles("osgi.bundle");
+		Collection<File> bundleFeatures = index.getAllBundles("org.eclipse.update.feature");
 
 		for (File bundleFile : bundlePlugins) {
 			String id = "";

@@ -29,25 +29,19 @@ import org.osgi.framework.BundleException;
 
 public class FedoraBundleIndex {
 
-	private static FedoraBundleIndex single;
+	private File root;
 	private Map <IArtifactKey, File> index;
 
-	private FedoraBundleIndex () {
+	public FedoraBundleIndex (File root) {
+		this.root = root;
 		index = new HashMap<IArtifactKey, File> ();
 	}
 
-	public static FedoraBundleIndex getInstance () {
-		if (single == null) {
-			single = new FedoraBundleIndex();
-		}
-		return single;
-	}
-
-	public Collection<File> getAllBundles (File root, String classifier) {
+	public Collection<File> getAllBundles (String classifier) {
 		if (! index.isEmpty()) {
 			return filterBundles(classifier);
 		}
-		gatherAllBundles(root, index);
+		gatherAllBundles(root);
 		return filterBundles(classifier);
 	}
 
@@ -62,24 +56,33 @@ public class FedoraBundleIndex {
 	}
 
 	public Collection<IArtifactKey> getAllArtifactKeys () {
+		if (index.isEmpty()) {
+			gatherAllBundles(root);
+		}
 		return index.keySet();
 	}
 
 	public File getFileForKey (IArtifactKey key) {
+		if (index.isEmpty()) {
+			gatherAllBundles(root);
+		}
 		return index.get(key);
 	}
 
 	public boolean containsKey (IArtifactKey key) {
+		if (index.isEmpty()) {
+			gatherAllBundles(root);
+		}
 		return index.containsKey(key);
 	}
 
-	private void gatherAllBundles (File dir, final Map<IArtifactKey, File> res) {
+	private void gatherAllBundles (File dir) {
 		FeatureParser parser = new FeatureParser();
 		for (File file : dir.listFiles()) {
 			String id = null;
 			String version = null;
 			if (file.isDirectory() && file.canRead()) {
-				gatherAllBundles(file, res);
+				gatherAllBundles(file);
 			} else if (file.getName().endsWith(".jar")) {
 					try {
 						Dictionary<String, String> manifest = BundlesAction.loadManifest(file);

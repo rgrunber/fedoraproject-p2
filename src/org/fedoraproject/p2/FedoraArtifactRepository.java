@@ -40,10 +40,12 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 
 	private IProvisioningAgent agent;
 	private File location;
+	private FedoraBundleIndex index;
 
 	public FedoraArtifactRepository (IProvisioningAgent agent, File location) {
 		this.agent = agent;
 		this.location = location;
+		this.index = new FedoraBundleIndex(location);
 	}
 
 	@Override
@@ -120,9 +122,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	@Override
 	public IQueryResult<IArtifactKey> query(IQuery<IArtifactKey> query,
 			IProgressMonitor monitor) {
-		FedoraBundleIndex.getInstance().getAllBundles(new File(getLocation()), "osgi.bundle");
-		FedoraBundleIndex.getInstance().getAllBundles(new File(getLocation()), "org.eclipse.update.feature");
-		return query.perform(FedoraBundleIndex.getInstance().getAllArtifactKeys().iterator());
+		return query.perform(index.getAllArtifactKeys().iterator());
 	}
 
 	@Override
@@ -161,14 +161,14 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 
 	@Override
 	public boolean contains(IArtifactKey key) {
-		return FedoraBundleIndex.getInstance().containsKey(key);
+		return index.containsKey(key);
 	}
 
 	@Override
 	public IStatus getArtifact(IArtifactDescriptor descriptor,
 			OutputStream destination, IProgressMonitor monitor) {
 		IArtifactKey key = descriptor.getArtifactKey();
-		File file = FedoraBundleIndex.getInstance().getFileForKey(key);
+		File file = index.getFileForKey(key);
 		FileInputStream fi = null;
 		try {
 			fi = new FileInputStream(file);
