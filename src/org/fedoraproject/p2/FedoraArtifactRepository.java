@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,6 @@ import org.eclipse.equinox.p2.repository.IRunnableWithProgress;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactDescriptor;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepository;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRequest;
-import org.eclipse.equinox.p2.repository.artifact.IFileArtifactRepository;
 import org.eclipse.equinox.p2.repository.artifact.spi.ArtifactDescriptor;
 
 public class FedoraArtifactRepository implements IArtifactRepository {
@@ -92,6 +92,12 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	}
 
 	@Override
+	//TODO: We could support this but let's be immutable for now.
+	/**
+	 * Mirroring artifacts from one Fedora Repository to one
+	 * empty Fedora Repository is essentially a recursive
+	 * directory copy!
+	 */
 	public boolean isModifiable() {
 		return false;
 	}
@@ -114,7 +120,9 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	@Override
 	public IQueryResult<IArtifactKey> query(IQuery<IArtifactKey> query,
 			IProgressMonitor monitor) {
-		return null;
+		FedoraBundleIndex.getInstance().getAllBundles(new File(getLocation()), "osgi.bundle");
+		FedoraBundleIndex.getInstance().getAllBundles(new File(getLocation()), "org.eclipse.update.feature");
+		return query.perform(FedoraBundleIndex.getInstance().getAllArtifactKeys().iterator());
 	}
 
 	@Override
@@ -148,7 +156,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 
 	@Override
 	public boolean contains(IArtifactDescriptor descriptor) {
-		return false;
+		return contains(descriptor.getArtifactKey());
 	}
 
 	@Override
@@ -181,7 +189,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	@Override
 	public IStatus getRawArtifact(IArtifactDescriptor descriptor,
 			OutputStream destination, IProgressMonitor monitor) {
-		return null;
+		return getArtifact(descriptor, destination, monitor);
 	}
 
 	@Override

@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.eclipse.equinox.internal.p2.publisher.eclipse.FeatureParser;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
-import org.eclipse.equinox.p2.metadata.Version;
 import org.eclipse.equinox.p2.publisher.eclipse.BundlesAction;
 import org.eclipse.equinox.p2.publisher.eclipse.Feature;
 import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
@@ -62,7 +61,7 @@ public class FedoraBundleIndex {
 		return res;
 	}
 
-	private Collection<IArtifactKey> getAllArtifactKeys () {
+	public Collection<IArtifactKey> getAllArtifactKeys () {
 		return index.keySet();
 	}
 

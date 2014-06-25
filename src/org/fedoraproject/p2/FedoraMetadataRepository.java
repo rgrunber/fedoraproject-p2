@@ -98,6 +98,13 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 	}
 
 	@Override
+	//TODO: We could support this but let's be immutable for now.
+	/**
+	 * Our metadata is determined by our artifacts so there is
+	 * no reason to modify it independently, unless we want
+	 * to hide/expose certain things. We'd have to create some
+	 * file to save that state though.
+	 */
 	public boolean isModifiable() {
 		return false;
 	}
