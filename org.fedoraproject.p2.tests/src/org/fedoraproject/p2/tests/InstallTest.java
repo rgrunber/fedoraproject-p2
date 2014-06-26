@@ -36,10 +36,9 @@ public class InstallTest extends RepositoryTest {
 
 	@Test
 	public void simpleSingleUnitInstallTest() {
-		IInstallableUnit targetIU = null;
-		IMetadataRepository repo;
 		try {
-			repo = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+			IInstallableUnit targetIU = null;
+			IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
 			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> units = res.toUnmodifiableSet();
 			for (IInstallableUnit u : units) {
@@ -53,14 +52,15 @@ public class InstallTest extends RepositoryTest {
 			if (targetIU != null) {
 				String args [] = new String [] {"-repository", JAVADIR,
 						"-installIU", targetIU.getId(),
-						"-destination", ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString() + File.separator + "p2"};
+						"-destination", ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
+						+ File.separator + getClass().getName()};
 				DirectorApplication app = new DirectorApplication();
 				app.run(args);
 
 				// See org.eclipse.equinox.internal.p2.artifact.repository.simple.Mapper
 				String fileName = targetIU.getId() + "_" + targetIU.getVersion() + ".jar";
 				assertTrue(new File(ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
-						+ File.separator + "p2" + File.separator + "plugins" + File.separator + fileName).exists());
+						+ File.separator + getClass().getName() + File.separator + "plugins" + File.separator + fileName).exists());
 
 			}
 		} catch (Exception e) {

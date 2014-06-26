@@ -12,11 +12,18 @@ package org.fedoraproject.p2;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -175,21 +182,69 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 			OutputStream destination, IProgressMonitor monitor) {
 		IArtifactKey key = descriptor.getArtifactKey();
 		File file = index.getFileForKey(key);
-		FileInputStream fi = null;
-		try {
-			fi = new FileInputStream(file);
-			byte [] buf = new byte[1024];
-			while (fi.read(buf) != -1) {
-				destination.write(buf);
-			}
-		} catch (IOException e) {
-		} finally {
+		if (key.getClassifier().equals("osgi.bundle")) {
+			FileInputStream fi = null;
 			try {
-				fi.close();
+				fi = new FileInputStream(file);
+				byte [] buf = new byte[1024];
+				while (fi.read(buf) != -1) {
+					destination.write(buf);
+				}
 			} catch (IOException e) {
+			} finally {
+				try {
+					fi.close();
+				} catch (IOException e) {
+				}
+			}
+		} else if (key.getClassifier().equals("org.eclipse.update.feature")) {
+			byte [] buf = new byte[1024];
+			JarOutputStream out = null;
+			try {
+				out = new JarOutputStream(destination);
+				File [] inputFiles = getAllFiles(file);
+				for (File f : inputFiles) {
+					String fileEntry = f.getAbsolutePath().substring(file.getAbsolutePath().length() + 1);
+					JarEntry entry = new JarEntry(fileEntry);
+					entry.setTime(f.lastModified());
+					out.putNextEntry(entry);
+
+					FileInputStream inFile = null;
+					try {
+						inFile = new FileInputStream(f);
+						int nRead = inFile.read(buf);
+						while (nRead > 0) {
+							out.write(buf, 0, nRead);
+							nRead = inFile.read(buf);
+						}
+					} catch (IOException e) {
+					} finally {
+						inFile.close();
+					}
+				}
+			} catch (IOException e) {
+			} finally {
+				try {
+					out.close();
+				} catch (IOException e) {
+				}
 			}
 		}
 		return Status.OK_STATUS;
+	}
+
+	private File[] getAllFiles(File root) {
+		List<File> res = new ArrayList<File>();
+		for (File child : root.listFiles()) {
+			File [] tmp;
+			if (child.isDirectory() && child.canRead()) {
+				tmp = getAllFiles(child);
+			} else {
+				tmp = new File [] {child};
+			}
+			res.addAll(Arrays.asList(tmp));
+		}
+		return res.toArray(new File[0]);
 	}
 
 	@Override
