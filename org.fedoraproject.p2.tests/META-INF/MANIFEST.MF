@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Fedora Project p2 Repository Tests
+Bundle-SymbolicName: org.fedoraproject.p2.tests;singleton:=true
+Bundle-Version: 0.0.1.qualifier
+Bundle-Vendor: Fedora
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: org.fedoraproject.p2,
+ org.junit,
+ org.eclipse.osgi,
+ org.eclipse.equinox.p2.core,
+ org.eclipse.equinox.p2.repository,
+ org.eclipse.equinox.p2.metadata
+Import-Package: org.eclipse.core.resources,
+ org.eclipse.core.runtime
+Bundle-ActivationPolicy: lazy
