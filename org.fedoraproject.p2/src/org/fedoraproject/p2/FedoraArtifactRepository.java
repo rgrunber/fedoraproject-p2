@@ -15,7 +15,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +26,8 @@ import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.Version;
+import org.eclipse.equinox.p2.publisher.eclipse.BundlesAction;
+import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.IQueryable;
@@ -133,7 +134,12 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	@Override
 	public IArtifactKey createArtifactKey(String classifier, String id,
 			Version version) {
-		return new FedoraArtifactKey(classifier, id, version);
+		if (classifier.equals("osgi.bundle")) {
+			return BundlesAction.createBundleArtifactKey(id, version.toString());
+		} else if (classifier.equals("org.eclipse.update.feature")) {
+			return FeaturesAction.createFeatureArtifactKey(id, version.toString());
+		}
+		return null;
 	}
 
 	@Override

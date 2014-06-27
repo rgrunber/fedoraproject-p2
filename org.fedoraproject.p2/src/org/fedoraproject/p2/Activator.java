@@ -31,6 +31,15 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		Activator.context = bundleContext;
+		/**
+		 *  TODO: It would be nice if the RepositorySelectionGroup dialog
+		 *  (Help -> Install New Software -> Add) supported a custom protocol (fedora ? )
+		 *  instead of using 'file'. Other things may use this and we have no
+		 *  guarantee they won't claim to be able to load our repository, then fail.
+		 *
+		 *  Switching from 'file' to 'fedora' is easy but getting the UI to recognize
+		 *  our protocol would be a nice-to-have.
+		 */
 		//Hashtable properties = new Hashtable(1);
 		//properties.put(URLConstants.URL_HANDLER_PROTOCOL, new String[] {"fedora"});
 		//getContext().registerService(URLStreamHandlerService.class.getName(), new FedoraURLHandler(), properties);

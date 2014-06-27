@@ -18,4 +18,10 @@
             suffix="fedora-content.xml"></filter>
    </extension>
 
+    <!--
+    fedora-content.xml and fedora-artifacts.xml are placeholders and are NEVER used.
+
+    When attempting to match a repository to a location, only repositories which define
+    suffixes are consulted so we must declare this attribute.
+    -->
 </plugin>
