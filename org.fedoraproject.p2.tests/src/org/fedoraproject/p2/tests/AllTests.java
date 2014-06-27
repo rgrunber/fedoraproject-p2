@@ -15,7 +15,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ ArtifactRepositoryTest.class, MetadataRepositoryTest.class })
+@SuiteClasses({ ArtifactRepositoryTest.class, MetadataRepositoryTest.class, InstallTest.class })
 public class AllTests {
 
 }

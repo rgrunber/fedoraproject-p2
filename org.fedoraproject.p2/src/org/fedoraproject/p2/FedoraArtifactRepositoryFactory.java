@@ -33,7 +33,7 @@ public class FedoraArtifactRepositoryFactory extends ArtifactRepositoryFactory {
 	public IArtifactRepository load(URI location, int flags,
 			IProgressMonitor monitor) throws ProvisionException {
 
-		if (location.getScheme().equals("file")) {
+		if (location.getScheme().equals("fedora")) {
 			File file = new File(location.getPath());
 			if (file.exists()) {
 				return new FedoraArtifactRepository(getAgent(), file);

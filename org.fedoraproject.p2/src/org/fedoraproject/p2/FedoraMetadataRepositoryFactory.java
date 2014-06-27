@@ -33,7 +33,7 @@ public class FedoraMetadataRepositoryFactory extends MetadataRepositoryFactory {
 	public IMetadataRepository load(URI location, int flags,
 			IProgressMonitor monitor) throws ProvisionException {
 
-		if (location.getScheme().equals("file")) {
+		if (location.getScheme().equals("fedora")) {
 			File file = new File(location.getPath());
 			if (file.exists()) {
 				return new FedoraMetadataRepository(getAgent(), file);

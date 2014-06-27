@@ -24,7 +24,7 @@ import org.osgi.framework.ServiceReference;
 
 public class RepositoryTest {
 
-	static final String NAMESPACE = "file:";
+	static final String NAMESPACE = "fedora:";
 	// TODO: Create our own test repositories in resoures/ folder
 	static final String JAVADIR = NAMESPACE + "/usr/share/java";
 	static final String EMPTY = NAMESPACE + "/tmp";
