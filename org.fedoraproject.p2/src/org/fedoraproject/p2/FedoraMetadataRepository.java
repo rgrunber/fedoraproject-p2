@@ -140,15 +140,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 		Collection<File> bundleFeatures = index.getAllBundles("org.eclipse.update.feature");
 
 		for (File bundleFile : bundlePlugins) {
-			String id = "";
-			String version = "";
-			try {
-				Dictionary<String, String> manifest = BundlesAction.loadManifest(bundleFile);
-				id = manifest.get("Bundle-SymbolicName");
-				version = manifest.get("Bundle-Version");
-			} catch (IOException | BundleException e) {
-			}
-			IArtifactKey key = BundlesAction.createBundleArtifactKey(id, version);
+			IArtifactKey key = index.getKeyForFile(bundleFile);
 			allIUs.add(PublisherUtil.createBundleIU(key, bundleFile));
 		}
 

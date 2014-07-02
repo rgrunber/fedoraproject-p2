@@ -69,6 +69,18 @@ public class FedoraBundleIndex {
 		return index.get(key);
 	}
 
+	public IArtifactKey getKeyForFile (File file) {
+		if (index.isEmpty()) {
+			gatherAllBundles(root);
+		}
+		for (Entry<IArtifactKey, File> e : index.entrySet()) {
+			if (e.getValue().equals(file)) {
+				return e.getKey();
+			}
+		}
+		return null;
+	}
+
 	public boolean containsKey (IArtifactKey key) {
 		if (index.isEmpty()) {
 			gatherAllBundles(root);
@@ -88,6 +100,10 @@ public class FedoraBundleIndex {
 						Dictionary<String, String> manifest = BundlesAction.loadManifest(file);
 						if (manifest != null) {
 							id = manifest.get("Bundle-SymbolicName");
+							int idex = id.indexOf(';');
+							if (idex > 0) {
+								id = id.substring(0, idex);
+							}
 							version = manifest.get("Bundle-Version");
 							index.put(BundlesAction.createBundleArtifactKey(id, version), file);
 						}
