@@ -180,6 +180,9 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 			OutputStream destination, IProgressMonitor monitor) {
 		IArtifactKey key = descriptor.getArtifactKey();
 		File file = index.getFileForKey(key);
+		if (file == null) {
+			return Status.CANCEL_STATUS;
+		}
 		if (key.getClassifier().equals("osgi.bundle")) {
 			FileInputStream fi = null;
 			try {
