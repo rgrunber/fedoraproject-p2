@@ -11,11 +11,9 @@
 package org.fedoraproject.p2;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,22 +23,18 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.equinox.internal.p2.publisher.eclipse.FeatureParser;
 import org.eclipse.equinox.internal.p2.touchpoint.eclipse.PublisherUtil;
-import org.eclipse.equinox.internal.p2.updatesite.CategoryXMLAction;
-import org.eclipse.equinox.internal.p2.updatesite.SiteCategory;
 import org.eclipse.equinox.p2.core.IPool;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.publisher.IPublisherInfo;
 import org.eclipse.equinox.p2.publisher.PublisherInfo;
-import org.eclipse.equinox.p2.publisher.eclipse.BundlesAction;
 import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.repository.IRepositoryReference;
 import org.eclipse.equinox.p2.repository.IRunnableWithProgress;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
-import org.osgi.framework.BundleException;
 
 public class FedoraMetadataRepository implements IMetadataRepository {
 
@@ -149,17 +143,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 			allIUs.add(FeaturesAction.createFeatureJarIU(parser.parse(bundleFile), info));
 		}
 
-//		allIUs.add(createRootCategory(allIUs));
 		return allIUs;
-	}
-
-	private IInstallableUnit createRootCategory (Set<IInstallableUnit> ius) {
-		CategoryXMLAction action = new CategoryXMLAction(getLocation(), "fedora");
-		SiteCategory category = new SiteCategory();
-		category.setLabel("All Content");
-		category.setDescription("A category to aggregate all content at this location.");
-		category.setName("org.fedoraproject.p2.category");
-		return action.createCategoryIU(category, ius);
 	}
 
 	@Override

@@ -67,7 +67,7 @@ public class FedoraBundleRepository {
 
 		BundleContext bc = Activator.getContext();
 		ServiceReference sr = (ServiceReference) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
-		IProvisioningAgentProvider pr = bc.getService(sr);
+		IProvisioningAgentProvider pr = (IProvisioningAgentProvider) bc.getService(sr);
 		try {
 			// All p2 state information should be at this location
 			IProvisioningAgent agent = pr.createAgent(new URI("file:" + Files.createTempDirectory("p2_").toString()));
