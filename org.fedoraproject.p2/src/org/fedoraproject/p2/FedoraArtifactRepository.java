@@ -184,52 +184,26 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 			return Status.CANCEL_STATUS;
 		}
 		if (key.getClassifier().equals("osgi.bundle")) {
-			FileInputStream fi = null;
-			try {
-				fi = new FileInputStream(file);
-				byte [] buf = new byte[1024];
-				while (fi.read(buf) != -1) {
-					destination.write(buf);
-				}
-			} catch (IOException e) {
-			} finally {
+			if (file.isDirectory()) {
+				createJarFromDir(file, destination);
+			} else {
+				FileInputStream fi = null;
 				try {
-					fi.close();
+					fi = new FileInputStream(file);
+					byte [] buf = new byte[1024];
+					while (fi.read(buf) != -1) {
+						destination.write(buf);
+					}
 				} catch (IOException e) {
+				} finally {
+					try {
+						fi.close();
+					} catch (IOException e) {
+					}
 				}
 			}
 		} else if (key.getClassifier().equals("org.eclipse.update.feature")) {
-			byte [] buf = new byte[1024];
-			JarOutputStream out = null;
-			try {
-				out = new JarOutputStream(destination);
-				File [] inputFiles = getAllFiles(file);
-				for (File f : inputFiles) {
-					String fileEntry = f.getAbsolutePath().substring(file.getAbsolutePath().length() + 1);
-					JarEntry entry = new JarEntry(fileEntry);
-					entry.setTime(f.lastModified());
-					out.putNextEntry(entry);
-
-					FileInputStream inFile = null;
-					try {
-						inFile = new FileInputStream(f);
-						int nRead = inFile.read(buf);
-						while (nRead > 0) {
-							out.write(buf, 0, nRead);
-							nRead = inFile.read(buf);
-						}
-					} catch (IOException e) {
-					} finally {
-						inFile.close();
-					}
-				}
-			} catch (IOException e) {
-			} finally {
-				try {
-					out.close();
-				} catch (IOException e) {
-				}
-			}
+			createJarFromDir(file, destination);
 		}
 		return Status.OK_STATUS;
 	}
@@ -246,6 +220,40 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 			res.addAll(Arrays.asList(tmp));
 		}
 		return res.toArray(new File[0]);
+	}
+
+	private void createJarFromDir (File file, OutputStream destination) {
+		byte [] buf = new byte[1024];
+		JarOutputStream out = null;
+		try {
+			out = new JarOutputStream(destination);
+			File [] inputFiles = getAllFiles(file);
+			for (File f : inputFiles) {
+				String fileEntry = f.getAbsolutePath().substring(file.getAbsolutePath().length() + 1);
+				JarEntry entry = new JarEntry(fileEntry);
+				entry.setTime(f.lastModified());
+				out.putNextEntry(entry);
+
+				FileInputStream inFile = null;
+				try {
+					inFile = new FileInputStream(f);
+					int nRead = inFile.read(buf);
+					while (nRead > 0) {
+						out.write(buf, 0, nRead);
+						nRead = inFile.read(buf);
+					}
+				} catch (IOException e) {
+				} finally {
+					inFile.close();
+				}
+			}
+		} catch (IOException e) {
+		} finally {
+			try {
+				out.close();
+			} catch (IOException e) {
+			}
+		}
 	}
 
 	@Override

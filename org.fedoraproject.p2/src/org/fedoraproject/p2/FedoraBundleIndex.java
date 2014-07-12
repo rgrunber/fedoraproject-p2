@@ -114,6 +114,22 @@ public class FedoraBundleIndex {
 				id = feature.getId();
 				version = feature.getVersion();
 				index.put(FeaturesAction.createFeatureArtifactKey(id, version), file.getParentFile());
+			} else if (file.getName().equals("MANIFEST.MF")
+					&& file.getParentFile().getName().equals("META-INF")) {
+				try {
+					File bundleDir = file.getParentFile().getParentFile();
+					Dictionary<String, String> manifest = BundlesAction.loadManifest(bundleDir);
+					if (manifest != null && "dir".equals(manifest.get("Eclipse-BundleShape"))) {
+						id = manifest.get("Bundle-SymbolicName");
+						int idex = id.indexOf(';');
+						if (idex > 0) {
+							id = id.substring(0, idex);
+						}
+						version = manifest.get("Bundle-Version");
+						index.put(BundlesAction.createBundleArtifactKey(id, version), bundleDir);
+					}
+				} catch (IOException | BundleException | IllegalArgumentException e) {
+				}
 			}
 		}
 	}

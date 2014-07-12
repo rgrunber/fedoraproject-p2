@@ -20,6 +20,9 @@ import java.util.Set;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
+import org.eclipse.equinox.p2.metadata.IProvidedCapability;
+import org.eclipse.equinox.p2.metadata.ITouchpointData;
+import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
@@ -121,6 +124,35 @@ public class MetadataRepositoryTest extends RepositoryTest {
 			e.printStackTrace();
 			fail();
 		}
+	}
+
+	@Test
+	public void bundleShapeDirRepositoryTest () {
+		boolean hasBundleShapeDir = false;
+		try {
+			IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(ECLIPSE_DIR), new NullProgressMonitor());
+			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+			Set<IInstallableUnit> units = res.toUnmodifiableSet();
+			for (IInstallableUnit u : units) {
+				for (IProvidedCapability cap : u.getProvidedCapabilities()) {
+					// We want to find OSGi bundles
+					if (cap.getNamespace().equals("org.eclipse.equinox.p2.eclipse.type")
+							&& cap.getName().equals("bundle")) {
+						for (ITouchpointData d : u.getTouchpointData()) {
+							// 'Eclipse-BundleShape: dir'
+							ITouchpointInstruction i = d.getInstruction("zipped");
+							if (i != null && i.getBody().equals("true")) {
+								hasBundleShapeDir = true;
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+		assertTrue("There are no IUs corresponding to artifacts with an Eclipse-BundleShape: dir .", hasBundleShapeDir);
 	}
 
 }

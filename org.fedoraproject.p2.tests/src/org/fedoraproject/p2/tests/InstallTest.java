@@ -27,6 +27,8 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.internal.p2.director.app.DirectorApplication;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
+import org.eclipse.equinox.p2.metadata.ITouchpointData;
+import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
@@ -34,6 +36,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class InstallTest extends RepositoryTest {
+
+	private final String profileID = "testProfile";
+	private final String installLoc = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
+			+ File.separator + getClass().getSimpleName();
 
 	@BeforeClass
 	public static void beforeClass() throws Exception {
@@ -54,49 +60,83 @@ public class InstallTest extends RepositoryTest {
 				}
 			}
 
-			final String profileID = "testProfile";
-			final String installLoc = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
-					+ File.separator + getClass().getName();
-
-			// TODO: Fix test to create the profile and use the proper InstallOperation API
 			if (targetIU != null) {
-				String args [] = new String [] {"-repository", JAVADIR,
-						"-installIU", targetIU.getId(),
-						"-profile", profileID,
-						"-destination", installLoc};
-				DirectorApplication app = new DirectorApplication();
-				app.run(args);
+				installUnit(targetIU, JAVADIR);
+				checkUnitInstallation(targetIU);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
 
-				// See org.eclipse.equinox.internal.p2.artifact.repository.simple.Mapper
-				String fileName = targetIU.getId() + "_" + targetIU.getVersion() + ".jar";
-				assertTrue(new File(installLoc + File.separator + "plugins" + File.separator + fileName).exists());
-
-				File [] profileFiles = getProfileFiles(new File(installLoc));
-
-				// Get the latest '.profile.gz' file
-				File latestProfileFile = null;
-				long timestamp = 0;
-				for (File file : profileFiles) {
-					long ts = Long.parseLong(file.getName().replace(".profile.gz", ""));
-					if (ts > timestamp) {
-						timestamp = ts;
-						latestProfileFile = file;
+	@Test
+	public void bundleShapeDirUnitInstallTest () {
+		try {
+			IInstallableUnit targetIU = null;
+			IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(ECLIPSE_DIR), new NullProgressMonitor());
+			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+			Set<IInstallableUnit> units = res.toUnmodifiableSet();
+			for (IInstallableUnit u : units) {
+				for (ITouchpointData d : u.getTouchpointData()) {
+					ITouchpointInstruction i = d.getInstruction("zipped");
+					if (i != null && "true".equals(i.getBody())) {
+						targetIU = u;
+						break;
 					}
 				}
-
-				// A profile with ID of ${profileID} must be contained in a folder ${profileID}.profile
-				String profileDir = File.separator + "tmp" + File.separator + profileID + ".profile";
-				new File(profileDir).mkdir();
-				String profileFile = profileDir + File.separator + latestProfileFile.getName();
-				Files.copy(Paths.get(latestProfileFile.getAbsolutePath()), Paths.get(profileFile), StandardCopyOption.REPLACE_EXISTING);
-
-				IMetadataRepository profile = getMetadataRepoManager().loadRepository(new URI("file:" + profileFile), new NullProgressMonitor());
-				IQueryResult<IInstallableUnit> profRes = profile.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
-				Set<IInstallableUnit> profUnits = profRes.toUnmodifiableSet();
-
-				assertTrue(profUnits.size() == 1);
-				assertTrue(profUnits.contains(targetIU));
 			}
+
+			if (targetIU != null) {
+				installUnit(targetIU, ECLIPSE_DIR);
+				checkUnitInstallation(targetIU);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+
+	private void installUnit (IInstallableUnit targetIU, String repository) {
+		String args [] = new String [] {"-repository", repository,
+				"-installIU", targetIU.getId(),
+				"-profile", profileID,
+				"-destination", installLoc};
+		DirectorApplication app = new DirectorApplication();
+		app.run(args);
+	}
+
+	private void checkUnitInstallation (IInstallableUnit targetIU) {
+		try {
+			// See org.eclipse.equinox.internal.p2.artifact.repository.simple.Mapper
+			String fileName = targetIU.getId() + "_" + targetIU.getVersion() + ".jar";
+			assertTrue(new File(installLoc + File.separator + "plugins" + File.separator + fileName).exists());
+
+			File[] profileFiles = getProfileFiles(new File(installLoc));
+
+			// Get the latest '.profile.gz' file
+			File latestProfileFile = null;
+			long timestamp = 0;
+			for (File file : profileFiles) {
+				long ts = Long.parseLong(file.getName().replace(".profile.gz",
+						""));
+				if (ts > timestamp) {
+					timestamp = ts;
+					latestProfileFile = file;
+				}
+			}
+
+			// A profile with ID of ${profileID} must be contained in a folder ${profileID}.profile
+			String profileDir = File.separator + "tmp" + File.separator + profileID + ".profile";
+			new File(profileDir).mkdir();
+			String profileFile = profileDir + File.separator + latestProfileFile.getName();
+			Files.copy(Paths.get(latestProfileFile.getAbsolutePath()), Paths.get(profileFile), StandardCopyOption.REPLACE_EXISTING);
+
+			IMetadataRepository profile = getMetadataRepoManager().loadRepository(new URI("file:" + profileFile), new NullProgressMonitor());
+			IQueryResult<IInstallableUnit> profRes = profile.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+			Set<IInstallableUnit> profUnits = profRes.toUnmodifiableSet();
+
+			assertTrue(profUnits.contains(targetIU));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail();

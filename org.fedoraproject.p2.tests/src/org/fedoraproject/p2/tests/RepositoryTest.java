@@ -28,6 +28,9 @@ public class RepositoryTest {
 	// TODO: Create our own test repositories in resoures/ folder
 	static final String JAVADIR = NAMESPACE + "/usr/share/java";
 	static final String EMPTY = NAMESPACE + "/tmp";
+	static final String ECLIPSE_DIR = NAMESPACE + "/usr/lib"
+						+ (System.getProperty("os.arch").contains("64") ? "64" : "")
+						+ "/eclipse/plugins";
 
 	private static IProvisioningAgent agent;
 	private static IMetadataRepositoryManager metadataRM;
