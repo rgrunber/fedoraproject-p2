@@ -17,6 +17,9 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
+import org.eclipse.equinox.p2.metadata.IInstallableUnit;
+import org.eclipse.equinox.p2.metadata.ITouchpointData;
+import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.osgi.framework.BundleContext;
@@ -55,6 +58,16 @@ public class RepositoryTest {
 
 	protected IArtifactRepositoryManager getArtifactRepoManager () {
 		return artifactRM;
+	}
+
+	protected boolean isBundleShapeDir (IInstallableUnit u) {
+		for (ITouchpointData d : u.getTouchpointData()) {
+			ITouchpointInstruction i = d.getInstruction("zipped");
+			if (i != null && "true".equals(i.getBody())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

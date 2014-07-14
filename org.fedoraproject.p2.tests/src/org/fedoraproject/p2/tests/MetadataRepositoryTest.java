@@ -21,8 +21,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IProvidedCapability;
-import org.eclipse.equinox.p2.metadata.ITouchpointData;
-import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
@@ -138,12 +136,8 @@ public class MetadataRepositoryTest extends RepositoryTest {
 					// We want to find OSGi bundles
 					if (cap.getNamespace().equals("org.eclipse.equinox.p2.eclipse.type")
 							&& cap.getName().equals("bundle")) {
-						for (ITouchpointData d : u.getTouchpointData()) {
-							// 'Eclipse-BundleShape: dir'
-							ITouchpointInstruction i = d.getInstruction("zipped");
-							if (i != null && i.getBody().equals("true")) {
-								hasBundleShapeDir = true;
-							}
+						if (isBundleShapeDir(u)) {
+							hasBundleShapeDir = true;
 						}
 					}
 				}

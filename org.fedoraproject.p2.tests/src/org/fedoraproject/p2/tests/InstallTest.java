@@ -78,12 +78,9 @@ public class InstallTest extends RepositoryTest {
 			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> units = res.toUnmodifiableSet();
 			for (IInstallableUnit u : units) {
-				for (ITouchpointData d : u.getTouchpointData()) {
-					ITouchpointInstruction i = d.getInstruction("zipped");
-					if (i != null && "true".equals(i.getBody())) {
-						targetIU = u;
-						break;
-					}
+				if (isBundleShapeDir(u)) {
+					targetIU = u;
+					break;
 				}
 			}
 
@@ -109,7 +106,10 @@ public class InstallTest extends RepositoryTest {
 	private void checkUnitInstallation (IInstallableUnit targetIU) {
 		try {
 			// See org.eclipse.equinox.internal.p2.artifact.repository.simple.Mapper
-			String fileName = targetIU.getId() + "_" + targetIU.getVersion() + ".jar";
+			String fileName = targetIU.getId() + "_" + targetIU.getVersion();
+			if (! isBundleShapeDir(targetIU)) {
+				fileName += ".jar";
+			}
 			assertTrue(new File(installLoc + File.separator + "plugins" + File.separator + fileName).exists());
 
 			File[] profileFiles = getProfileFiles(new File(installLoc));
