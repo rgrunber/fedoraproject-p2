@@ -25,8 +25,12 @@ import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.publisher.eclipse.BundlesAction;
 import org.eclipse.equinox.p2.publisher.eclipse.Feature;
 import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
+import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.BundleException;
 
+/**
+ * An index for bundles (OSGi, Feature) under a specified location.
+ */
 public class FedoraBundleIndex {
 
 	private File root;
@@ -99,15 +103,14 @@ public class FedoraBundleIndex {
 					try {
 						Dictionary<String, String> manifest = BundlesAction.loadManifest(file);
 						if (manifest != null) {
-							id = manifest.get("Bundle-SymbolicName");
-							int idex = id.indexOf(';');
-							if (idex > 0) {
-								id = id.substring(0, idex);
-							}
+							id = ManifestElement.parseHeader("Bundle-SymbolicName",
+									manifest.get("Bundle-SymbolicName"))
+									[0].getValue();
 							version = manifest.get("Bundle-Version");
 							index.put(BundlesAction.createBundleArtifactKey(id, version), file);
 						}
-					} catch (IOException | BundleException e) {
+					} catch (IOException | BundleException | IllegalArgumentException e) {
+						// Skip bundle if invalid or improper arguments for artifact creation
 					}
 			} else if (file.getName().equals("feature.xml")) {
 				Feature feature = parser.parse(file.getParentFile());
@@ -120,15 +123,14 @@ public class FedoraBundleIndex {
 					File bundleDir = file.getParentFile().getParentFile();
 					Dictionary<String, String> manifest = BundlesAction.loadManifest(bundleDir);
 					if (manifest != null && "dir".equals(manifest.get("Eclipse-BundleShape"))) {
-						id = manifest.get("Bundle-SymbolicName");
-						int idex = id.indexOf(';');
-						if (idex > 0) {
-							id = id.substring(0, idex);
-						}
+						id = ManifestElement.parseHeader("Bundle-SymbolicName",
+								manifest.get("Bundle-SymbolicName"))
+								[0].getValue();
 						version = manifest.get("Bundle-Version");
 						index.put(BundlesAction.createBundleArtifactKey(id, version), bundleDir);
 					}
 				} catch (IOException | BundleException | IllegalArgumentException e) {
+					// Skip bundle if invalid or improper arguments for artifact creation
 				}
 			}
 		}

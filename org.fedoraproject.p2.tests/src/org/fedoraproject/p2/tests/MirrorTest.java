@@ -33,6 +33,8 @@ public class MirrorTest extends RepositoryTest {
 
 	// Mirroring is time consuming so let's not do too many
 	private final int LIMIT = 10;
+	private final String installLoc = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
+			+ File.separator + this.getClass().getSimpleName();
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -55,6 +57,7 @@ public class MirrorTest extends RepositoryTest {
 				}
 			}
 
+			// See MirrorApplication's initializeIUs() for format
 			StringBuffer rootStr = new StringBuffer();
 			for (int i = 0; i < roots.size(); i++) {
 				String id = roots.get(i).getId();
@@ -66,17 +69,14 @@ public class MirrorTest extends RepositoryTest {
 				}
 			}
 
-			String args[] = new String[] {"-source", JAVADIR, "-destination",
-					ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
-					+ File.separator + getClass().getName(),
+			String args[] = new String[] {"-source", JAVADIR,
+					"-destination", installLoc,
 					"-roots", rootStr.toString()};
 			MirrorApplication app = new MirrorApplication();
 			app.initializeFromArguments(args);
 			app.run(new NullProgressMonitor());
 
-			IMetadataRepository destRepo = getMetadataRepoManager().loadRepository(new URI("file:"
-			+ ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString() 
-			+ File.separator + getClass().getName()), new NullProgressMonitor());
+			IMetadataRepository destRepo = getMetadataRepoManager().loadRepository(new URI("file:" + installLoc), new NullProgressMonitor());
 			IQueryResult<IInstallableUnit> destRes = destRepo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> destUnits = destRes.toUnmodifiableSet();
 
