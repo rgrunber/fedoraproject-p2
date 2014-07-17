@@ -149,4 +149,16 @@ public class MetadataRepositoryTest extends RepositoryTest {
 		assertTrue("There are no IUs corresponding to artifacts with an Eclipse-BundleShape: dir .", hasBundleShapeDir);
 	}
 
+	@Test
+	public void cachingTest () {
+		try {
+			IMetadataRepository orig = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+			IMetadataRepository cached = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+			assertTrue("Caching of previously accessed repositories failed.", orig.equals(cached));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+
 }

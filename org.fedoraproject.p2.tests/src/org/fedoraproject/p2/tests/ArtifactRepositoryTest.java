@@ -118,4 +118,16 @@ public class ArtifactRepositoryTest extends RepositoryTest {
 		}
 	}
 
+	@Test
+	public void cachingTest () {
+		try {
+			IArtifactRepository orig = getArtifactRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+			IArtifactRepository cached = getArtifactRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+			assertTrue("Caching of previously accessed repositories failed.", orig.equals(cached));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+
 }

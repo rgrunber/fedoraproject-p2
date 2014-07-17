@@ -36,7 +36,7 @@ public class FedoraArtifactRepositoryFactory extends ArtifactRepositoryFactory {
 		if (location.getScheme().equals("fedora")) {
 			File file = new File(location.getPath());
 			if (file.exists()) {
-				return new FedoraArtifactRepository(getAgent(), file);
+				return new FedoraArtifactRepository(getAgent(), location);
 			}
 		}
 		throw new ProvisionException(new Status(IStatus.ERROR, "org.fedoraproject.p2", ProvisionException.REPOSITORY_NOT_FOUND, "Repository Not Found", null));

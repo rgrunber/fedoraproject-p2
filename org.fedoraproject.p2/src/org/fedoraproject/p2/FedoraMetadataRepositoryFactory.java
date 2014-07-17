@@ -36,7 +36,7 @@ public class FedoraMetadataRepositoryFactory extends MetadataRepositoryFactory {
 		if (location.getScheme().equals("fedora")) {
 			File file = new File(location.getPath());
 			if (file.exists()) {
-				return new FedoraMetadataRepository(getAgent(), file);
+				return new FedoraMetadataRepository(getAgent(), location);
 			}
 		}
 		throw new ProvisionException(new Status(IStatus.ERROR, "org.fedoraproject.p2", ProvisionException.REPOSITORY_NOT_FOUND, "Repository Not Found", null));

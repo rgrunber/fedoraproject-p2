@@ -45,23 +45,23 @@ import org.eclipse.equinox.p2.repository.artifact.spi.ArtifactDescriptor;
 public class FedoraArtifactRepository implements IArtifactRepository {
 
 	private IProvisioningAgent agent;
-	private File location;
+	private URI location;
 	private FedoraBundleIndex index;
 
-	public FedoraArtifactRepository (IProvisioningAgent agent, File location) {
+	public FedoraArtifactRepository (IProvisioningAgent agent, URI location) {
 		this.agent = agent;
 		this.location = location;
-		this.index = new FedoraBundleIndex(location);
+		this.index = new FedoraBundleIndex(new File(location.getPath()));
 	}
 
 	@Override
 	public URI getLocation() {
-		return location.toURI();
+		return location;
 	}
 
 	@Override
 	public String getName() {
-		return "Fedora Artifact Repository " + location.getAbsolutePath();
+		return "Fedora Artifact Repository " + location;
 	}
 
 	@Override

@@ -39,22 +39,23 @@ import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 public class FedoraMetadataRepository implements IMetadataRepository {
 
 	private IProvisioningAgent agent;
-	private File location;
+	private URI location;
 	private FedoraBundleIndex index;
 
-	public FedoraMetadataRepository(IProvisioningAgent agent, File location) {
+	public FedoraMetadataRepository(IProvisioningAgent agent, URI location) {
 		this.agent = agent;
 		this.location = location;
+		this.index = new FedoraBundleIndex(new File(location.getPath()));
 	}
 
 	@Override
 	public URI getLocation() {
-		return location.toURI();
+		return location;
 	}
 
 	@Override
 	public String getName() {
-		return "Fedora Metadata Repository " + location.getAbsolutePath();
+		return "Fedora Metadata Repository " + location;
 	}
 
 	@Override
@@ -129,7 +130,6 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 		FeatureParser parser = new FeatureParser();
 		Set<IInstallableUnit> allIUs = new HashSet<IInstallableUnit>();
 
-		index = new FedoraBundleIndex(new File(getLocation()));
 		Collection<File> bundlePlugins = index.getAllBundles("osgi.bundle");
 		Collection<File> bundleFeatures = index.getAllBundles("org.eclipse.update.feature");
 
