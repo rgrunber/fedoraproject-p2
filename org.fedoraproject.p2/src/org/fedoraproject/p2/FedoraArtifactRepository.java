@@ -264,7 +264,11 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 
 	@Override
 	public IArtifactDescriptor[] getArtifactDescriptors(IArtifactKey key) {
-		return new IArtifactDescriptor [] {createArtifactDescriptor(key)};
+		if (contains(key)) {
+			return new IArtifactDescriptor[] { createArtifactDescriptor(key) };
+		} else {
+			return new IArtifactDescriptor [0];
+		}
 	}
 
 	@Override
