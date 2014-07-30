@@ -11,9 +11,11 @@
 package org.fedoraproject.p2;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,10 +49,10 @@ import org.osgi.framework.ServiceReference;
 public class FedoraBundleRepository {
 
 	private static final IExpression nomatchIU_IDAndVersion = ExpressionUtil.parse("id != $0 && version != $1");
-	private static final String [] platformLocations = new String [] { "usr/lib64/eclipse/plugins/" };
-	private static final String [] dropinsLocations = new String [] { "usr/lib64/eclipse/dropins/", "usr/share/eclipse/dropins/" };
-	private static final String [] externalLocations = new String [] { "usr/share/java/", "usr/lib/java/" };
-
+	private static final String [] javaVersions = new String [] { null, "1.5.0", "1.6.0", "1.7.0", "1.8.0" };
+	private Set<String> platformLocations = new HashSet<String> ();
+	private Set<String> dropinsLocations = new HashSet<String> ();
+	private Set<String> externalLocations = new HashSet<String> ();
 	private File root;
 	private Map<String, IMetadataRepository> metaRepos;
 	private Map<String, FedoraBundleIndex> fbindices;
@@ -60,10 +62,12 @@ public class FedoraBundleRepository {
 		metaRepos = new HashMap<String, IMetadataRepository>();
 		fbindices = new HashMap<String, FedoraBundleIndex>();
 
+		initLocations(platformLocations, dropinsLocations, externalLocations);
+
 		List<String> allLocations = new ArrayList<String> ();
-		allLocations.addAll(Arrays.asList(platformLocations));
-		allLocations.addAll(Arrays.asList(dropinsLocations));
-		allLocations.addAll(Arrays.asList(externalLocations));
+		allLocations.addAll(platformLocations);
+		allLocations.addAll(dropinsLocations);
+		allLocations.addAll(externalLocations);
 
 		BundleContext bc = Activator.getContext();
 		ServiceReference sr = (ServiceReference) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
@@ -74,16 +78,64 @@ public class FedoraBundleRepository {
 			IMetadataRepositoryManager metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
 			for (String loc : allLocations) {
 				try {
-					IMetadataRepository metaRepo = metadataRM.loadRepository(new URI("fedora:" + root.getAbsolutePath() + loc), new NullProgressMonitor());
-					FedoraBundleIndex index = new FedoraBundleIndex(new File(root.getAbsolutePath() + loc));
-					metaRepos.put(loc, metaRepo);
-					fbindices.put(loc, index);
+					Path repoPath = Paths.get(root.getAbsolutePath(), loc);
+					if (Files.exists(repoPath)) {
+						IMetadataRepository metaRepo = metadataRM.loadRepository(new URI("fedora:" + repoPath), new NullProgressMonitor());
+						FedoraBundleIndex index = new FedoraBundleIndex(new File(root.getAbsolutePath() + loc));
+						metaRepos.put(loc, metaRepo);
+						fbindices.put(loc, index);
+					}
 				} catch (ProvisionException e) {
 					// ignore and continue if there are repository issues
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void initLocations (Set<String> platformDirs, Set<String> internalDirs, Set<String> externalDirs) {
+		Path prefix = root.toPath().resolve("usr");
+		for (String lib : Arrays.asList("share", "lib", "lib64")) {
+			Path libDir = prefix.resolve(lib);
+
+			// Eclipse Platform locations (platform)
+			Path eclipseDir = libDir.resolve("eclipse");
+			if (Files.isDirectory(eclipseDir)) {
+				Path pluginsDir = eclipseDir.resolve("plugins");
+				Path featuresDir = eclipseDir.resolve("features");
+				if (Files.isDirectory(pluginsDir)) {
+					platformDirs.add(pluginsDir.toString());
+				}
+				if (Files.isDirectory(featuresDir)) {
+					platformDirs.add(featuresDir.toString());
+				}
+
+				// Eclipse Dropins locations (internal)
+				Path dropinsDir = eclipseDir.resolve("dropins");
+				if (Files.isDirectory(dropinsDir)) {
+					try {
+						for (Path dropin : Files.newDirectoryStream(dropinsDir)) {
+							Path realDropin = dropin;
+							if (!Files.isDirectory(dropin.resolve("plugins"))) {
+								realDropin = dropin.resolve("eclipse");
+								internalDirs.add(realDropin.toString());
+							}
+						}
+					} catch (IOException e) {
+						// ignore
+					}
+				}
+			}
+
+			// OSGi bundle locations (external)
+			for (String javaVersion : Arrays.asList(javaVersions)) {
+				String versionSuffix = javaVersion != null ? "-" + javaVersion : "";
+				Path javaDir = libDir.resolve("java" + versionSuffix);
+				if (Files.isDirectory(javaDir)) {
+					externalDirs.add(javaDir.toString());
+				}
+			}
 		}
 	}
 
@@ -95,8 +147,7 @@ public class FedoraBundleRepository {
 		IQuery<IInstallableUnit> noExternalUnits = createUnitExclusionQuery(getExternalUnits());
 
 		Set<IInstallableUnit> candidates = new HashSet<IInstallableUnit>();
-		List<String> platformLocationsList = Arrays.asList(platformLocations);
-		for (String loc : platformLocationsList) {
+		for (String loc : platformLocations) {
 			IMetadataRepository repo = metaRepos.get(loc);
 			if (repo != null) {
 				candidates.addAll(repo.query(noExternalUnits, new NullProgressMonitor()).toUnmodifiableSet());
@@ -114,8 +165,7 @@ public class FedoraBundleRepository {
 		IQuery<IInstallableUnit> noExternalUnits = createUnitExclusionQuery(getExternalUnits());
 
 		Set<IInstallableUnit> candidates = new HashSet<IInstallableUnit>();
-		List<String> platformLocationsList = Arrays.asList(dropinsLocations);
-		for (String loc : platformLocationsList) {
+		for (String loc : dropinsLocations) {
 			IMetadataRepository repo = metaRepos.get(loc);
 			if (repo != null) {
 				candidates.addAll(repo.query(noExternalUnits, new NullProgressMonitor()).toUnmodifiableSet());
@@ -130,8 +180,7 @@ public class FedoraBundleRepository {
 	 */
 	public Set<IInstallableUnit> getExternalUnits() {
 		Set<IInstallableUnit> candidates = new HashSet<IInstallableUnit>();
-		List<String> platformLocationsList = Arrays.asList(externalLocations);
-		for (String loc : platformLocationsList) {
+		for (String loc : externalLocations) {
 			IMetadataRepository repo = metaRepos.get(loc);
 			if (repo != null) {
 				candidates.addAll(repo.query(QueryUtil.ALL_UNITS, new NullProgressMonitor()).toUnmodifiableSet());

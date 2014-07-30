@@ -11,8 +11,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.equinox.p2.core,
  org.eclipse.equinox.p2.publisher.eclipse,
  org.eclipse.equinox.p2.publisher,
- org.eclipse.equinox.p2.touchpoint.eclipse,
- org.eclipse.equinox.p2.updatesite
+ org.eclipse.equinox.p2.touchpoint.eclipse
 Bundle-Activator: org.fedoraproject.p2.Activator
 Bundle-ActivationPolicy: lazy
 Export-Package: org.fedoraproject.p2
