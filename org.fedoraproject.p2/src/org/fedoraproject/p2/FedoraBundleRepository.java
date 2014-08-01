@@ -49,7 +49,7 @@ import org.osgi.framework.ServiceReference;
 public class FedoraBundleRepository {
 
 	private static final IExpression nomatchIU_IDAndVersion = ExpressionUtil.parse("id != $0 && version != $1");
-	private static final String [] javaVersions = new String [] { null, "1.5.0", "1.6.0", "1.7.0", "1.8.0" };
+	private static final String [] javaVersions = new String [] { "", "1.5.0", "1.6.0", "1.7.0", "1.8.0" };
 	private Set<String> platformLocations = new HashSet<String> ();
 	private Set<String> dropinsLocations = new HashSet<String> ();
 	private Set<String> externalLocations = new HashSet<String> ();
@@ -70,11 +70,10 @@ public class FedoraBundleRepository {
 		allLocations.addAll(externalLocations);
 
 		BundleContext bc = Activator.getContext();
-		ServiceReference sr = (ServiceReference) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		ServiceReference<?> sr = (ServiceReference<?>) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		IProvisioningAgentProvider pr = (IProvisioningAgentProvider) bc.getService(sr);
 		try {
-			// All p2 state information should be at this location
-			IProvisioningAgent agent = pr.createAgent(new URI("file:" + Files.createTempDirectory("p2_").toString()));
+			IProvisioningAgent agent = pr.createAgent(null);
 			IMetadataRepositoryManager metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
 			for (String loc : allLocations) {
 				try {
@@ -130,7 +129,7 @@ public class FedoraBundleRepository {
 
 			// OSGi bundle locations (external)
 			for (String javaVersion : Arrays.asList(javaVersions)) {
-				String versionSuffix = javaVersion != null ? "-" + javaVersion : "";
+				String versionSuffix = !javaVersion.equals("") ? "-" + javaVersion : "";
 				Path javaDir = libDir.resolve("java" + versionSuffix);
 				if (Files.isDirectory(javaDir)) {
 					externalDirs.add(javaDir.toString());

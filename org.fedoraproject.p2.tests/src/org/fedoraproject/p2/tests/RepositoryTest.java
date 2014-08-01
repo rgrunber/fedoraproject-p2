@@ -44,10 +44,9 @@ public class RepositoryTest {
 	 */
 	public static void beforeClass() throws Exception {
 		BundleContext bc = Platform.getBundle("org.fedoraproject.p2.tests").getBundleContext();
-		ServiceReference sr = (ServiceReference) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		ServiceReference<?> sr = (ServiceReference<?>) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		IProvisioningAgentProvider pr = (IProvisioningAgentProvider) bc.getService(sr);
-		// All p2 state information should be at this location
-		agent = pr.createAgent(new URI("file:" + ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString() + File.separator + "p2"));
+		agent = pr.createAgent(null);
 		metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
 		artifactRM = (IArtifactRepositoryManager) agent.getService(IArtifactRepositoryManager.SERVICE_NAME);
 	}

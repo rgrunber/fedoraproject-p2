@@ -158,7 +158,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 
 	@Override
 	public Collection<IRepositoryReference> getReferences() {
-		return Collections.EMPTY_LIST;
+		return Collections.emptyList();
 	}
 
 	@Override
