@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
+import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.FedoraBundleRepository;
 import org.junit.Test;
 
@@ -66,6 +67,13 @@ public class FedoraBundleRepositoryTest {
 			assertTrue("Path for " + u.getId() + " " + u.getVersion() + " does not exist", path.toFile().exists());
 			System.out.println(u.getId() + " " + u.getVersion() + " " + path.toString());
 		}
+	}
+
+	@Test
+	public void userDefinedLocationsTest () {
+		System.setProperty("fedora.p2.repos", "/tmp/notexist/,/usr/share/java/,/usr/lib/");
+		Set<String> res = EclipseSystemLayout.getUserDefinedBundleLocations();
+		assertTrue(res.size() == 2);
 	}
 
 }

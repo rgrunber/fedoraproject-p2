@@ -11,13 +11,11 @@
 package org.fedoraproject.p2;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +47,6 @@ import org.osgi.framework.ServiceReference;
 public class FedoraBundleRepository {
 
 	private static final IExpression nomatchIU_IDAndVersion = ExpressionUtil.parse("id != $0 && version != $1");
-	private static final String [] javaVersions = new String [] { "", "1.5.0", "1.6.0", "1.7.0", "1.8.0" };
 	private Set<String> platformLocations = new HashSet<String> ();
 	private Set<String> dropinsLocations = new HashSet<String> ();
 	private Set<String> externalLocations = new HashSet<String> ();
@@ -62,7 +59,7 @@ public class FedoraBundleRepository {
 		metaRepos = new HashMap<String, IMetadataRepository>();
 		fbindices = new HashMap<String, FedoraBundleIndex>();
 
-		initLocations(platformLocations, dropinsLocations, externalLocations);
+		EclipseSystemLayout.initLocations(root.toPath(), platformLocations, dropinsLocations, externalLocations, true);
 
 		List<String> allLocations = new ArrayList<String> ();
 		allLocations.addAll(platformLocations);
@@ -90,51 +87,6 @@ public class FedoraBundleRepository {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-
-	private void initLocations (Set<String> platformDirs, Set<String> internalDirs, Set<String> externalDirs) {
-		Path prefix = root.toPath().resolve("usr");
-		for (String lib : Arrays.asList("share", "lib", "lib64")) {
-			Path libDir = prefix.resolve(lib);
-
-			// Eclipse Platform locations (platform)
-			Path eclipseDir = libDir.resolve("eclipse");
-			if (Files.isDirectory(eclipseDir)) {
-				Path pluginsDir = eclipseDir.resolve("plugins");
-				Path featuresDir = eclipseDir.resolve("features");
-				if (Files.isDirectory(pluginsDir)) {
-					platformDirs.add(pluginsDir.toString());
-				}
-				if (Files.isDirectory(featuresDir)) {
-					platformDirs.add(featuresDir.toString());
-				}
-
-				// Eclipse Dropins locations (internal)
-				Path dropinsDir = eclipseDir.resolve("dropins");
-				if (Files.isDirectory(dropinsDir)) {
-					try {
-						for (Path dropin : Files.newDirectoryStream(dropinsDir)) {
-							Path realDropin = dropin;
-							if (!Files.isDirectory(dropin.resolve("plugins"))) {
-								realDropin = dropin.resolve("eclipse");
-								internalDirs.add(realDropin.toString());
-							}
-						}
-					} catch (IOException e) {
-						// ignore
-					}
-				}
-			}
-
-			// OSGi bundle locations (external)
-			for (String javaVersion : Arrays.asList(javaVersions)) {
-				String versionSuffix = !javaVersion.equals("") ? "-" + javaVersion : "";
-				Path javaDir = libDir.resolve("java" + versionSuffix);
-				if (Files.isDirectory(javaDir)) {
-					externalDirs.add(javaDir.toString());
-				}
-			}
 		}
 	}
 
