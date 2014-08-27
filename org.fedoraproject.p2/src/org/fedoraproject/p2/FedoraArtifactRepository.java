@@ -191,8 +191,9 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 				try {
 					fi = new FileInputStream(file);
 					byte [] buf = new byte[1024];
-					while (fi.read(buf) != -1) {
-						destination.write(buf);
+					int len;
+					while ((len = fi.read(buf)) != -1) {
+						destination.write(buf, 0, len);
 					}
 				} catch (IOException e) {
 				} finally {
