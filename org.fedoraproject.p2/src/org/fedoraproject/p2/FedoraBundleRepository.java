@@ -150,9 +150,9 @@ public class FedoraBundleRepository {
 	public Path lookupBundle (IVersionedId key) {
 		for (FedoraBundleIndex index : fbindices.values()) {
 			IArtifactKey artKey;
-			if (key.getId().endsWith(".feature.jar")) {
+			if (key.getId().endsWith(".feature.jar") || key.getId().endsWith(".feature.group")) {
 				// classifier = 'org.eclipse.update.feature'
-				String adjustedID = key.getId().replace(".feature.jar", "");
+				String adjustedID = key.getId().replaceAll("\\.feature\\.(jar|group)", "");
 				artKey = FeaturesAction.createFeatureArtifactKey(adjustedID, key.getVersion().toString());
 			} else {
 				// classifier = 'osgi.bundle'
@@ -162,6 +162,7 @@ public class FedoraBundleRepository {
 				return index.getFileForKey(artKey).toPath();
 			}
 		}
+		// Either the unit doesn't exist, or it's a meta-unit (p2.inf)
 		return null;
 	}
 

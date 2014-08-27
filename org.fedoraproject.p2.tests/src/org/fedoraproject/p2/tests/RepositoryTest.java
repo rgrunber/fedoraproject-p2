@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.fedoraproject.p2.tests;
 
-import java.io.File;
-import java.net.URI;
-
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;

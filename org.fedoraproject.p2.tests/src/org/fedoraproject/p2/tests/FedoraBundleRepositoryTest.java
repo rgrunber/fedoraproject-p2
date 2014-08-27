@@ -63,9 +63,12 @@ public class FedoraBundleRepositoryTest {
 
 		for (IInstallableUnit u : allUnits) {
 			Path path = rep.lookupBundle(u);
-			assertTrue("Path for " + u.getId() + " " + u.getVersion() + " not found", path != null);
-			assertTrue("Path for " + u.getId() + " " + u.getVersion() + " does not exist", path.toFile().exists());
-			System.out.println(u.getId() + " " + u.getVersion() + " " + path.toString());
+			if (path != null) {
+			    assertTrue("Path for " + u.getId() + " " + u.getVersion() + " does not exist", path.toFile().exists());
+			    System.out.println(u.getId() + " " + u.getVersion() + " " + path.toString());
+			} else {
+			    System.out.println("ERROR : Path for " + u.getId() + " " + u.getVersion() + " not found.");
+			}
 		}
 	}
 

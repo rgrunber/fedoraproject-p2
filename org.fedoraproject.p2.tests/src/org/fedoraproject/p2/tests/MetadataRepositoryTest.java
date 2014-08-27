@@ -15,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -159,6 +160,38 @@ public class MetadataRepositoryTest extends RepositoryTest {
 			e.printStackTrace();
 			fail();
 		}
+	}
+
+	@Test
+	public void featureJarAndGroupTest () {
+	    try {
+            IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+            IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+            Set<IInstallableUnit> units = res.toUnmodifiableSet();
+            Set<String> unitIds = new HashSet<String>();
+
+            // Gather all feature jars and feature groups
+            for (IInstallableUnit u : units) {
+                if (u.getId().endsWith(".feature.jar") || u.getId().endsWith(".feature.group")) {
+                    unitIds.add(u.getId());
+                }
+            }
+
+            // Every feature must contain a feature.jar and a feature.group unit
+            String otherId;
+            for (String id : unitIds) {
+                if (id.endsWith(".feature.jar")) {
+                    otherId = id.replace(".jar", ".group");
+                    assertTrue(unitIds.contains(otherId));
+                } else if (id.endsWith(".feature.group")) {
+                    otherId = id.replace(".group", ".jar");
+                    assertTrue(unitIds.contains(otherId));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
 	}
 
 }

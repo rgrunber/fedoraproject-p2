@@ -21,17 +21,20 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.equinox.internal.p2.publisher.eclipse.FeatureParser;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.internal.p2.touchpoint.eclipse.PublisherUtil;
 import org.eclipse.equinox.p2.core.IPool;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.publisher.IPublisherInfo;
+import org.eclipse.equinox.p2.publisher.IPublisherResult;
 import org.eclipse.equinox.p2.publisher.PublisherInfo;
+import org.eclipse.equinox.p2.publisher.PublisherResult;
 import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.IQueryResult;
+import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.IRepositoryReference;
 import org.eclipse.equinox.p2.repository.IRunnableWithProgress;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
@@ -127,7 +130,6 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 	}
 
 	private Set<IInstallableUnit> getAllSystemIUs() {
-		FeatureParser parser = new FeatureParser();
 		Set<IInstallableUnit> allIUs = new HashSet<IInstallableUnit>();
 
 		Collection<File> bundlePlugins = index.getAllBundles("osgi.bundle");
@@ -138,9 +140,13 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 			allIUs.add(PublisherUtil.createBundleIU(key, bundleFile));
 		}
 
-		for (File bundleFile : bundleFeatures) {
-			IPublisherInfo info = new PublisherInfo();
-			allIUs.add(FeaturesAction.createFeatureJarIU(parser.parse(bundleFile), info));
+		if (! bundleFeatures.isEmpty()) {
+		    IPublisherInfo info = new PublisherInfo();
+		    IPublisherResult result = new PublisherResult();
+		    FeaturesAction fAction = new FeaturesAction(bundleFeatures.toArray(new File[0]));
+		    fAction.perform(info, result, new NullProgressMonitor());
+		    IQueryResult<IInstallableUnit> units = result.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+		    allIUs.addAll(units.toUnmodifiableSet());
 		}
 
 		return allIUs;
