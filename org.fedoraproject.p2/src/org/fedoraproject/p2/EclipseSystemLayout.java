@@ -106,7 +106,7 @@ public class EclipseSystemLayout {
 	 * @return A set of the software collections installed on this system.
 	 */
 	public static Set<String> getSCLRoots() {
-		String jconfdirs = System.getProperty("JAVACONFDIRS");
+		String jconfdirs = System.getenv("JAVACONFDIRS");
 		Set<String> roots = new HashSet<String>();
 		roots.add("/");
 		if (jconfdirs != null && !jconfdirs.isEmpty()) {

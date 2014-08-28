@@ -27,6 +27,8 @@ import org.eclipse.equinox.p2.publisher.eclipse.Feature;
 import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
 import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.BundleException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An index for bundles (OSGi, Feature) under a specified location.
@@ -35,6 +37,7 @@ public class FedoraBundleIndex {
 
 	private File root;
 	private Map <IArtifactKey, File> index;
+	private final Logger logger = LoggerFactory.getLogger(FedoraBundleIndex.class);
 
 	public FedoraBundleIndex (File root) {
 		this.root = root;
@@ -107,7 +110,7 @@ public class FedoraBundleIndex {
 									manifest.get("Bundle-SymbolicName"))
 									[0].getValue();
 							version = manifest.get("Bundle-Version");
-							index.put(BundlesAction.createBundleArtifactKey(id, version), file);
+							putInIndex(BundlesAction.createBundleArtifactKey(id, version), file);
 						}
 					} catch (IOException | BundleException | IllegalArgumentException e) {
 						// Skip bundle if invalid or improper arguments for artifact creation
@@ -116,7 +119,7 @@ public class FedoraBundleIndex {
 				Feature feature = parser.parse(file.getParentFile());
 				id = feature.getId();
 				version = feature.getVersion();
-				index.put(FeaturesAction.createFeatureArtifactKey(id, version), file.getParentFile());
+				putInIndex(FeaturesAction.createFeatureArtifactKey(id, version), file.getParentFile());
 			} else if (file.getName().equals("MANIFEST.MF")
 					&& file.getParentFile().getName().equals("META-INF")) {
 				try {
@@ -127,13 +130,30 @@ public class FedoraBundleIndex {
 								manifest.get("Bundle-SymbolicName"))
 								[0].getValue();
 						version = manifest.get("Bundle-Version");
-						index.put(BundlesAction.createBundleArtifactKey(id, version), bundleDir);
+						putInIndex(BundlesAction.createBundleArtifactKey(id, version), bundleDir);
 					}
 				} catch (IOException | BundleException | IllegalArgumentException e) {
 					// Skip bundle if invalid or improper arguments for artifact creation
 				}
 			}
 		}
+	}
+
+	private void putInIndex (IArtifactKey key, File file) {
+	    boolean isSameFile = false;
+	    File prev = index.put(key, file);
+	    if (prev != null) {
+	        try {
+	            isSameFile = file.getCanonicalFile().equals(prev.getCanonicalFile());
+	        } catch (IOException e) {
+	        }
+	        if (!isSameFile) {
+	            logger.warn("Multiple artifacts detected for {}", key.toString());
+	            logger.warn("{} and {} have the same ID and version.", prev.getAbsolutePath(), file.getAbsolutePath());
+	            logger.warn("{} will be preferred.", file.getAbsolutePath());
+	        }
+	    }
+	    logger.debug("Artifact: {} File: {}", key.toString(), file.getAbsolutePath());
 	}
 
 }
