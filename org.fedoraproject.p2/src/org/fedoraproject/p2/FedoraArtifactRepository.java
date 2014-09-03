@@ -190,7 +190,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 				FileInputStream fi = null;
 				try {
 					fi = new FileInputStream(file);
-					byte [] buf = new byte[1024];
+					byte [] buf = new byte[4096];
 					int len;
 					while ((len = fi.read(buf)) != -1) {
 						destination.write(buf, 0, len);
@@ -224,7 +224,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	}
 
 	private void createJarFromDir (File file, OutputStream destination) {
-		byte [] buf = new byte[1024];
+		byte [] buf = new byte[4096];
 		JarOutputStream out = null;
 		try {
 			out = new JarOutputStream(destination);

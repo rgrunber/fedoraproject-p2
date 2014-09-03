@@ -43,12 +43,12 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 
 	private IProvisioningAgent agent;
 	private URI location;
-	private FedoraBundleIndex index;
+	private Set<IInstallableUnit> unitCache;
 
 	public FedoraMetadataRepository(IProvisioningAgent agent, URI location) {
 		this.agent = agent;
 		this.location = location;
-		this.index = new FedoraBundleIndex(new File(location.getPath()));
+		this.unitCache = new HashSet<IInstallableUnit> ();
 	}
 
 	@Override
@@ -130,26 +130,27 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 	}
 
 	private Set<IInstallableUnit> getAllSystemIUs() {
-		Set<IInstallableUnit> allIUs = new HashSet<IInstallableUnit>();
+	    if (unitCache.isEmpty()) {
+	        FedoraBundleIndex index = new FedoraBundleIndex(new File(location.getPath()));
+	        Collection<File> bundlePlugins = index.getAllBundles("osgi.bundle");
+	        Collection<File> bundleFeatures = index.getAllBundles("org.eclipse.update.feature");
 
-		Collection<File> bundlePlugins = index.getAllBundles("osgi.bundle");
-		Collection<File> bundleFeatures = index.getAllBundles("org.eclipse.update.feature");
+	        for (File bundleFile : bundlePlugins) {
+	            IArtifactKey key = index.getKeyForFile(bundleFile);
+	            unitCache.add(PublisherUtil.createBundleIU(key, bundleFile));
+	        }
 
-		for (File bundleFile : bundlePlugins) {
-			IArtifactKey key = index.getKeyForFile(bundleFile);
-			allIUs.add(PublisherUtil.createBundleIU(key, bundleFile));
-		}
+	        if (! bundleFeatures.isEmpty()) {
+	            IPublisherInfo info = new PublisherInfo();
+	            IPublisherResult result = new PublisherResult();
+	            FeaturesAction fAction = new FeaturesAction(bundleFeatures.toArray(new File[0]));
+	            fAction.perform(info, result, new NullProgressMonitor());
+	            IQueryResult<IInstallableUnit> units = result.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+	            unitCache.addAll(units.toUnmodifiableSet());
+	        }
+	    }
 
-		if (! bundleFeatures.isEmpty()) {
-		    IPublisherInfo info = new PublisherInfo();
-		    IPublisherResult result = new PublisherResult();
-		    FeaturesAction fAction = new FeaturesAction(bundleFeatures.toArray(new File[0]));
-		    fAction.perform(info, result, new NullProgressMonitor());
-		    IQueryResult<IInstallableUnit> units = result.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
-		    allIUs.addAll(units.toUnmodifiableSet());
-		}
-
-		return allIUs;
+	    return unitCache;
 	}
 
 	@Override
