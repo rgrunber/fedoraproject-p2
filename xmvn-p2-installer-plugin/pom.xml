@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Copyright (C) 2014, Red Hat, Inc. and others
+
+   All rights reserved. This program and the accompanying materials
+   are made available under the terms of the Eclipse Public License v1.0
+   which accompanies this distribution, and is available at
+   http://www.eclipse.org/legal/epl-v10.html
+
+   Contributors:
+       Red Hat Incorporated - initial implementation
+-->
+
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.fedoraproject.p2</groupId>
+    <artifactId>fedoraproject-p2</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>xmvn-p2-installer-plugin</artifactId>
+  <name>XMvn P2 Installer Plugin</name>
+  <description>
+    This module contains a plugin for XMvn Installer which allows
+    artifact installation to P2 repositories.
+  </description>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.fedoraproject.xmvn</groupId>
+        <artifactId>xmvn-parent</artifactId>
+        <version>${xmvn-version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>org.fedoraproject.p2</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.inject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.sisu</groupId>
+      <artifactId>sisu-guice</artifactId>
+      <classifier>no_aop</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.osgi</groupId>
+      <artifactId>org.eclipse.osgi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.fedoraproject.xmvn</groupId>
+      <artifactId>xmvn-install</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+  </dependencies>
+  <repositories>
+    <repository>
+      <id>xmvn</id>
+      <url>http://mizdebsk.fedorapeople.org/xmvn/repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <checksumPolicy>fail</checksumPolicy>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+        <checksumPolicy>fail</checksumPolicy>
+      </releases>
+    </repository>
+  </repositories>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

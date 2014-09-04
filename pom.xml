@@ -24,11 +24,13 @@
 
   <properties>
     <tycho-version>0.21.0</tycho-version>
+    <xmvn-version>2.1.0</xmvn-version>
   </properties>
 
   <modules>
     <module>org.fedoraproject.p2</module>
     <module>org.fedoraproject.p2.tests</module>
+    <module>xmvn-p2-installer-plugin</module>
   </modules>
 
   <!--
