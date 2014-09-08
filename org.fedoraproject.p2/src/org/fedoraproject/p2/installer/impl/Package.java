@@ -136,10 +136,10 @@ public class Package {
 		}
 	}
 
-	public static void expandVirtualPackages(Set<Package> metapackages) {
+	public static void expandVirtualPackages(Set<Package> metapackages, String mainName) {
 		Package main = null;
 		for (Package w : metapackages) {
-			if (w.physical.get("") != null)
+			if (w.physical.get(mainName) != null)
 				main = w;
 		}
 
@@ -157,7 +157,7 @@ public class Package {
 						main.merge(w);
 						metapackages.remove(w);
 					} else {
-						w.physical.put("", new LinkedHashSet<>(w.virtual));
+						w.physical.put(mainName, new LinkedHashSet<>(w.virtual));
 						w.virtual.clear();
 						main = w;
 					}
@@ -183,7 +183,7 @@ public class Package {
 			}
 
 			throw new RuntimeException("There are " + unmerged.size()
-					+ " unmerged virntual metapackages");
+					+ " unmerged virtual metapackages");
 		}
 	}
 

@@ -81,6 +81,7 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		logger.info("Installing artifact {}", artifact);
 
 		String commonId = basePackageName.replaceAll("^eclipse-", "");
+		request.setMainPackageId(commonId);
 		String subpackageId = targetPackage.getId().replaceAll("^eclipse-", "");
 		if (subpackageId.isEmpty())
 			subpackageId = commonId;
