@@ -11,7 +11,7 @@
 package org.fedoraproject.p2.osgi.impl;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -46,7 +44,8 @@ public class DefaultOSGiConfigurator implements OSGiConfigurator {
 			.getLogger(DefaultOSGiConfigurator.class);
 
 	private static final Artifact BUNDLES_EXTERNAL = new DefaultArtifact(
-			"org.eclipse.tycho", "tycho-bundles-external", "zip", "SYSTEM");
+			"org.eclipse.tycho", "tycho-bundles-external", "txt", "manifest",
+			"SYSTEM");
 
 	private final Resolver resolver;
 
@@ -67,13 +66,9 @@ public class DefaultOSGiConfigurator implements OSGiConfigurator {
 						+ BUNDLES_EXTERNAL);
 			logger.debug("Using bundles from: {}", bundlesExternal);
 
-			Path tempDir = Files.createTempDirectory("xmvn-p2-equinox-");
-			tempDir.toFile().deleteOnExit();
-			unzip(bundlesExternal, tempDir);
-			Path installationPath = tempDir.resolve("eclipse").resolve(
-					"plugins");
-
-			for (Path file : Files.newDirectoryStream(installationPath)) {
+			for (String line : Files.readAllLines(bundlesExternal,
+					StandardCharsets.UTF_8)) {
+				Path file = Paths.get(line).toAbsolutePath();
 				if (file.getFileName().toString()
 						.startsWith("org.eclipse.osgi_"))
 					continue;
@@ -91,29 +86,5 @@ public class DefaultOSGiConfigurator implements OSGiConfigurator {
 	@Override
 	public Collection<String> getExportedPackages() {
 		return Arrays.asList("org.fedoraproject.p2.installer", "org.slf4j");
-	}
-
-	private void unzip(Path zip, Path dest) throws IOException {
-		byte[] buffer = new byte[1024];
-
-		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
-
-			ZipEntry ze;
-			while ((ze = zis.getNextEntry()) != null) {
-				Path newFile = dest.resolve(Paths.get(ze.getName()));
-
-				if (ze.isDirectory()) {
-					Files.createDirectories(newFile);
-				} else {
-					Files.createDirectories(newFile.getParent());
-
-					try (OutputStream fos = Files.newOutputStream(newFile)) {
-						int len;
-						while ((len = zis.read(buffer)) > 0)
-							fos.write(buffer, 0, len);
-					}
-				}
-			}
-		}
 	}
 }
