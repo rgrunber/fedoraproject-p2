@@ -79,10 +79,10 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 		String commonId = basePackageName.replaceAll("^eclipse-", "");
 		String subpackageId = targetPackage.getId().replaceAll("^eclipse-", "");
-		if (!subpackageId.isEmpty() && !subpackageId.startsWith(commonId))
+		if (subpackageId.isEmpty())
+			subpackageId = commonId;
+		else if (!subpackageId.startsWith(commonId + "-"))
 			subpackageId = commonId + "-" + subpackageId;
-		subpackageId = subpackageId.replaceAll("-+$", "");
-		subpackageId = subpackageId.replaceAll("^-+", "");
 
 		if (isFeature
 				|| (rule.getTargetPackage() != null && !rule.getTargetPackage()
