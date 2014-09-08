@@ -79,6 +79,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		Director.publish(reactorRepo, request.getPlugins(),
 				request.getFeatures());
 		reactor = reactorRepo.getAllUnits();
+
+		dump("Platform units", platform);
+		dump("Internal units", internal);
+		dump("External units", external);
 		dump("Reactor contents", reactor);
 
 		Map<String, Set<IInstallableUnit>> packages = new LinkedHashMap<>();
@@ -114,18 +118,21 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			for (Entry<String, Set<IInstallableUnit>> entry : metapkg
 					.getPackageMap().entrySet()) {
 				String name = entry.getKey();
+				logger.info("Creating dropin {}...", name);
 				Dropin dropin = new Dropin(name, request
 						.getTargetDropinDirectory().resolve(name));
 				dropins.add(dropin);
 
 				Set<IInstallableUnit> content = entry.getValue();
+				dump("Metapackage contents", content);
 				Set<IInstallableUnit> symlinks = new LinkedHashSet<>();
 				symlinks.addAll(content);
 				content.retainAll(reactor);
 				symlinks.removeAll(content);
+				dump("Dropin physical units", content);
+				dump("Dropin symlinks", symlinks);
 
-				logger.info("Creating runnable repository for package {}...",
-						name);
+				logger.debug("Creating runnable repository...");
 				Repository packageRepo = Repository.createTemp();
 				Director.mirror(packageRepo, reactorRepo, content);
 				Path installationPath = dropin.getPath().resolve("eclipse");
