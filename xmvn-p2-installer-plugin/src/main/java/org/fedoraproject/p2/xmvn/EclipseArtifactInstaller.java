@@ -97,9 +97,6 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 		packageMap.put(subpackageId, targetPackage);
 		metadadaMap.put(am.getArtifactId(), am);
-
-		am.setPath("/dev/null"); // FIXME
-		targetPackage.getMetadata().addArtifact(am);
 	}
 
 	@Override
