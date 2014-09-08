@@ -87,6 +87,9 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		else if (!subpackageId.startsWith(commonId + "-"))
 			subpackageId = commonId + "-" + subpackageId;
 
+		if (JavaPackage.MAIN.equals(targetPackage.getId()))
+			request.setMainPackageDropin(commonId);
+
 		if (isFeature
 				|| (rule.getTargetPackage() != null && !rule.getTargetPackage()
 						.isEmpty())) {

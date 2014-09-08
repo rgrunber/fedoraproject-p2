@@ -35,6 +35,8 @@ public class EclipseInstallationRequest {
 
 	private final Map<String, String> packageMappings = new LinkedHashMap<>();
 
+	private String mainPackageDropin;
+
 	public Path getBuildRoot() {
 		return buildRoot;
 	}
@@ -81,5 +83,13 @@ public class EclipseInstallationRequest {
 
 	public void addPackageMapping(String artifactId, String packageId) {
 		packageMappings.put(artifactId, packageId);
+	}
+
+	public String getMainPackageDropin() {
+		return mainPackageDropin;
+	}
+
+	public void setMainPackageDropin(String mainPackageDropin) {
+		this.mainPackageDropin = mainPackageDropin;
 	}
 }
