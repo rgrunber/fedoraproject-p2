@@ -158,7 +158,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						String baseName = artifact.getId() + "_"
 								+ artifact.getVersion();
 
-						Path path = Paths.get("/dev/null");
+						Path path = null;
 						for (String artifactName : Arrays.asList(baseName,
 								baseName + ".jar")) {
 							for (String type : Arrays.asList("plugins",
@@ -169,6 +169,11 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 											.resolve(artifactName);
 							}
 						}
+
+						if (path == null)
+							throw new Exception(
+									"Unable to determine path for artifact "
+											+ artifact);
 
 						Provide provide = new Provide(artifact.getId(),
 								artifact.getVersion().toString(), Paths
