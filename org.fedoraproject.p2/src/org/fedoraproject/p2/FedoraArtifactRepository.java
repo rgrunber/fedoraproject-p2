@@ -225,9 +225,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 
 	private void createJarFromDir (File file, OutputStream destination) {
 		byte [] buf = new byte[4096];
-		JarOutputStream out = null;
-		try {
-			out = new JarOutputStream(destination);
+		try (JarOutputStream out = new JarOutputStream(destination)) {
 			File [] inputFiles = getAllFiles(file);
 			for (File f : inputFiles) {
 				String fileEntry = f.getAbsolutePath().substring(file.getAbsolutePath().length() + 1);
@@ -235,25 +233,16 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 				entry.setTime(f.lastModified());
 				out.putNextEntry(entry);
 
-				FileInputStream inFile = null;
-				try {
-					inFile = new FileInputStream(f);
+				try (FileInputStream inFile = new FileInputStream(f)) {
 					int nRead = inFile.read(buf);
 					while (nRead > 0) {
 						out.write(buf, 0, nRead);
 						nRead = inFile.read(buf);
 					}
 				} catch (IOException e) {
-				} finally {
-					inFile.close();
 				}
 			}
 		} catch (IOException e) {
-		} finally {
-			try {
-				out.close();
-			} catch (IOException e) {
-			}
 		}
 	}
 
