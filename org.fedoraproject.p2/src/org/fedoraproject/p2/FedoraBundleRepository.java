@@ -50,12 +50,10 @@ public class FedoraBundleRepository {
 	private Set<String> platformLocations = new HashSet<String> ();
 	private Set<String> dropinsLocations = new HashSet<String> ();
 	private Set<String> externalLocations = new HashSet<String> ();
-	private File root;
 	private Map<String, IMetadataRepository> metaRepos;
 	private Map<String, FedoraBundleIndex> fbindices;
 
 	public FedoraBundleRepository(File root) {
-		this.root = root;
 		metaRepos = new HashMap<String, IMetadataRepository>();
 		fbindices = new HashMap<String, FedoraBundleIndex>();
 

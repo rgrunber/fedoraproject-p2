@@ -10,12 +10,8 @@
  *******************************************************************************/
 package org.fedoraproject.p2;
 
-import java.util.Hashtable;
-
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.service.url.URLConstants;
-import org.osgi.service.url.URLStreamHandlerService;
 
 public class Activator implements BundleActivator {
 
