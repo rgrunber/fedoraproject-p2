@@ -114,8 +114,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			for (Entry<String, Set<IInstallableUnit>> entry : metapkg
 					.getPackageMap().entrySet()) {
 				String name = entry.getKey();
+				String packageDropin = name.isEmpty() ? request
+						.getMainPackageDropin() : name;
 				Dropin dropin = new Dropin(name, request
-						.getTargetDropinDirectory().resolve(name));
+						.getTargetDropinDirectory().resolve(packageDropin));
 				dropins.add(dropin);
 
 				Set<IInstallableUnit> content = entry.getValue();
@@ -124,8 +126,13 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				content.retainAll(reactor);
 				symlinks.removeAll(content);
 
-				logger.info("Creating runnable repository for package {}...",
-						name);
+				if (name.isEmpty()) {
+					logger.info("Creating runnable repository for main package...");
+				} else {
+					logger.info(
+							"Creating runnable repository for package {}...",
+							name);
+				}
 				Repository packageRepo = Repository.createTemp();
 				Director.mirror(packageRepo, reactorRepo, content);
 				Path installationPath = dropin.getPath().resolve("eclipse");

@@ -183,7 +183,7 @@ public class Package {
 			}
 
 			throw new RuntimeException("There are " + unmerged.size()
-					+ " unmerged virntual metapackages");
+					+ " unmerged virtual metapackages");
 		}
 	}
 

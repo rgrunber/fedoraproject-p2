@@ -84,6 +84,9 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		subpackageId = subpackageId.replaceAll("-+$", "");
 		subpackageId = subpackageId.replaceAll("^-+", "");
 
+		if (JavaPackage.MAIN.equals(targetPackage.getId()))
+			request.setMainPackageDropin(commonId);
+
 		if (isFeature
 				|| (rule.getTargetPackage() != null && !rule.getTargetPackage()
 						.isEmpty())) {
