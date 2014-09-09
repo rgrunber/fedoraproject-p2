@@ -82,6 +82,9 @@ public class Package {
 			w.deps.remove(v);
 			w.deps.add(this);
 		}
+
+		deps.remove(this);
+		revdeps.remove(this);
 	}
 
 	public Set<IInstallableUnit> getContents() {

@@ -320,6 +320,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 							dep = Package.creeateVirtual(match);
 							metapackageLookup.put(match, dep);
 							toProcess.add(dep);
+							metapackages.add(dep);
 						}
 
 						metapackage.addDependency(dep);
