@@ -103,8 +103,10 @@ public class Package {
 	}
 
 	public void addDependency(Package dep) {
-		deps.add(dep);
-		dep.revdeps.add(this);
+		if (dep != this) {
+			deps.add(dep);
+			dep.revdeps.add(this);
+		}
 	}
 
 	public static void detectStrongComponents(Set<Package> V) {
