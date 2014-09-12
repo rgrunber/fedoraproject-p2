@@ -211,7 +211,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		}
 
 		for (IInstallableUnit unit : unprocesseduUnits) {
-			metapackages.add(Package.creeateVirtual(unit));
+			metapackages.add(Package.creeateVirtual(unit, false));
 		}
 	}
 
@@ -317,7 +317,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 						Package dep = metapackageLookup.get(match);
 						if (dep == null) {
-							dep = Package.creeateVirtual(match);
+							dep = Package.creeateVirtual(match, true);
 							metapackageLookup.put(match, dep);
 							toProcess.add(dep);
 							metapackages.add(dep);

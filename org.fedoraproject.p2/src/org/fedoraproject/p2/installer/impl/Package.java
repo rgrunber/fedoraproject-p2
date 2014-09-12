@@ -11,6 +11,7 @@
 package org.fedoraproject.p2.installer.impl;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -41,6 +42,8 @@ public class Package {
 
 	private int lowlink;
 
+	private boolean isSplittable;
+
 	public static Package creeatePhysical(String name,
 			Set<IInstallableUnit> contents) {
 		Package metapackage = new Package();
@@ -50,10 +53,12 @@ public class Package {
 		return metapackage;
 	}
 
-	public static Package creeateVirtual(IInstallableUnit unit) {
+	public static Package creeateVirtual(IInstallableUnit unit,
+			boolean isSplittable) {
 		Package metapackage = new Package();
 
 		metapackage.virtual.add(unit);
+		metapackage.isSplittable = isSplittable;
 
 		return metapackage;
 	}
@@ -85,6 +90,8 @@ public class Package {
 
 		deps.remove(this);
 		revdeps.remove(this);
+
+		isSplittable &= v.isSplittable;
 	}
 
 	public Set<IInstallableUnit> getContents() {
@@ -141,7 +148,8 @@ public class Package {
 		}
 	}
 
-	public static void expandVirtualPackages(Set<Package> metapackages, String mainName) {
+	public static void expandVirtualPackages(Set<Package> metapackages,
+			String mainName) {
 		Package main = null;
 		for (Package w : metapackages) {
 			if (w.physical.get(mainName) != null)
@@ -153,16 +161,18 @@ public class Package {
 		main_loop: for (;;) {
 			unmerged.clear();
 
-			for (Package w : metapackages) {
+			for (Iterator<Package> iw = metapackages.iterator(); iw.hasNext();) {
+				Package w = iw.next();
 				if (w.virtual.isEmpty())
 					continue;
 
 				if (w.revdeps.isEmpty()) {
 					if (main != null) {
 						main.merge(w);
-						metapackages.remove(w);
+						iw.remove();
 					} else {
-						w.physical.put(mainName, new LinkedHashSet<>(w.virtual));
+						w.physical
+								.put(mainName, new LinkedHashSet<>(w.virtual));
 						w.virtual.clear();
 						main = w;
 					}
@@ -170,9 +180,11 @@ public class Package {
 					continue main_loop;
 				}
 
-				if (w.revdeps.size() == 1) {
-					metapackages.remove(w);
-					w.revdeps.iterator().next().merge(w);
+				if (w.revdeps.size() == 1 || w.isSplittable) {
+					iw.remove();
+					for (Package v : w.revdeps) {
+						v.merge(w);
+					}
 
 					continue main_loop;
 				}
