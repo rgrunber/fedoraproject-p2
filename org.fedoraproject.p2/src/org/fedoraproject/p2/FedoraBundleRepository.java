@@ -73,10 +73,10 @@ public class FedoraBundleRepository {
 			IMetadataRepositoryManager metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
 			for (String loc : allLocations) {
 				try {
-					Path repoPath = Paths.get(root.getAbsolutePath(), loc);
+					Path repoPath = Paths.get(loc);
 					if (Files.exists(repoPath)) {
 						IMetadataRepository metaRepo = metadataRM.loadRepository(new URI("fedora:" + repoPath), new NullProgressMonitor());
-						FedoraBundleIndex index = new FedoraBundleIndex(new File(root.getAbsolutePath() + loc));
+						FedoraBundleIndex index = new FedoraBundleIndex(repoPath.toFile());
 						metaRepos.put(loc, metaRepo);
 						fbindices.put(loc, index);
 					}
