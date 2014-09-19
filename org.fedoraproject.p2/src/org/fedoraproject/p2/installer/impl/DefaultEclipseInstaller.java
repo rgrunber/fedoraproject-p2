@@ -60,9 +60,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private Set<IInstallableUnit> external;
 
-	private final Map<IInstallableUnit, String> reactorRequires = new LinkedHashMap<>();
+	private Map<IInstallableUnit, String> reactorRequires;
 
-	private final Set<Package> metapackages = new LinkedHashSet<>();
+	private Set<Package> metapackages;
 
 	@Override
 	public EclipseInstallationResult performInstallation(
@@ -200,6 +200,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private void createMetapackages(
 			Map<String, Set<IInstallableUnit>> partialPackageMap) {
+		metapackages = new LinkedHashSet<>();
 		Set<IInstallableUnit> unprocesseduUnits = new LinkedHashSet<>(reactor);
 
 		for (Entry<String, Set<IInstallableUnit>> entry : partialPackageMap
@@ -216,6 +217,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 	}
 
 	public void resolveDeps() throws ProvisionException, IOException {
+		reactorRequires = new LinkedHashMap<>();
 		IQueryable<IInstallableUnit> queryable = createQueryable();
 
 		Map<IInstallableUnit, Package> metapackageLookup = new LinkedHashMap<>();
