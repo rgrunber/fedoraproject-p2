@@ -10,13 +10,27 @@
  *******************************************************************************/
 package org.fedoraproject.p2.tests;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.osgi.framework.BundleContext;
 
-@RunWith(Suite.class)
-@SuiteClasses({ ArtifactRepositoryTest.class, MetadataRepositoryTest.class, InstallTest.class,
-	MirrorTest.class, FedoraBundleRepositoryTest.class, InstallerTest.class })
-public class AllTests {
+import org.osgi.framework.BundleActivator;
 
+/**
+ * @author Mikolaj Izdebski
+ */
+public class Activator implements BundleActivator {
+	private static BundleContext context;
+
+	public static BundleContext getBundleContext() {
+		return context;
+	}
+
+	@Override
+	public void start(BundleContext context) throws Exception {
+		Activator.context = context;
+	}
+
+	@Override
+	public void stop(BundleContext context) throws Exception {
+		Activator.context = null;
+	}
 }
