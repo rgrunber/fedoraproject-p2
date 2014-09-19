@@ -109,23 +109,44 @@ interface BuildrootVisitor {
  * @author Mikolaj Izdebski
  */
 public class InstallerTest {
+	private final EclipseInstaller installer;
 	private Path tempDir;
-	private EclipseInstaller installer;
-	private Map<String, Plugin> reactorPlugins = new LinkedHashMap<>();
+	private Map<String, Plugin> reactorPlugins;
 	private BuildrootVisitor visitor;
+	private EclipseInstallationRequest request;
+	private Path root;
+	private Path reactor;
 
-	@Before
-	public void setUp() throws Exception {
-		tempDir = Files.createTempDirectory("fp-p2-");
-
+	public InstallerTest() {
 		BundleContext context = Activator.getBundleContext();
 		ServiceReference<EclipseInstaller> serviceReference = context
 				.getServiceReference(EclipseInstaller.class);
 		assertNotNull(serviceReference);
 		installer = context.getService(serviceReference);
 		assertNotNull(installer);
+	}
+
+	@Before
+	public void setUp() throws Exception {
+		reactorPlugins = new LinkedHashMap<>();
+		tempDir = Files.createTempDirectory("fp-p2-");
 
 		visitor = createMock(BuildrootVisitor.class);
+
+		root = tempDir.resolve("root");
+		Files.createDirectory(root);
+		reactor = tempDir.resolve("reactor");
+		Files.createDirectory(reactor);
+
+		request = new EclipseInstallationRequest();
+		request.setBuildRoot(root);
+		request.setTargetDropinDirectory(Paths.get("dropins"));
+		request.setMainPackageId("main");
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		delete(tempDir);
 	}
 
 	private void delete(Path path) throws IOException {
@@ -134,11 +155,6 @@ public class InstallerTest {
 				delete(child);
 
 		Files.delete(path);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		delete(tempDir);
 	}
 
 	private Plugin addPlugin(String id, Map<String, Plugin> map) {
@@ -154,17 +170,7 @@ public class InstallerTest {
 		return addPlugin(id, reactorPlugins);
 	}
 
-	public void performInstallation() throws Exception {
-		Path root = tempDir.resolve("root");
-		Files.createDirectory(root);
-		Path reactor = tempDir.resolve("reactor");
-		Files.createDirectory(reactor);
-
-		EclipseInstallationRequest request = new EclipseInstallationRequest();
-		request.setBuildRoot(root);
-		request.setTargetDropinDirectory(Paths.get("dropins"));
-		request.setMainPackageId("main");
-
+	public void performTest() throws Exception {
 		// Create reactor plugins
 		for (Entry<String, Plugin> entry : reactorPlugins.entrySet()) {
 			String id = entry.getKey();
@@ -242,19 +248,21 @@ public class InstallerTest {
 		expectLastCall();
 	}
 
+	// The simplest case possible: one plugin with no deps
 	@Test
 	public void simpleTest() throws Exception {
 		addReactorPlugin("foo");
 		expectPlugin("main", "foo");
-		performInstallation();
+		performTest();
 	}
 
+	// Two plugins with no deps
 	@Test
 	public void twoPluginsTest() throws Exception {
 		addReactorPlugin("foo");
 		addReactorPlugin("bar");
 		expectPlugin("main", "foo");
 		expectPlugin("main", "bar");
-		performInstallation();
+		performTest();
 	}
 }
