@@ -38,6 +38,7 @@ import java.util.jar.Manifest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -49,25 +50,37 @@ import org.fedoraproject.p2.installer.EclipseInstaller;
  * @author Mikolaj Izdebski
  */
 class Plugin {
-	private final String id;
 	private final Set<String> imports = new LinkedHashSet<>();
 	private final Set<String> exports = new LinkedHashSet<>();
 	private final Set<String> requires = new LinkedHashSet<>();
+	private final Manifest mf = new Manifest();
+	private final Attributes attr = mf.getMainAttributes();
 
 	public Plugin(String id) {
-		this.id = id;
+		attr.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+		attr.put(new Attributes.Name("Bundle-ManifestVersion"), "2");
+		attr.put(new Attributes.Name("Bundle-SymbolicName"), id);
+		attr.put(new Attributes.Name("Bundle-Version"), "1.0.0");
 	}
 
-	public void importPackage(String name) {
+	public Plugin importPackage(String name) {
 		imports.add(name);
+		return this;
 	}
 
-	public void exportPackage(String name) {
+	public Plugin exportPackage(String name) {
 		exports.add(name);
+		return this;
 	}
 
-	public void requireBundle(String name) {
+	public Plugin requireBundle(String name) {
 		requires.add(name);
+		return this;
+	}
+
+	public Plugin addMfEntry(String key, String value) {
+		attr.put(new Attributes.Name(key), value);
+		return this;
 	}
 
 	private void addManifestSet(Attributes attr, String key, Set<String> values) {
@@ -81,12 +94,6 @@ class Plugin {
 	}
 
 	public void writeBundle(Path path) throws IOException {
-		Manifest mf = new Manifest();
-		Attributes attr = mf.getMainAttributes();
-		attr.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-		attr.put(new Attributes.Name("Bundle-ManifestVersion"), "2");
-		attr.put(new Attributes.Name("Bundle-SymbolicName"), id);
-		attr.put(new Attributes.Name("Bundle-Version"), "1.0.0");
 		addManifestSet(attr, "Import-Package", imports);
 		addManifestSet(attr, "Export-Package", exports);
 		addManifestSet(attr, "Require-Bundle", requires);
@@ -221,7 +228,7 @@ public class InstallerTest {
 						String id = name.replaceAll("_.*", "");
 						if (isLink)
 							visitor.visitSymlink(dropin, id);
-						if (isPlugin)
+						else if (isPlugin)
 							visitor.visitPlugin(dropin, id);
 						else if (isFeature)
 							visitor.visitFeature(dropin, id);
@@ -263,6 +270,140 @@ public class InstallerTest {
 		addReactorPlugin("bar");
 		expectPlugin("main", "foo");
 		expectPlugin("main", "bar");
+		performTest();
+	}
+
+	// Directory-shaped plugin
+	@Test
+	public void dirShapedPlugin() throws Exception {
+		addReactorPlugin("foo").addMfEntry("Eclipse-BundleShape", "dir");
+		expectPlugin("main", "foo");
+		performTest();
+		Path dir = root.resolve("dropins/main/eclipse/plugins/foo_1.0.0");
+		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
+	}
+
+	// Two plugins manually assigned to subpackages, third implicitly installed
+	// to main pkg
+	@Test
+	public void subpackageSplitTest() throws Exception {
+		addReactorPlugin("foo");
+		addReactorPlugin("bar");
+		addReactorPlugin("baz");
+		request.addPackageMapping("foo", "sub1");
+		request.addPackageMapping("bar", "sub2");
+		expectPlugin("sub1", "foo");
+		expectPlugin("sub2", "bar");
+		expectPlugin("main", "baz");
+		performTest();
+	}
+
+	// Plugin B is required by A, hence it is getting installed in subpackage
+	// together with A.
+	@Test
+	public void interdepSplitTest() throws Exception {
+		addReactorPlugin("A").requireBundle("B");
+		addReactorPlugin("B");
+		addReactorPlugin("C");
+		request.addPackageMapping("A", "sub");
+		expectPlugin("sub", "A");
+		expectPlugin("sub", "B");
+		expectPlugin("main", "C");
+		performTest();
+	}
+
+	// Plugins B1,B2 are required by both A and C, which are installed to
+	// different supackages. Installer puts B1 next to A and C, but puts B2 in
+	// different package because this was explicitly requested by user. B3 lands
+	// in main package as it's not required by anything and not explicitly put
+	// in any package by user.
+	@Test
+	public void interdepCommonTest() throws Exception {
+		addReactorPlugin("A").requireBundle("B1").requireBundle("B2");
+		addReactorPlugin("B1");
+		addReactorPlugin("B2");
+		addReactorPlugin("B3");
+		addReactorPlugin("C").requireBundle("B2").requireBundle("B1");
+		request.addPackageMapping("A", "sub");
+		request.addPackageMapping("C", "sub");
+		request.addPackageMapping("B2", "different");
+		expectPlugin("sub", "A");
+		expectPlugin("sub", "C");
+		expectPlugin("sub", "B1");
+		expectPlugin("different", "B2");
+		expectPlugin("main", "B3");
+		performTest();
+	}
+
+	// Plugin B is required by both A and C, which are installed to different
+	// subpackages. Installation fails as installer cannot guess where to
+	// install B.
+	@Test(expected = RuntimeException.class)
+	public void interdepImpossibleSplitTest() throws Exception {
+		addReactorPlugin("A").requireBundle("B");
+		addReactorPlugin("B");
+		addReactorPlugin("C").requireBundle("B");
+		request.addPackageMapping("A", "sub1");
+		request.addPackageMapping("C", "sub2");
+		performTest();
+	}
+
+	// One bundle which has dependency on two external libs, one through
+	// Require-Bundle and one through Import-Package. Both libs are expected to
+	// be symlinked next to our plugin.
+	@Test
+	public void symlinkTest() throws Exception {
+		Plugin myPlugin = addReactorPlugin("my-plugin");
+		myPlugin.requireBundle("org.apache.commons.io");
+		myPlugin.importPackage("org.apache.commons.lang");
+		expectPlugin("main", "my-plugin");
+		expectSymlink("main", "org.apache.commons.io");
+		expectSymlink("main", "org.apache.commons.lang");
+		performTest();
+	}
+
+	// Plugin which directly depends on junit. Besides junit, hamcrest is
+	// expected to be symlinked too as junit depends on hamcrest.
+	@Test
+	public void transitiveSymlinkTest() throws Exception {
+		addReactorPlugin("my.tests").importPackage("junit.framework");
+		expectPlugin("main", "my.tests");
+		expectSymlink("main", "org.junit");
+		expectSymlink("main", "org.hamcrest.core");
+		performTest();
+	}
+
+	// Two independant plugins, both require junit. Junit and hamcrest must be
+	// symlinked next to both plugins.
+	@Test
+	public void indepPluginsCommonDep() throws Exception {
+		addReactorPlugin("A").importPackage("junit.framework");
+		addReactorPlugin("B").requireBundle("org.junit");
+		request.addPackageMapping("A", "pkg1");
+		request.addPackageMapping("B", "pkg2");
+		expectPlugin("pkg1", "A");
+		expectSymlink("pkg1", "org.junit");
+		expectSymlink("pkg1", "org.hamcrest.core");
+		expectPlugin("pkg2", "B");
+		expectSymlink("pkg2", "org.junit");
+		expectSymlink("pkg2", "org.hamcrest.core");
+		performTest();
+	}
+
+	// FIXME this doesn't work currently
+	@Ignore
+	// Two plugins A and B, where B requires A. Both require junit. Junit and
+	// hamcrest are symlinked only next to A.
+	@Test
+	public void depPluginsCommonDep() throws Exception {
+		addReactorPlugin("A").importPackage("junit.framework");
+		addReactorPlugin("B").requireBundle("org.junit").requireBundle("A");
+		request.addPackageMapping("A", "pkg1");
+		request.addPackageMapping("B", "pkg2");
+		expectPlugin("pkg1", "A");
+		expectSymlink("pkg1", "org.junit");
+		expectSymlink("pkg1", "org.hamcrest.core");
+		expectPlugin("pkg2", "B");
 		performTest();
 	}
 }
