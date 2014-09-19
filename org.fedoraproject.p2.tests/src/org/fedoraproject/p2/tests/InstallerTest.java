@@ -10,7 +10,15 @@
  *******************************************************************************/
 package org.fedoraproject.p2.tests;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,20 +30,19 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
-import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
 
 /**
@@ -90,6 +97,14 @@ class Plugin {
 	}
 }
 
+interface BuildrootVisitor {
+	void visitPlugin(String dropin, String id);
+
+	void visitFeature(String dropin, String id);
+
+	void visitSymlink(String dropin, String id);
+}
+
 /**
  * @author Mikolaj Izdebski
  */
@@ -97,7 +112,7 @@ public class InstallerTest {
 	private Path tempDir;
 	private EclipseInstaller installer;
 	private Map<String, Plugin> reactorPlugins = new LinkedHashMap<>();
-	private EclipseInstallationResult result;
+	private BuildrootVisitor visitor;
 
 	@Before
 	public void setUp() throws Exception {
@@ -109,6 +124,8 @@ public class InstallerTest {
 		assertNotNull(serviceReference);
 		installer = context.getService(serviceReference);
 		assertNotNull(installer);
+
+		visitor = createMock(BuildrootVisitor.class);
 	}
 
 	private void delete(Path path) throws IOException {
@@ -157,13 +174,87 @@ public class InstallerTest {
 			request.addPlugin(path);
 		}
 
-		result = installer.performInstallation(request);
+		installer.performInstallation(request);
+
+		replay(visitor);
+		visitDropins(root.resolve("dropins"));
+		verify(visitor);
+	}
+
+	private void visitDropins(Path dropins) throws Exception {
+		assertTrue(Files.isDirectory(dropins, LinkOption.NOFOLLOW_LINKS));
+
+		for (Path dropinPath : Files.newDirectoryStream(dropins)) {
+			assertTrue(Files.isDirectory(dropinPath, LinkOption.NOFOLLOW_LINKS));
+			String dropin = dropinPath.getFileName().toString();
+
+			for (Path dropinSubdir : Files.newDirectoryStream(dropinPath)) {
+				assertTrue(Files.isDirectory(dropinSubdir,
+						LinkOption.NOFOLLOW_LINKS));
+				assertEquals("eclipse", dropinSubdir.getFileName().toString());
+
+				for (Path categoryPath : Files.newDirectoryStream(dropinSubdir)) {
+					assertTrue(Files.isDirectory(categoryPath,
+							LinkOption.NOFOLLOW_LINKS));
+					String cat = categoryPath.getFileName().toString();
+					boolean isPlugin = cat.equals("plugins");
+					boolean isFeature = cat.equals("features");
+					assertTrue(isPlugin ^ isFeature);
+
+					for (Path unit : Files.newDirectoryStream(categoryPath)) {
+						String name = unit.getFileName().toString();
+						boolean isDir = Files.isDirectory(unit);
+						boolean isLink = Files.isSymbolicLink(unit);
+						// Either dir-shaped or ends with .jar
+						assertTrue(isDir ^ name.endsWith(".jar"));
+						// While theoretically possible, symlinks to
+						// directory-shaped units are not expected
+						assertFalse(isLink && isDir);
+						// We never symlink features
+						assertFalse(isFeature && isLink);
+						String id = name.replaceAll("_.*", "");
+						if (isLink)
+							visitor.visitSymlink(dropin, id);
+						if (isPlugin)
+							visitor.visitPlugin(dropin, id);
+						else if (isFeature)
+							visitor.visitFeature(dropin, id);
+						else
+							fail();
+					}
+				}
+			}
+		}
+	}
+
+	public void expectPlugin(String dropin, String plugin) {
+		visitor.visitPlugin(dropin, plugin);
+		expectLastCall();
+	}
+
+	public void expectFeature(String dropin, String plugin) {
+		visitor.visitFeature(dropin, plugin);
+		expectLastCall();
+	}
+
+	public void expectSymlink(String dropin, String plugin) {
+		visitor.visitSymlink(dropin, plugin);
+		expectLastCall();
 	}
 
 	@Test
 	public void simpleTest() throws Exception {
 		addReactorPlugin("foo");
+		expectPlugin("main", "foo");
 		performInstallation();
 	}
 
+	@Test
+	public void twoPluginsTest() throws Exception {
+		addReactorPlugin("foo");
+		addReactorPlugin("bar");
+		expectPlugin("main", "foo");
+		expectPlugin("main", "bar");
+		performInstallation();
+	}
 }

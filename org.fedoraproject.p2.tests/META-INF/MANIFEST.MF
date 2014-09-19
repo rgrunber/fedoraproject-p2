@@ -7,6 +7,7 @@ Bundle-Vendor: Fedora
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.fedoraproject.p2,
  org.junit,
+ org.easymock,
  org.eclipse.osgi,
  org.eclipse.equinox.p2.core,
  org.eclipse.equinox.p2.repository,
