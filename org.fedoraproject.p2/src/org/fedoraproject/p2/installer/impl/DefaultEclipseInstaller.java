@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.fedoraproject.p2.installer.impl;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -36,14 +36,15 @@ import org.eclipse.equinox.p2.metadata.IRequirement;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.IQueryable;
 import org.eclipse.equinox.p2.query.QueryUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.fedoraproject.p2.FedoraBundleRepository;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
 import org.fedoraproject.p2.installer.Provide;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Mikolaj Izdebski
@@ -69,7 +70,14 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			EclipseInstallationRequest request) throws Exception {
 		logger.info("Indexing system bundles and features...");
 		// TODO: allow configuring roots for SCL support
-		FedoraBundleRepository index = new FedoraBundleRepository(new File("/"));
+		List<Path> prefixes = request.getPrefixes();
+		if (prefixes.isEmpty())
+			prefixes = Collections.singletonList(Paths.get("/"));
+		if (prefixes.size() > 1)
+			throw new UnsupportedOperationException(
+					"Multiple prefixes (SCLs) are not yet supported");
+		FedoraBundleRepository index = new FedoraBundleRepository(prefixes
+				.iterator().next().toFile());
 		platform = index.getPlatformUnits();
 		internal = index.getInternalUnits();
 		external = index.getExternalUnits();
