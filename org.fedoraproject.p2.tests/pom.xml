@@ -43,6 +43,10 @@
                  <type>p2-installable-unit</type>
                  <artifactId>org.eclipse.platform.feature.group</artifactId>
                </dependency>
+               <dependency>
+                 <type>p2-installable-unit</type>
+                 <artifactId>ch.qos.logback.slf4j</artifactId>
+               </dependency>
             </dependencies>
         </configuration>
       </plugin>
