@@ -36,10 +36,11 @@ import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -124,6 +125,9 @@ public class InstallerTest extends RepositoryTest {
 	private Path root;
 	private Path reactor;
 
+	@Rule
+	public TestName testName = new TestName();
+
 	public InstallerTest() {
 		BundleContext context = getBundleContext();
 		ServiceReference<EclipseInstaller> serviceReference = context
@@ -135,8 +139,11 @@ public class InstallerTest extends RepositoryTest {
 
 	@Before
 	public void setUp() throws Exception {
+		tempDir = Paths.get("target/installer-test").resolve(
+				testName.getMethodName());
+		Files.createDirectories(tempDir);
+
 		reactorPlugins = new LinkedHashMap<>();
-		tempDir = Files.createTempDirectory("fp-p2-");
 
 		visitor = createMock(BuildrootVisitor.class);
 
@@ -149,19 +156,6 @@ public class InstallerTest extends RepositoryTest {
 		request.setBuildRoot(root);
 		request.setTargetDropinDirectory(Paths.get("dropins"));
 		request.setMainPackageId("main");
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		delete(tempDir);
-	}
-
-	private void delete(Path path) throws IOException {
-		if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS))
-			for (Path child : Files.newDirectoryStream(path))
-				delete(child);
-
-		Files.delete(path);
 	}
 
 	private Plugin addPlugin(String id, Map<String, Plugin> map) {
