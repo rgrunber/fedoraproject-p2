@@ -26,15 +26,9 @@ import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.fedoraproject.p2.FedoraMetadataRepository;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MetadataRepositoryTest extends RepositoryTest {
-
-	@BeforeClass
-	public static void beforeClass () throws Exception {
-		RepositoryTest.beforeClass();
-	}
 
 	@Test
 	public void ownershipTest () {

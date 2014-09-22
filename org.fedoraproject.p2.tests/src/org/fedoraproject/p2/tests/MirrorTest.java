@@ -26,7 +26,6 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MirrorTest extends RepositoryTest {
@@ -35,11 +34,6 @@ public class MirrorTest extends RepositoryTest {
 	private final int LIMIT = 10;
 	private final String installLoc = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
 			+ File.separator + this.getClass().getSimpleName();
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-		RepositoryTest.beforeClass();
-	}
 
 	@Test
 	public void simpleMirrorTest() {

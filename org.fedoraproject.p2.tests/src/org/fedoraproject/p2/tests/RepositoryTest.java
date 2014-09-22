@@ -18,6 +18,7 @@ import org.eclipse.equinox.p2.metadata.ITouchpointData;
 import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
+import org.junit.BeforeClass;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -38,6 +39,7 @@ public class RepositoryTest {
 	/**
 	 * All access to p2 services happen through the provisioning agent.
 	 */
+	@BeforeClass
 	public static void beforeClass() throws Exception {
 		BundleContext bc = Platform.getBundle("org.fedoraproject.p2.tests").getBundleContext();
 		ServiceReference<?> sr = (ServiceReference<?>) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);

@@ -32,7 +32,6 @@ import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.fedoraproject.p2.FedoraBundleRepository;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class InstallTest extends RepositoryTest {
@@ -40,11 +39,6 @@ public class InstallTest extends RepositoryTest {
 	private final String profileID = "testProfile";
 	private final String installLoc = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString()
 			+ File.separator + getClass().getSimpleName();
-
-	@BeforeClass
-	public static void beforeClass() throws Exception {
-		RepositoryTest.beforeClass();
-	}
 
 	@Test
 	public void simpleSingleUnitInstallTest() {

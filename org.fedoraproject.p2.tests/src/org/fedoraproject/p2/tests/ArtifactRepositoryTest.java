@@ -23,15 +23,9 @@ import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.repository.artifact.ArtifactKeyQuery;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepository;
 import org.fedoraproject.p2.FedoraArtifactRepository;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ArtifactRepositoryTest extends RepositoryTest {
-
-	@BeforeClass
-	public static void beforeClass() throws Exception {
-		RepositoryTest.beforeClass();
-	}
 
 	@Test
 	public void ownershipTest () {
