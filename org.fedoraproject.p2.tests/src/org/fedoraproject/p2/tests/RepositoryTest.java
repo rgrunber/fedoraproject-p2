@@ -32,6 +32,7 @@ public class RepositoryTest {
 						+ (System.getProperty("os.arch").contains("64") ? "64" : "")
 						+ "/eclipse/plugins";
 
+	private static BundleContext bc;
 	private static IProvisioningAgent agent;
 	private static IMetadataRepositoryManager metadataRM;
 	private static IArtifactRepositoryManager artifactRM;
@@ -41,12 +42,16 @@ public class RepositoryTest {
 	 */
 	@BeforeClass
 	public static void beforeClass() throws Exception {
-		BundleContext bc = Platform.getBundle("org.fedoraproject.p2.tests").getBundleContext();
+		bc = Platform.getBundle("org.fedoraproject.p2.tests").getBundleContext();
 		ServiceReference<?> sr = (ServiceReference<?>) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		IProvisioningAgentProvider pr = (IProvisioningAgentProvider) bc.getService(sr);
 		agent = pr.createAgent(null);
 		metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
 		artifactRM = (IArtifactRepositoryManager) agent.getService(IArtifactRepositoryManager.SERVICE_NAME);
+	}
+
+	protected BundleContext getBundleContext () {
+		return bc;
 	}
 
 	protected IMetadataRepositoryManager getMetadataRepoManager () {

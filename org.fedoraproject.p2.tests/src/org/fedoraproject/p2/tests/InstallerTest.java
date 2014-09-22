@@ -115,7 +115,7 @@ interface BuildrootVisitor {
 /**
  * @author Mikolaj Izdebski
  */
-public class InstallerTest {
+public class InstallerTest extends RepositoryTest {
 	private final EclipseInstaller installer;
 	private Path tempDir;
 	private Map<String, Plugin> reactorPlugins;
@@ -125,7 +125,7 @@ public class InstallerTest {
 	private Path reactor;
 
 	public InstallerTest() {
-		BundleContext context = Activator.getBundleContext();
+		BundleContext context = getBundleContext();
 		ServiceReference<EclipseInstaller> serviceReference = context
 				.getServiceReference(EclipseInstaller.class);
 		assertNotNull(serviceReference);
