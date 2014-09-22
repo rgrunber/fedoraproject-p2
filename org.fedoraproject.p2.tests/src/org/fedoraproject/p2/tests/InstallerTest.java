@@ -262,7 +262,7 @@ public class InstallerTest extends RepositoryTest {
 						assertFalse(isLink && isDir);
 						// We never symlink features
 						assertFalse(isFeature && isLink);
-						String id = name.replaceAll("_.*", "");
+						String id = name.replaceAll("_.*$", "");
 						if (isLink)
 							visitor.visitSymlink(dropin, id);
 						else if (isPlugin)
@@ -277,14 +277,26 @@ public class InstallerTest extends RepositoryTest {
 		}
 	}
 
+	public void expectPlugin(String plugin) {
+		expectPlugin("main", plugin);
+	}
+
 	public void expectPlugin(String dropin, String plugin) {
 		visitor.visitPlugin(dropin, plugin);
 		expectLastCall();
 	}
 
-	public void expectFeature(String dropin, String plugin) {
-		visitor.visitFeature(dropin, plugin);
+	public void expectFeature(String feature) {
+		expectFeature("main", feature);
+	}
+
+	public void expectFeature(String dropin, String feature) {
+		visitor.visitFeature(dropin, feature);
 		expectLastCall();
+	}
+
+	public void expectSymlink(String plugin) {
+		expectSymlink("main", plugin);
 	}
 
 	public void expectSymlink(String dropin, String plugin) {
@@ -296,7 +308,7 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void simpleTest() throws Exception {
 		addReactorPlugin("foo");
-		expectPlugin("main", "foo");
+		expectPlugin("foo");
 		performTest();
 	}
 
@@ -305,8 +317,8 @@ public class InstallerTest extends RepositoryTest {
 	public void twoPluginsTest() throws Exception {
 		addReactorPlugin("foo");
 		addReactorPlugin("bar");
-		expectPlugin("main", "foo");
-		expectPlugin("main", "bar");
+		expectPlugin("foo");
+		expectPlugin("bar");
 		performTest();
 	}
 
@@ -314,7 +326,7 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void dirShapedPlugin() throws Exception {
 		addReactorPlugin("foo").addMfEntry("Eclipse-BundleShape", "dir");
-		expectPlugin("main", "foo");
+		expectPlugin("foo");
 		performTest();
 		Path dir = buildRoot.resolve("dropins/main/eclipse/plugins/foo_1.0.0");
 		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
@@ -331,7 +343,7 @@ public class InstallerTest extends RepositoryTest {
 		request.addPackageMapping("bar", "sub2");
 		expectPlugin("sub1", "foo");
 		expectPlugin("sub2", "bar");
-		expectPlugin("main", "baz");
+		expectPlugin("baz");
 		performTest();
 	}
 
@@ -345,7 +357,7 @@ public class InstallerTest extends RepositoryTest {
 		request.addPackageMapping("A", "sub");
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "B");
-		expectPlugin("main", "C");
+		expectPlugin("C");
 		performTest();
 	}
 
@@ -368,7 +380,7 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub", "C");
 		expectPlugin("sub", "B1");
 		expectPlugin("different", "B2");
-		expectPlugin("main", "B3");
+		expectPlugin("B3");
 		performTest();
 	}
 
@@ -403,9 +415,9 @@ public class InstallerTest extends RepositoryTest {
 		Plugin myPlugin = addReactorPlugin("my-plugin");
 		myPlugin.requireBundle("org.apache.commons.io");
 		myPlugin.importPackage("org.apache.commons.lang");
-		expectPlugin("main", "my-plugin");
-		expectSymlink("main", "org.apache.commons.io");
-		expectSymlink("main", "org.apache.commons.lang");
+		expectPlugin("my-plugin");
+		expectSymlink("org.apache.commons.io");
+		expectSymlink("org.apache.commons.lang");
 		performTest();
 	}
 
@@ -421,9 +433,9 @@ public class InstallerTest extends RepositoryTest {
 	public void transitiveSymlinkTest() throws Exception {
 		addJunitBundles();
 		addReactorPlugin("my.tests").importPackage("junit.framework");
-		expectPlugin("main", "my.tests");
-		expectSymlink("main", "org.junit");
-		expectSymlink("main", "org.hamcrest.core");
+		expectPlugin("my.tests");
+		expectSymlink("org.junit");
+		expectSymlink("org.hamcrest.core");
 		performTest();
 	}
 
@@ -467,7 +479,7 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void unresolvedDependencyTest() throws Exception {
 		addReactorPlugin("A").requireBundle("non-existent-plugin");
-		expectPlugin("main", "A");
+		expectPlugin("A");
 		performTest();
 	}
 
@@ -478,8 +490,8 @@ public class InstallerTest extends RepositoryTest {
 		addExternalPlugin("org.eclipse.osgi");
 		addExternalPlugin("system.bundle");
 		addReactorPlugin("A").requireBundle("system.bundle");
-		expectPlugin("main", "A");
-		expectSymlink("main", "org.eclipse.osgi");
+		expectPlugin("A");
+		expectSymlink("org.eclipse.osgi");
 		performTest();
 	}
 
@@ -490,9 +502,9 @@ public class InstallerTest extends RepositoryTest {
 		addExternalPlugin("lib1").exportPackage("foo.bar");
 		addExternalPlugin("another-lib").exportPackage("foo.bar");
 		addReactorPlugin("A").importPackage("foo.bar");
-		expectPlugin("main", "A");
-		expectSymlink("main", "lib1");
-		expectSymlink("main", "another-lib");
+		expectPlugin("A");
+		expectSymlink("lib1");
+		expectSymlink("another-lib");
 		performTest();
 	}
 
@@ -509,9 +521,9 @@ public class InstallerTest extends RepositoryTest {
 	public void versionedRequirementTest() throws Exception {
 		addVersionedPlugins();
 		addReactorPlugin("A").importPackage("foo.bar;version=4.0.0");
-		expectPlugin("main", "A");
-		expectSymlink("main", "P4");
-		expectSymlink("main", "P5");
+		expectPlugin("A");
+		expectSymlink("P4");
+		expectSymlink("P5");
 		performTest();
 	}
 
@@ -520,9 +532,9 @@ public class InstallerTest extends RepositoryTest {
 	public void versionRangeTest() throws Exception {
 		addVersionedPlugins();
 		addReactorPlugin("A").importPackage("foo.bar;version=\"[2.5,5.0.0)\"");
-		expectPlugin("main", "A");
-		expectSymlink("main", "P3");
-		expectSymlink("main", "P4");
+		expectPlugin("A");
+		expectSymlink("P3");
+		expectSymlink("P4");
 		performTest();
 	}
 
@@ -531,11 +543,11 @@ public class InstallerTest extends RepositoryTest {
 	public void anyVersionTest() throws Exception {
 		addVersionedPlugins();
 		addReactorPlugin("A").importPackage("foo.bar;version=0.0.0");
-		expectPlugin("main", "A");
-		expectSymlink("main", "P2");
-		expectSymlink("main", "P3");
-		expectSymlink("main", "P4");
-		expectSymlink("main", "P5");
+		expectPlugin("A");
+		expectSymlink("P2");
+		expectSymlink("P3");
+		expectSymlink("P4");
+		expectSymlink("P5");
 		performTest();
 	}
 
@@ -544,8 +556,8 @@ public class InstallerTest extends RepositoryTest {
 	public void optionalDependencyTest() throws Exception {
 		addExternalPlugin("X");
 		addReactorPlugin("A").requireBundle("X;optional=true");
-		expectPlugin("main", "A");
-		expectSymlink("main", "X");
+		expectPlugin("A");
+		expectSymlink("X");
 		performTest();
 	}
 }
