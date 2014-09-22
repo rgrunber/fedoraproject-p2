@@ -44,8 +44,11 @@ import org.junit.rules.TestName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
+import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
+import org.fedoraproject.p2.installer.Provide;
 
 /**
  * @author Mikolaj Izdebski
@@ -111,6 +114,8 @@ interface BuildrootVisitor {
 	void visitFeature(String dropin, String id);
 
 	void visitSymlink(String dropin, String id);
+
+	void visitRequires(String dropin, String id);
 }
 
 /**
@@ -194,7 +199,7 @@ public class InstallerTest extends RepositoryTest {
 		return addPlugin(id, platformPlugins);
 	}
 
-	public Plugin addIntarnalPlugin(String id) {
+	public Plugin addInternalPlugin(String id) {
 		return addPlugin(id, internalPlugins);
 	}
 
@@ -210,10 +215,12 @@ public class InstallerTest extends RepositoryTest {
 				root.resolve("usr/lib/eclipse/dropins/foo/eclipse/plugins"));
 		collectPlugins(externalPlugins, root.resolve("usr/share/java"));
 
-		installer.performInstallation(request);
+		EclipseInstallationResult result = installer
+				.performInstallation(request);
 
 		replay(visitor);
 		visitDropins(buildRoot.resolve("dropins"));
+		visitResult(result);
 		verify(visitor);
 	}
 
@@ -277,6 +284,25 @@ public class InstallerTest extends RepositoryTest {
 		}
 	}
 
+	private void visitResult(EclipseInstallationResult result) {
+		assertNotNull(result);
+		assertFalse(result.getDropins().isEmpty());
+		for (Dropin dropin : result.getDropins()) {
+			assertNotNull(dropin);
+			assertFalse(dropin.getOsgiProvides().isEmpty());
+			Set<String> requires = new LinkedHashSet<>();
+			for (Provide provide : dropin.getOsgiProvides()) {
+				String reqStr = provide.getProperties().get("osgi.requires");
+				if (reqStr == null)
+					continue;
+				for (String req : reqStr.split(","))
+					requires.add(req);
+			}
+			for (String req : requires)
+				visitor.visitRequires(dropin.getId(), req);
+		}
+	}
+
 	public void expectPlugin(String plugin) {
 		expectPlugin("main", plugin);
 	}
@@ -301,6 +327,15 @@ public class InstallerTest extends RepositoryTest {
 
 	public void expectSymlink(String dropin, String plugin) {
 		visitor.visitSymlink(dropin, plugin);
+		expectLastCall();
+	}
+
+	public void expectRequires(String req) {
+		expectRequires("main", req);
+	}
+
+	public void expectRequires(String dropin, String req) {
+		visitor.visitRequires(dropin, req);
 		expectLastCall();
 	}
 
@@ -358,6 +393,7 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "B");
 		expectPlugin("C");
+		expectRequires("sub", "B");
 		performTest();
 	}
 
@@ -381,6 +417,8 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub", "B1");
 		expectPlugin("different", "B2");
 		expectPlugin("B3");
+		expectRequires("sub", "B1");
+		expectRequires("sub", "B2");
 		performTest();
 	}
 
@@ -418,6 +456,8 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("my-plugin");
 		expectSymlink("org.apache.commons.io");
 		expectSymlink("org.apache.commons.lang");
+		expectRequires("org.apache.commons.io");
+		expectRequires("org.apache.commons.lang");
 		performTest();
 	}
 
@@ -436,6 +476,7 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("my.tests");
 		expectSymlink("org.junit");
 		expectSymlink("org.hamcrest.core");
+		expectRequires("org.junit");
 		performTest();
 	}
 
@@ -454,6 +495,8 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("pkg2", "B");
 		expectSymlink("pkg2", "org.junit");
 		expectSymlink("pkg2", "org.hamcrest.core");
+		expectRequires("pkg1", "org.junit");
+		expectRequires("pkg2", "org.junit");
 		performTest();
 	}
 
@@ -472,6 +515,9 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("pkg1", "org.junit");
 		expectSymlink("pkg1", "org.hamcrest.core");
 		expectPlugin("pkg2", "B");
+		expectRequires("pkg1", "org.junit");
+		expectRequires("pkg2", "org.junit");
+		expectRequires("pkg2", "A");
 		performTest();
 	}
 
@@ -492,6 +538,7 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("A").requireBundle("system.bundle");
 		expectPlugin("A");
 		expectSymlink("org.eclipse.osgi");
+		expectRequires("org.eclipse.osgi");
 		performTest();
 	}
 
@@ -505,6 +552,8 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("A");
 		expectSymlink("lib1");
 		expectSymlink("another-lib");
+		expectRequires("lib1");
+		expectRequires("another-lib");
 		performTest();
 	}
 
@@ -524,6 +573,8 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("A");
 		expectSymlink("P4");
 		expectSymlink("P5");
+		expectRequires("P4");
+		expectRequires("P5");
 		performTest();
 	}
 
@@ -535,6 +586,8 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("A");
 		expectSymlink("P3");
 		expectSymlink("P4");
+		expectRequires("P3");
+		expectRequires("P4");
 		performTest();
 	}
 
@@ -548,6 +601,10 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("P3");
 		expectSymlink("P4");
 		expectSymlink("P5");
+		expectRequires("P2");
+		expectRequires("P3");
+		expectRequires("P4");
+		expectRequires("P5");
 		performTest();
 	}
 
@@ -558,6 +615,22 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("A").requireBundle("X;optional=true");
 		expectPlugin("A");
 		expectSymlink("X");
+		expectRequires("X");
+		performTest();
+	}
+
+	// Platform requirements shouldn't be generated.
+	@Test
+	public void platformRequirementTest() throws Exception {
+		addPlatformPlugin("Plat");
+		addInternalPlugin("Int");
+		addExternalPlugin("Ext");
+		addReactorPlugin("React").requireBundle("Plat").requireBundle("Int")
+				.requireBundle("Ext");
+		expectPlugin("React");
+		expectSymlink("Ext");
+		expectRequires("Int");
+		expectRequires("Ext");
 		performTest();
 	}
 }
