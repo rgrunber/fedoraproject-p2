@@ -174,7 +174,7 @@ public class InstallerTest extends RepositoryTest {
 			for (Path child : Files.newDirectoryStream(path))
 				delete(child);
 
-		Files.delete(path);
+		Files.deleteIfExists(path);
 	}
 
 	private Plugin addPlugin(String id, Map<String, Plugin> map) {
@@ -460,6 +460,92 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("pkg1", "org.junit");
 		expectSymlink("pkg1", "org.hamcrest.core");
 		expectPlugin("pkg2", "B");
+		performTest();
+	}
+
+	// Unresolved dependencies shouldn't cause installation failure.
+	@Test
+	public void unresolvedDependencyTest() throws Exception {
+		addReactorPlugin("A").requireBundle("non-existent-plugin");
+		expectPlugin("main", "A");
+		performTest();
+	}
+
+	// Requirement on system bundle is equivalent to dependency on OSGi
+	// framework (org.eclipse.osgi)
+	@Test
+	public void systemBundleTest() throws Exception {
+		addExternalPlugin("org.eclipse.osgi");
+		addExternalPlugin("system.bundle");
+		addReactorPlugin("A").requireBundle("system.bundle");
+		expectPlugin("main", "A");
+		expectSymlink("main", "org.eclipse.osgi");
+		performTest();
+	}
+
+	// Two unit satisfy one dependency. Both should be symlinked to let OSGi
+	// framework choose better provider at runtime.
+	@Test
+	public void multipleProvidersTest() throws Exception {
+		addExternalPlugin("lib1").exportPackage("foo.bar");
+		addExternalPlugin("another-lib").exportPackage("foo.bar");
+		addReactorPlugin("A").importPackage("foo.bar");
+		expectPlugin("main", "A");
+		expectSymlink("main", "lib1");
+		expectSymlink("main", "another-lib");
+		performTest();
+	}
+
+	private void addVersionedPlugins() {
+		addExternalPlugin("P2").exportPackage("foo.bar;version=2");
+		addExternalPlugin("P3").exportPackage("foo.bar;version=3");
+		addExternalPlugin("P4").exportPackage("foo.bar;version=4");
+		addExternalPlugin("P5").exportPackage("foo.bar;version=5");
+	}
+
+	// Versioned requirement must be satisfied only by bundles with matching
+	// versions.
+	@Test
+	public void versionedRequirementTest() throws Exception {
+		addVersionedPlugins();
+		addReactorPlugin("A").importPackage("foo.bar;version=4.0.0");
+		expectPlugin("main", "A");
+		expectSymlink("main", "P4");
+		expectSymlink("main", "P5");
+		performTest();
+	}
+
+	// Version ranges should be respected.
+	@Test
+	public void versionRangeTest() throws Exception {
+		addVersionedPlugins();
+		addReactorPlugin("A").importPackage("foo.bar;version=\"[2.5,5.0.0)\"");
+		expectPlugin("main", "A");
+		expectSymlink("main", "P3");
+		expectSymlink("main", "P4");
+		performTest();
+	}
+
+	// Version 0 matches everything.
+	@Test
+	public void anyVersionTest() throws Exception {
+		addVersionedPlugins();
+		addReactorPlugin("A").importPackage("foo.bar;version=0.0.0");
+		expectPlugin("main", "A");
+		expectSymlink("main", "P2");
+		expectSymlink("main", "P3");
+		expectSymlink("main", "P4");
+		expectSymlink("main", "P5");
+		performTest();
+	}
+
+	// Symlinks for optional dependencies should be created.
+	@Test
+	public void optionalDependencyTest() throws Exception {
+		addExternalPlugin("X");
+		addReactorPlugin("A").requireBundle("X;optional=true");
+		expectPlugin("main", "A");
+		expectSymlink("main", "X");
 		performTest();
 	}
 }
