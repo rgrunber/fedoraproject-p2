@@ -120,9 +120,13 @@ public class InstallerTest extends RepositoryTest {
 	private final EclipseInstaller installer;
 	private Path tempDir;
 	private Map<String, Plugin> reactorPlugins;
+	private Map<String, Plugin> platformPlugins;
+	private Map<String, Plugin> internalPlugins;
+	private Map<String, Plugin> externalPlugins;
 	private BuildrootVisitor visitor;
 	private EclipseInstallationRequest request;
 	private Path root;
+	private Path buildRoot;
 	private Path reactor;
 
 	@Rule
@@ -139,23 +143,38 @@ public class InstallerTest extends RepositoryTest {
 
 	@Before
 	public void setUp() throws Exception {
-		tempDir = Paths.get("target/installer-test").resolve(
-				testName.getMethodName());
+		tempDir = Paths.get("target/installer-test")
+				.resolve(testName.getMethodName()).toAbsolutePath();
+		delete(tempDir);
 		Files.createDirectories(tempDir);
 
 		reactorPlugins = new LinkedHashMap<>();
+		platformPlugins = new LinkedHashMap<>();
+		externalPlugins = new LinkedHashMap<>();
+		internalPlugins = new LinkedHashMap<>();
 
 		visitor = createMock(BuildrootVisitor.class);
 
 		root = tempDir.resolve("root");
 		Files.createDirectory(root);
+		buildRoot = tempDir.resolve("buildroot");
+		Files.createDirectory(buildRoot);
 		reactor = tempDir.resolve("reactor");
 		Files.createDirectory(reactor);
 
 		request = new EclipseInstallationRequest();
-		request.setBuildRoot(root);
+		request.setBuildRoot(buildRoot);
 		request.setTargetDropinDirectory(Paths.get("dropins"));
 		request.setMainPackageId("main");
+		request.addPrefix(root);
+	}
+
+	private void delete(Path path) throws IOException {
+		if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS))
+			for (Path child : Files.newDirectoryStream(path))
+				delete(child);
+
+		Files.delete(path);
 	}
 
 	private Plugin addPlugin(String id, Map<String, Plugin> map) {
@@ -171,21 +190,45 @@ public class InstallerTest extends RepositoryTest {
 		return addPlugin(id, reactorPlugins);
 	}
 
+	public Plugin addPlatformPlugin(String id) {
+		return addPlugin(id, platformPlugins);
+	}
+
+	public Plugin addIntarnalPlugin(String id) {
+		return addPlugin(id, internalPlugins);
+	}
+
+	public Plugin addExternalPlugin(String id) {
+		return addPlugin(id, externalPlugins);
+	}
+
 	public void performTest() throws Exception {
-		// Create reactor plugins
-		for (Entry<String, Plugin> entry : reactorPlugins.entrySet()) {
-			String id = entry.getKey();
-			Plugin plugin = entry.getValue();
-			Path path = reactor.resolve(id + ".jar");
-			plugin.writeBundle(path);
+		for (Path path : collectPlugins(reactorPlugins, reactor))
 			request.addPlugin(path);
-		}
+		collectPlugins(platformPlugins, root.resolve("usr/lib/eclipse/plugins"));
+		collectPlugins(internalPlugins,
+				root.resolve("usr/lib/eclipse/dropins/foo/eclipse/plugins"));
+		collectPlugins(externalPlugins, root.resolve("usr/share/java"));
 
 		installer.performInstallation(request);
 
 		replay(visitor);
-		visitDropins(root.resolve("dropins"));
+		visitDropins(buildRoot.resolve("dropins"));
 		verify(visitor);
+	}
+
+	private Set<Path> collectPlugins(Map<String, Plugin> plugins, Path dir)
+			throws Exception {
+		Files.createDirectories(dir);
+		LinkedHashSet<Path> result = new LinkedHashSet<>();
+		for (Entry<String, Plugin> entry : plugins.entrySet()) {
+			String id = entry.getKey();
+			Plugin plugin = entry.getValue();
+			Path path = dir.resolve(id + ".jar");
+			plugin.writeBundle(path);
+			result.add(path);
+		}
+		return result;
 	}
 
 	private void visitDropins(Path dropins) throws Exception {
@@ -273,7 +316,7 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("foo").addMfEntry("Eclipse-BundleShape", "dir");
 		expectPlugin("main", "foo");
 		performTest();
-		Path dir = root.resolve("dropins/main/eclipse/plugins/foo_1.0.0");
+		Path dir = buildRoot.resolve("dropins/main/eclipse/plugins/foo_1.0.0");
 		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
 	}
 
@@ -342,11 +385,21 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 	}
 
+	private void addCommonsBundles() {
+		addExternalPlugin("org.apache.commons.io").exportPackage(
+				"org.apache.commons.io");
+		addExternalPlugin("org.apache.commons.lang").exportPackage(
+				"org.apache.commons.lang");
+		addExternalPlugin("org.apache.commons.net").exportPackage(
+				"org.apache.commons.net");
+	}
+
 	// One bundle which has dependency on two external libs, one through
 	// Require-Bundle and one through Import-Package. Both libs are expected to
 	// be symlinked next to our plugin.
 	@Test
 	public void symlinkTest() throws Exception {
+		addCommonsBundles();
 		Plugin myPlugin = addReactorPlugin("my-plugin");
 		myPlugin.requireBundle("org.apache.commons.io");
 		myPlugin.importPackage("org.apache.commons.lang");
@@ -356,10 +409,17 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 	}
 
+	private void addJunitBundles() {
+		addExternalPlugin("org.junit").requireBundle("org.hamcrest.core")
+				.exportPackage("org.junit").exportPackage("junit.framework");
+		addExternalPlugin("org.hamcrest.core");
+	}
+
 	// Plugin which directly depends on junit. Besides junit, hamcrest is
 	// expected to be symlinked too as junit depends on hamcrest.
 	@Test
 	public void transitiveSymlinkTest() throws Exception {
+		addJunitBundles();
 		addReactorPlugin("my.tests").importPackage("junit.framework");
 		expectPlugin("main", "my.tests");
 		expectSymlink("main", "org.junit");
@@ -371,6 +431,7 @@ public class InstallerTest extends RepositoryTest {
 	// symlinked next to both plugins.
 	@Test
 	public void indepPluginsCommonDep() throws Exception {
+		addJunitBundles();
 		addReactorPlugin("A").importPackage("junit.framework");
 		addReactorPlugin("B").requireBundle("org.junit");
 		request.addPackageMapping("A", "pkg1");
@@ -390,6 +451,7 @@ public class InstallerTest extends RepositoryTest {
 	// hamcrest are symlinked only next to A.
 	@Test
 	public void depPluginsCommonDep() throws Exception {
+		addJunitBundles();
 		addReactorPlugin("A").importPackage("junit.framework");
 		addReactorPlugin("B").requireBundle("org.junit").requireBundle("A");
 		request.addPackageMapping("A", "pkg1");
