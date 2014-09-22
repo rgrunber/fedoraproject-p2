@@ -37,7 +37,6 @@
           <testSuite>org.fedoraproject.p2.tests</testSuite>
           <testClass>org.fedoraproject.p2.tests.AllTests</testClass>
           <product>org.eclipse.platform.ide</product>
-          <useUIHarness>true</useUIHarness>
           <dependencies>
                <dependency>
                  <type>p2-installable-unit</type>
