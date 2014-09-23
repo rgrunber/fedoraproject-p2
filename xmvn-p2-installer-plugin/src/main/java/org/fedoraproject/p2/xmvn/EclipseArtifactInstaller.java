@@ -63,7 +63,7 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 			throws ArtifactInstallationException {
 		Path path = Paths.get(am.getPath());
 
-		if (!am.getExtension().equals("jar") || !am.getClassifier().isEmpty())
+		if (!am.getExtension().equals("jar") || (!am.getClassifier().isEmpty() && !am.getClassifier().equals("sources")))
 			return;
 
 		String type = am.getProperties().getProperty("type");
@@ -91,8 +91,14 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		if (isFeature
 				|| (rule.getTargetPackage() != null && !rule.getTargetPackage()
 						.isEmpty())) {
-			String unitId = isFeature ? am.getArtifactId() + ".feature.group"
-					: am.getArtifactId();
+			String unitId = null;
+			if (isFeature) {
+				unitId = am.getArtifactId() + ".feature.group";
+			} else if ("sources".equals(am.getClassifier())) {
+				unitId = am.getArtifactId() + ".source";
+			} else {
+				unitId = am.getArtifactId();
+			}
 			request.addPackageMapping(unitId, subpackageId);
 		}
 
