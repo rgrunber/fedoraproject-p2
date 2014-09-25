@@ -294,15 +294,11 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 					resolved.addAll(matches);
 					resolved.retainAll(internal);
 					if (!resolved.isEmpty()) {
-						if (logger.isDebugEnabled()) {
-							for (IInstallableUnit match : resolved) {
-								logger.debug("      => {} (dropins)", match);
+						for (IInstallableUnit match : resolved) {
+							logger.debug("      => {} (dropins)", match);
 
-								for (IArtifactKey artifact : match
-										.getArtifacts())
-									requires.append(',').append(
-											artifact.getId());
-							}
+							for (IArtifactKey artifact : match.getArtifacts())
+								requires.append(',').append(artifact.getId());
 						}
 
 						continue;
