@@ -633,4 +633,14 @@ public class InstallerTest extends RepositoryTest {
 		expectRequires("Ext");
 		performTest();
 	}
+
+	// Requirements should not be generated for self-dependencies.
+	@Test
+	public void selfDependencyTest() throws Exception {
+		addReactorPlugin("A").requireBundle("B");
+		addReactorPlugin("B");
+		expectPlugin("A");
+		expectPlugin("B");
+		performTest();
+	}
 }
