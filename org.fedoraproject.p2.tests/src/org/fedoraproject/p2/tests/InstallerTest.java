@@ -393,7 +393,6 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "B");
 		expectPlugin("C");
-		expectRequires("sub", "B");
 		performTest();
 	}
 
@@ -417,7 +416,6 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub", "B1");
 		expectPlugin("different", "B2");
 		expectPlugin("B3");
-		expectRequires("sub", "B1");
 		expectRequires("sub", "B2");
 		performTest();
 	}
