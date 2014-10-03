@@ -61,7 +61,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private Set<IInstallableUnit> external;
 
-	private Map<IInstallableUnit, String> reactorRequires;
+	private Map<IInstallableUnit, Set<IInstallableUnit>> reactorRequires;
 
 	private Set<Package> metapackages;
 
@@ -195,9 +195,17 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 										.get("/").resolve(path));
 						dropin.addProvide(provide);
 
-						String requires = reactorRequires.get(unit);
-						if (requires != null)
-							provide.setProperty("osgi.requires", requires);
+						Set<IInstallableUnit> requires = reactorRequires
+								.get(unit);
+						requires.removeAll(content);
+						Iterator<IInstallableUnit> it = requires.iterator();
+						if (it.hasNext()) {
+							StringBuilder sb = new StringBuilder(it.next()
+									.getId());
+							while (it.hasNext())
+								sb.append(',').append(it.next().getId());
+							provide.setProperty("osgi.requires", sb.toString());
+						}
 					}
 				}
 			}
@@ -239,7 +247,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			for (IInstallableUnit iu : metapackage.getContents()) {
 				logger.debug("##### IU {}", iu);
 
-				StringBuilder requires = new StringBuilder();
+				Set<IInstallableUnit> requires = new LinkedHashSet<>();
+				reactorRequires.put(iu, requires);
 
 				for (IRequirement req : getRequirements(iu)) {
 					logger.debug("    Requires: {}", req);
@@ -271,11 +280,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 								Package dep = metapackageLookup.get(match);
 								metapackage.addDependency(dep);
 							}
-
-							for (IArtifactKey artifact : match.getArtifacts())
-								requires.append(',').append(artifact.getId());
 						}
 
+						requires.addAll(matches);
 						continue;
 					}
 
@@ -291,14 +298,15 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						continue;
 					}
 
+					requires.addAll(matches);
+
 					resolved.addAll(matches);
 					resolved.retainAll(internal);
 					if (!resolved.isEmpty()) {
-						for (IInstallableUnit match : resolved) {
-							logger.debug("      => {} (dropins)", match);
-
-							for (IArtifactKey artifact : match.getArtifacts())
-								requires.append(',').append(artifact.getId());
+						if (logger.isDebugEnabled()) {
+							for (IInstallableUnit match : resolved) {
+								logger.debug("      => {} (dropins)", match);
+							}
 						}
 
 						continue;
@@ -318,9 +326,6 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 								"      => {} (external, will be symlinked)",
 								match);
 
-						for (IArtifactKey artifact : match.getArtifacts())
-							requires.append(',').append(artifact.getId());
-
 						Package dep = metapackageLookup.get(match);
 						if (dep == null) {
 							dep = Package.creeateVirtual(match, true);
@@ -332,9 +337,6 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						metapackage.addDependency(dep);
 					}
 				}
-
-				if (requires.length() > 0 && reactor.contains(iu))
-					reactorRequires.put(iu, requires.substring(1));
 			}
 		}
 	}
