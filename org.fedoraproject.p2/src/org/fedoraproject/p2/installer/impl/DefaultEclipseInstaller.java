@@ -154,6 +154,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 				Path pluginsDir = runnableRepo.getLocation().resolve("plugins");
 				for (IInstallableUnit iu : symlinks) {
+					Files.createDirectories(pluginsDir);
 					Path path = index.lookupBundle(iu);
 					if (path == null) {
 						logger.error(
