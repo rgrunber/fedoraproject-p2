@@ -26,9 +26,11 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -36,6 +38,11 @@ import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseInstallationRequest;
+import org.fedoraproject.p2.installer.EclipseInstallationResult;
+import org.fedoraproject.p2.installer.EclipseInstaller;
+import org.fedoraproject.p2.installer.Provide;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -43,12 +50,6 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-
-import org.fedoraproject.p2.installer.Dropin;
-import org.fedoraproject.p2.installer.EclipseInstallationRequest;
-import org.fedoraproject.p2.installer.EclipseInstallationResult;
-import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.Provide;
 
 /**
  * @author Mikolaj Izdebski
@@ -60,11 +61,19 @@ class Plugin {
 	private final Manifest mf = new Manifest();
 	private final Attributes attr = mf.getMainAttributes();
 
-	public Plugin(String id) {
+	public Plugin(String id, String ver) {
 		attr.put(Attributes.Name.MANIFEST_VERSION, "1.0");
 		attr.put(new Attributes.Name("Bundle-ManifestVersion"), "2");
 		attr.put(new Attributes.Name("Bundle-SymbolicName"), id);
-		attr.put(new Attributes.Name("Bundle-Version"), "1.0.0");
+		attr.put(new Attributes.Name("Bundle-Version"), ver);
+	}
+
+	public String getId() {
+		return attr.getValue(new Attributes.Name("Bundle-SymbolicName"));
+	}
+
+	public String getVersion() {
+		return attr.getValue(new Attributes.Name("Bundle-Version"));
 	}
 
 	public Plugin importPackage(String name) {
@@ -109,11 +118,13 @@ class Plugin {
 }
 
 interface BuildrootVisitor {
-	void visitPlugin(String dropin, String id);
+	void visitPlugin(String dropin, String id, String ver);
 
-	void visitFeature(String dropin, String id);
+	void visitFeature(String dropin, String id, String ver);
 
 	void visitSymlink(String dropin, String id);
+
+	void visitProvides(String dropin, String id, String ver);
 
 	void visitRequires(String dropin, String id);
 }
@@ -124,10 +135,10 @@ interface BuildrootVisitor {
 public class InstallerTest extends RepositoryTest {
 	private final EclipseInstaller installer;
 	private Path tempDir;
-	private Map<String, Plugin> reactorPlugins;
-	private Map<String, Plugin> platformPlugins;
-	private Map<String, Plugin> internalPlugins;
-	private Map<String, Plugin> externalPlugins;
+	private Map<String, List<Plugin>> reactorPlugins;
+	private Map<String, List<Plugin>> platformPlugins;
+	private Map<String, List<Plugin>> internalPlugins;
+	private Map<String, List<Plugin>> externalPlugins;
 	private BuildrootVisitor visitor;
 	private EclipseInstallationRequest request;
 	private Path root;
@@ -182,29 +193,47 @@ public class InstallerTest extends RepositoryTest {
 		Files.deleteIfExists(path);
 	}
 
-	private Plugin addPlugin(String id, Map<String, Plugin> map) {
-		Plugin plugin = map.get(id);
-		if (plugin == null) {
-			plugin = new Plugin(id);
-			map.put(id, plugin);
+	private Plugin addPlugin(String id, String ver, Map<String, List<Plugin>> map) {
+		List<Plugin> plugins = map.get(id);
+		if (plugins == null) {
+			plugins = new ArrayList<>();
+			map.put(id, plugins);
 		}
+		Plugin plugin = new Plugin(id, ver);
+		plugins.add(plugin);
 		return plugin;
 	}
 
 	public Plugin addReactorPlugin(String id) {
-		return addPlugin(id, reactorPlugins);
+		return addReactorPlugin(id, "1.0.0");
+	}
+
+	public Plugin addReactorPlugin(String id, String ver) {
+		return addPlugin(id, ver, reactorPlugins);
 	}
 
 	public Plugin addPlatformPlugin(String id) {
-		return addPlugin(id, platformPlugins);
+		return addPlatformPlugin(id, "1.0.0");
+	}
+
+	public Plugin addPlatformPlugin(String id, String ver) {
+		return addPlugin(id, ver, platformPlugins);
 	}
 
 	public Plugin addInternalPlugin(String id) {
-		return addPlugin(id, internalPlugins);
+		return addInternalPlugin(id, "1.0.0");
+	}
+
+	public Plugin addInternalPlugin(String id, String ver) {
+		return addPlugin(id, ver, internalPlugins);
 	}
 
 	public Plugin addExternalPlugin(String id) {
-		return addPlugin(id, externalPlugins);
+		return addExternalPlugin(id, "1.0.0");
+	}
+
+	public Plugin addExternalPlugin(String id, String ver) {
+		return addPlugin(id, ver, externalPlugins);
 	}
 
 	public void performTest() throws Exception {
@@ -224,16 +253,18 @@ public class InstallerTest extends RepositoryTest {
 		verify(visitor);
 	}
 
-	private Set<Path> collectPlugins(Map<String, Plugin> plugins, Path dir)
+	private Set<Path> collectPlugins(Map<String, List<Plugin>> map, Path dir)
 			throws Exception {
 		Files.createDirectories(dir);
 		LinkedHashSet<Path> result = new LinkedHashSet<>();
-		for (Entry<String, Plugin> entry : plugins.entrySet()) {
-			String id = entry.getKey();
-			Plugin plugin = entry.getValue();
-			Path path = dir.resolve(id + ".jar");
-			plugin.writeBundle(path);
-			result.add(path);
+		for (Entry<String, List<Plugin>> entry : map.entrySet()) {
+			List<Plugin> plugins = entry.getValue();
+			for (Plugin plugin : plugins) {
+				Path path = dir.resolve(plugin.getId() + "_" + plugin.getVersion() + ".jar");
+				plugin.writeBundle(path);
+				result.add(path);
+				System.out.println(path);
+			}
 		}
 		return result;
 	}
@@ -270,12 +301,13 @@ public class InstallerTest extends RepositoryTest {
 						// We never symlink features
 						assertFalse(isFeature && isLink);
 						String id = name.replaceAll("_.*$", "");
+						String ver = name.replaceAll("^.*_", "").replaceAll("\\.jar$", "");
 						if (isLink)
 							visitor.visitSymlink(dropin, id);
 						else if (isPlugin)
-							visitor.visitPlugin(dropin, id);
+							visitor.visitPlugin(dropin, id, ver);
 						else if (isFeature)
-							visitor.visitFeature(dropin, id);
+							visitor.visitFeature(dropin, id, ver);
 						else
 							fail();
 					}
@@ -292,6 +324,7 @@ public class InstallerTest extends RepositoryTest {
 			assertFalse(dropin.getOsgiProvides().isEmpty());
 			Set<String> requires = new LinkedHashSet<>();
 			for (Provide provide : dropin.getOsgiProvides()) {
+				visitor.visitProvides(dropin.getId(), provide.getId(), provide.getVersion());
 				String reqStr = provide.getProperties().get("osgi.requires");
 				if (reqStr == null)
 					continue;
@@ -304,20 +337,28 @@ public class InstallerTest extends RepositoryTest {
 	}
 
 	public void expectPlugin(String plugin) {
-		expectPlugin("main", plugin);
+		expectPlugin("main", plugin, "1.0.0");
 	}
 
 	public void expectPlugin(String dropin, String plugin) {
-		visitor.visitPlugin(dropin, plugin);
+		expectPlugin(dropin, plugin, "1.0.0");
+	}
+
+	public void expectPlugin(String dropin, String plugin, String version) {
+		visitor.visitPlugin(dropin, plugin, version);
 		expectLastCall();
 	}
 
 	public void expectFeature(String feature) {
-		expectFeature("main", feature);
+		expectFeature("main", feature, "1.0.0");
 	}
 
 	public void expectFeature(String dropin, String feature) {
-		visitor.visitFeature(dropin, feature);
+		expectFeature(dropin, feature, "1.0.0");
+	}
+
+	public void expectFeature(String dropin, String feature, String version) {
+		visitor.visitFeature(dropin, feature, version);
 		expectLastCall();
 	}
 
@@ -339,11 +380,25 @@ public class InstallerTest extends RepositoryTest {
 		expectLastCall();
 	}
 
+	public void expectProvides(String prov) {
+		expectProvides("main", prov, "1.0.0");
+	}
+
+	public void expectProvides(String dropin, String prov) {
+		expectProvides(dropin, prov, "1.0.0");
+	}
+
+	public void expectProvides(String dropin, String prov, String version) {
+		visitor.visitProvides(dropin, prov, version);
+		expectLastCall();
+	}
+
 	// The simplest case possible: one plugin with no deps
 	@Test
 	public void simpleTest() throws Exception {
 		addReactorPlugin("foo");
 		expectPlugin("foo");
+		expectProvides("foo");
 		performTest();
 	}
 
@@ -354,6 +409,8 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("bar");
 		expectPlugin("foo");
 		expectPlugin("bar");
+		expectProvides("foo");
+		expectProvides("bar");
 		performTest();
 	}
 
@@ -362,6 +419,7 @@ public class InstallerTest extends RepositoryTest {
 	public void dirShapedPlugin() throws Exception {
 		addReactorPlugin("foo").addMfEntry("Eclipse-BundleShape", "dir");
 		expectPlugin("foo");
+		expectProvides("foo");
 		performTest();
 		Path dir = buildRoot.resolve("dropins/main/eclipse/plugins/foo_1.0.0");
 		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
@@ -379,6 +437,9 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub1", "foo");
 		expectPlugin("sub2", "bar");
 		expectPlugin("baz");
+		expectProvides("sub1", "foo");
+		expectProvides("sub2", "bar");
+		expectProvides("baz");
 		performTest();
 	}
 
@@ -393,6 +454,9 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "B");
 		expectPlugin("C");
+		expectProvides("sub", "A");
+		expectProvides("sub", "B");
+		expectProvides("C");
 		performTest();
 	}
 
@@ -417,6 +481,11 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("different", "B2");
 		expectPlugin("B3");
 		expectRequires("sub", "B2");
+		expectProvides("sub", "A");
+		expectProvides("sub", "C");
+		expectProvides("sub", "B1");
+		expectProvides("different", "B2");
+		expectProvides("B3");
 		performTest();
 	}
 
@@ -456,6 +525,7 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("org.apache.commons.lang");
 		expectRequires("org.apache.commons.io");
 		expectRequires("org.apache.commons.lang");
+		expectProvides("my-plugin");
 		performTest();
 	}
 
@@ -475,6 +545,7 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("org.junit");
 		expectSymlink("org.hamcrest.core");
 		expectRequires("org.junit");
+		expectProvides("my.tests");
 		performTest();
 	}
 
@@ -495,6 +566,8 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("pkg2", "org.hamcrest.core");
 		expectRequires("pkg1", "org.junit");
 		expectRequires("pkg2", "org.junit");
+		expectProvides("pkg1", "A");
+		expectProvides("pkg2", "B");
 		performTest();
 	}
 
@@ -516,6 +589,8 @@ public class InstallerTest extends RepositoryTest {
 		expectRequires("pkg1", "org.junit");
 		expectRequires("pkg2", "org.junit");
 		expectRequires("pkg2", "A");
+		expectProvides("pkg1", "A");
+		expectProvides("pkg2", "B");
 		performTest();
 	}
 
@@ -524,6 +599,7 @@ public class InstallerTest extends RepositoryTest {
 	public void unresolvedDependencyTest() throws Exception {
 		addReactorPlugin("A").requireBundle("non-existent-plugin");
 		expectPlugin("A");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -537,6 +613,7 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("A");
 		expectSymlink("org.eclipse.osgi");
 		expectRequires("org.eclipse.osgi");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -552,6 +629,7 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("another-lib");
 		expectRequires("lib1");
 		expectRequires("another-lib");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -573,6 +651,7 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("P5");
 		expectRequires("P4");
 		expectRequires("P5");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -586,6 +665,7 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("P4");
 		expectRequires("P3");
 		expectRequires("P4");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -603,6 +683,7 @@ public class InstallerTest extends RepositoryTest {
 		expectRequires("P3");
 		expectRequires("P4");
 		expectRequires("P5");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -614,6 +695,7 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("A");
 		expectSymlink("X");
 		expectRequires("X");
+		expectProvides("A");
 		performTest();
 	}
 
@@ -629,6 +711,7 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("Ext");
 		expectRequires("Int");
 		expectRequires("Ext");
+		expectProvides("React");
 		performTest();
 	}
 
@@ -639,6 +722,8 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("B");
 		expectPlugin("A");
 		expectPlugin("B");
+		expectProvides("A");
+		expectProvides("B");
 		performTest();
 	}
 }
