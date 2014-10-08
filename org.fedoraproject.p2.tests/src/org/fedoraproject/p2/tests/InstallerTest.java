@@ -726,4 +726,17 @@ public class InstallerTest extends RepositoryTest {
 		expectProvides("B");
 		performTest();
 	}
+
+	// Has to be able to deal with two bundles in the reactor that have the same
+	// symbolic name, but with different versions.
+	@Test
+	public void sameBundleSymbolicNamesTest() throws Exception {
+		addReactorPlugin("A", "1.0.0");
+		addReactorPlugin("A", "2.0.0");
+		expectPlugin("main", "A", "1.0.0");
+		expectPlugin("main", "A", "2.0.0");
+		expectProvides("main", "A", "1.0.0");
+		expectProvides("main", "A", "2.0.0");
+		performTest();
+	}
 }
