@@ -263,7 +263,6 @@ public class InstallerTest extends RepositoryTest {
 				Path path = dir.resolve(plugin.getId() + "_" + plugin.getVersion() + ".jar");
 				plugin.writeBundle(path);
 				result.add(path);
-				System.out.println(path);
 			}
 		}
 		return result;

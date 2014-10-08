@@ -56,11 +56,13 @@ public class Provide {
 	@Override
 	public boolean equals(Object obj) {
 		return obj != null && obj instanceof Provide
-				&& id.equals(((Provide) obj).id);
+				&& id.equals(((Provide) obj).id)
+				&& version.equals(((Provide) obj).version)
+				&& path.equals(((Provide) obj).path);
 	}
 
 	@Override
 	public int hashCode() {
-		return id.hashCode();
+		return id.hashCode() + version.hashCode() + path.hashCode();
 	}
 }

@@ -170,6 +170,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				}
 
 				for (IInstallableUnit unit : content) {
+					String type = "plugins";
+					if (unit.getId().endsWith(".feature.group") || unit.getId().endsWith(".feature.jar"))
+						type = "features";
 					for (IArtifactKey artifact : unit.getArtifacts()) {
 						String baseName = artifact.getId() + "_"
 								+ artifact.getVersion();
@@ -177,13 +180,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						Path path = null;
 						for (String artifactName : Arrays.asList(baseName,
 								baseName + ".jar")) {
-							for (String type : Arrays.asList("plugins",
-									"features")) {
-								if (Files.exists(runnableRepo.getLocation()
-										.resolve(type).resolve(artifactName)))
-									path = installationPath.resolve(type)
-											.resolve(artifactName);
-							}
+							if (Files.exists(runnableRepo.getLocation()
+									.resolve(type).resolve(artifactName)))
+								path = installationPath.resolve(type).resolve(
+										artifactName);
 						}
 
 						if (path == null)
