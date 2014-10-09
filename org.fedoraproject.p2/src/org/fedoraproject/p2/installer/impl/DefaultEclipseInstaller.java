@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.fedoraproject.p2.installer.impl;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,13 +27,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IInstallableUnitFragment;
 import org.eclipse.equinox.p2.metadata.IRequirement;
 import org.eclipse.equinox.p2.query.IQuery;
-import org.eclipse.equinox.p2.query.IQueryable;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,19 +52,25 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private Set<IInstallableUnit> reactor;
 
-	private Set<IInstallableUnit> platform;
-
-	private Set<IInstallableUnit> internal;
-
-	private Set<IInstallableUnit> external;
-
 	private Map<IInstallableUnit, Set<IInstallableUnit>> reactorRequires;
 
 	private Set<Package> metapackages;
 
+	private Map<IInstallableUnit, Package> metapackageLookup;
+
+	private LinkedList<Package> toProcess;
+
+	private FedoraBundleRepository index;
+
 	@Override
 	public EclipseInstallationResult performInstallation(
 			EclipseInstallationRequest request) throws Exception {
+		logger.info("Creating reactor repository...");
+		Repository reactorRepo = Repository.createTemp();
+		Director.publish(reactorRepo, request.getPlugins(),
+				request.getFeatures());
+		reactor = reactorRepo.getAllUnits();
+
 		logger.info("Indexing system bundles and features...");
 		// TODO: allow configuring roots for SCL support
 		List<Path> prefixes = request.getPrefixes();
@@ -76,21 +79,11 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		if (prefixes.size() > 1)
 			throw new UnsupportedOperationException(
 					"Multiple prefixes (SCLs) are not yet supported");
-		FedoraBundleRepository index = new FedoraBundleRepository(prefixes
-				.iterator().next().toFile());
-		platform = index.getPlatformUnits();
-		internal = index.getInternalUnits();
-		external = index.getExternalUnits();
+		index = new FedoraBundleRepository(prefixes.iterator().next().toFile());
 
-		logger.info("Populating all artifacts...");
-		Repository reactorRepo = Repository.createTemp();
-		Director.publish(reactorRepo, request.getPlugins(),
-				request.getFeatures());
-		reactor = reactorRepo.getAllUnits();
-
-		dump("Platform units", platform);
-		dump("Internal units", internal);
-		dump("External units", external);
+		dump("Platform units", index.getPlatformUnits());
+		dump("Internal units", index.getInternalUnits());
+		dump("External units", index.getExternalUnits());
 		dump("Reactor contents", reactor);
 
 		Map<String, Set<IInstallableUnit>> packages = new LinkedHashMap<>();
@@ -235,16 +228,15 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		}
 	}
 
-	public void resolveDeps() throws ProvisionException, IOException {
+	private void resolveDeps() {
 		reactorRequires = new LinkedHashMap<>();
-		IQueryable<IInstallableUnit> queryable = createQueryable();
 
-		Map<IInstallableUnit, Package> metapackageLookup = new LinkedHashMap<>();
+		metapackageLookup = new LinkedHashMap<>();
 		for (Package metapackage : metapackages)
 			for (IInstallableUnit unit : metapackage.getContents())
 				metapackageLookup.put(unit, metapackage);
 
-		LinkedList<Package> toProcess = new LinkedList<>(metapackages);
+		toProcess = new LinkedList<>(metapackages);
 		while (!toProcess.isEmpty()) {
 			Package metapackage = toProcess.removeFirst();
 			for (IInstallableUnit iu : metapackage.getContents()) {
@@ -253,107 +245,74 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				Set<IInstallableUnit> requires = new LinkedHashSet<>();
 				reactorRequires.put(iu, requires);
 
-				for (IRequirement req : getRequirements(iu)) {
-					logger.debug("    Requires: {}", req);
-
-					IQuery<IInstallableUnit> query = QueryUtil
-							.createMatchQuery(req.getMatches());
-					Set<IInstallableUnit> matches = queryable
-							.query(query, null).toUnmodifiableSet();
-					if (matches.isEmpty()) {
-						if (req.getMin() == 0)
-							logger.info(
-									"Unable to satisfy optional dependency from {} to {}",
-									iu, req);
-						else
-							logger.warn(
-									"Unable to satisfy dependency from {} to {}",
-									iu, req);
-						continue;
-					}
-
-					Set<IInstallableUnit> resolved = new LinkedHashSet<>(
-							matches);
-					resolved.retainAll(reactor);
-					if (!resolved.isEmpty()) {
-						for (IInstallableUnit match : resolved) {
-							logger.debug("      => {} (reactor)", match);
-
-							if (reactor.contains(iu)) {
-								Package dep = metapackageLookup.get(match);
-								metapackage.addDependency(dep);
-							}
-						}
-
-						requires.addAll(matches);
-						continue;
-					}
-
-					resolved.addAll(matches);
-					resolved.retainAll(platform);
-					if (!resolved.isEmpty()) {
-						if (logger.isDebugEnabled()) {
-							for (IInstallableUnit match : resolved)
-								logger.debug("      => {} (part of platform)",
-										match);
-						}
-
-						continue;
-					}
-
-					requires.addAll(matches);
-
-					resolved.addAll(matches);
-					resolved.retainAll(internal);
-					if (!resolved.isEmpty()) {
-						if (logger.isDebugEnabled()) {
-							for (IInstallableUnit match : resolved) {
-								logger.debug("      => {} (dropins)", match);
-							}
-						}
-
-						continue;
-					}
-
-					if (matches.size() > 1)
-						logger.warn(
-								"More than one external bundle satisfies dependency from {} to {}",
-								iu, req);
-
-					if (!external.containsAll(matches))
-						throw new RuntimeException(
-								"Requirement was resolved from unknown repository");
-
-					for (IInstallableUnit match : matches) {
-						logger.debug(
-								"      => {} (external, will be symlinked)",
-								match);
-
-						Package dep = metapackageLookup.get(match);
-						if (dep == null) {
-							dep = Package.creeateVirtual(match, true);
-							metapackageLookup.put(match, dep);
-							toProcess.add(dep);
-							metapackages.add(dep);
-						}
-
-						metapackage.addDependency(dep);
-					}
-				}
+				for (IRequirement req : getRequirements(iu))
+					resolveRequirement(iu, req);
 			}
 		}
 	}
 
-	private IQueryable<IInstallableUnit> createQueryable()
-			throws ProvisionException, IOException {
-		Repository unionMetadataRepo = Repository.createTemp();
+	private void resolveRequirement(IInstallableUnit iu, IRequirement req) {
+		logger.debug("    Requires: {}", req);
 
-		Director.mirrorMetadata(unionMetadataRepo, platform);
-		Director.mirrorMetadata(unionMetadataRepo, internal);
-		Director.mirrorMetadata(unionMetadataRepo, external);
-		Director.mirrorMetadata(unionMetadataRepo, reactor);
+		if (tryResolveRequirementFrom(iu, req, reactor, "reactor",
+				reactor.contains(iu), true))
+			return;
 
-		return unionMetadataRepo.getMetadataRepository();
+		if (tryResolveRequirementFrom(iu, req, index.getPlatformUnits(),
+				"platform", false, false))
+			return;
+
+		if (tryResolveRequirementFrom(iu, req, index.getInternalUnits(),
+				"internal", false, true))
+			return;
+
+		if (tryResolveRequirementFrom(iu, req, index.getExternalUnits(),
+				"external", true, true))
+			return;
+
+		if (req.getMin() == 0)
+			logger.info("Unable to satisfy optional dependency from {} to {}",
+					iu, req);
+		else
+			logger.warn("Unable to satisfy dependency from {} to {}", iu, req);
+	}
+
+	private boolean tryResolveRequirementFrom(IInstallableUnit iu,
+			IRequirement req, Set<IInstallableUnit> repo, String desc,
+			boolean generateDep, boolean generateReq) {
+		IQuery<IInstallableUnit> query = QueryUtil.createMatchQuery(req
+				.getMatches());
+		Set<IInstallableUnit> matches = query.perform(repo.iterator())
+				.toUnmodifiableSet();
+		if (matches.isEmpty())
+			return false;
+		if (matches.size() > 1)
+			logger.warn(
+					"More than one {} unit satisfies dependency from {} to {}",
+					desc, iu, req);
+
+		for (IInstallableUnit match : matches) {
+			logger.debug("      => {} ({})", match, desc);
+
+			if (generateDep) {
+				Package dep = metapackageLookup.get(match);
+				if (dep == null) {
+					dep = Package.creeateVirtual(match, true);
+					metapackageLookup.put(match, dep);
+					toProcess.add(dep);
+					metapackages.add(dep);
+				}
+				Package metapackage = metapackageLookup.get(iu);
+				metapackage.addDependency(dep);
+			}
+		}
+
+		if (generateReq) {
+			Set<IInstallableUnit> requires = reactorRequires.get(iu);
+			requires.addAll(matches);
+		}
+
+		return true;
 	}
 
 	private static Collection<IRequirement> getRequirements(IInstallableUnit iu) {

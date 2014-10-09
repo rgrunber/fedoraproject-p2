@@ -84,36 +84,24 @@ public class Director {
 			throw new ProvisionException(status);
 	}
 
-	public static void mirrorMetadata(Repository destinationRepository,
-			Set<IInstallableUnit> units) throws ProvisionException {
-		IMetadataRepository destMr = destinationRepository
-				.getMetadataRepository();
-
-		destMr.addInstallableUnits(units);
-	}
-
 	public static void mirror(Repository destinationRepository,
 			Repository sourceRepository, Set<IInstallableUnit> units)
 			throws ProvisionException {
-		mirrorMetadata(destinationRepository, units);
+		IMetadataRepository destMr = destinationRepository
+				.getMetadataRepository();
+		destMr.addInstallableUnits(units);
 
 		IArtifactRepository destAr = destinationRepository
 				.getArtifactRepository();
 		IArtifactRepository sourceAr = sourceRepository.getArtifactRepository();
 
-		Mirroring mirror = new Mirroring(sourceAr, destAr, true);
-		mirror.setCompare(false);
-		mirror.setValidate(false);
-		// mirror.setTransport( (Transport) Activator.getAgent().getService(
-		// Transport.SERVICE_NAME ) );
-		mirror.setIncludePacked(true);
-
 		Collection<IArtifactKey> artifactKeys = new ArrayList<>();
 		for (IInstallableUnit iInstallableUnit : units)
 			artifactKeys.addAll(iInstallableUnit.getArtifacts());
 
-		mirror.setArtifactKeys(artifactKeys.toArray(new IArtifactKey[0]));
-
+		Mirroring mirror = new Mirroring(sourceAr, destAr, true);
+		mirror.setArtifactKeys(artifactKeys
+				.toArray(new IArtifactKey[artifactKeys.size()]));
 		IStatus status = mirror.run(true, false);
 		if (!status.isOK())
 			throw new ProvisionException(status);
