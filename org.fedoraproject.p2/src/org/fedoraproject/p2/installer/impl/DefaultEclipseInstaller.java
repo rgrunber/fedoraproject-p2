@@ -171,7 +171,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 				for (IInstallableUnit unit : content) {
 					String type = "plugins";
-					if (unit.getId().endsWith(".feature.group") || unit.getId().endsWith(".feature.jar"))
+					if (unit.getId().endsWith(".feature.group")
+							|| unit.getId().endsWith(".feature.jar"))
 						type = "features";
 					for (IArtifactKey artifact : unit.getArtifacts()) {
 						String baseName = artifact.getId() + "_"
@@ -193,7 +194,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 						Provide provide = new Provide(artifact.getId(),
 								artifact.getVersion().toString(), Paths
-										.get("/").resolve(path));
+										.get("/").resolve(path),
+								"features".equals(type));
 						dropin.addProvide(provide);
 
 						Set<IInstallableUnit> requires = reactorRequires

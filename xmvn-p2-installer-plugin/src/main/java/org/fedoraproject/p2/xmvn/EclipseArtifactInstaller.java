@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -55,7 +57,9 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 	private final Map<String, JavaPackage> packageMap = new LinkedHashMap<>();
 
-	private final Map<String, ArtifactMetadata> metadadaMap = new LinkedHashMap<>();
+	private final Map<String, ArtifactMetadata> featureMetadataMap = new LinkedHashMap<>();
+
+	private final Map<String, ArtifactMetadata> pluginMetadataMap = new LinkedHashMap<>();
 
 	@Override
 	public void install(JavaPackage targetPackage, ArtifactMetadata am,
@@ -103,7 +107,27 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		}
 
 		packageMap.put(subpackageId, targetPackage);
-		metadadaMap.put(am.getArtifactId(), am);
+
+		// We must be able to distinguish between plug-ins and features with the
+		// same artifact ID, so keep two separate maps
+		if (isFeature) {
+			featureMetadataMap.put(am.getArtifactId(), am);
+		} else {
+			// We must be able to distinguish between different versions of the
+			// same plug-in in the same reactor, so key by name_version
+			try (JarFile bundle = new JarFile(am.getPath())) {
+				// Also, the maven artifact version is likely to be different to the
+				// osgi bundle version, so we must pull the version from the
+				// manifest in order to be able to look it up correctly later
+				Attributes attrs = bundle.getManifest().getMainAttributes();
+				String name = attrs.getValue("Bundle-SymbolicName");
+				String version = attrs.getValue("Bundle-Version");
+				pluginMetadataMap.put(name + "_" + version, am);
+			} catch (IOException e) {
+				throw new ArtifactInstallationException(
+						"Unable to inspect bundle manifest", e);
+			}
+		}
 	}
 
 	@Override
@@ -128,9 +152,18 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 				addAllFiles(pkg, tempRoot.resolve(dropin.getPath()), tempRoot);
 
 				for (Provide provide : dropin.getOsgiProvides()) {
-					ArtifactMetadata am = metadadaMap.get(provide.getId());
-					if (am == null)
+					ArtifactMetadata am = null;
+					if (provide.isFeature()) {
+						am = featureMetadataMap.remove(provide.getId());
+					} else {
+						am = pluginMetadataMap.remove(provide.getId() + "_"
+								+ provide.getVersion());
+					}
+					if (am == null) {
+						logger.warn("Could not generate metadata for bundle: "
+								+ provide.getId() + "_" + provide.getVersion());
 						continue;
+					}
 
 					am.setPath(provide.getPath().toString());
 					am.getProperties().putAll(provide.getProperties());

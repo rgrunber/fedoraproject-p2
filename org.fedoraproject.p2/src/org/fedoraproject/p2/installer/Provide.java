@@ -25,12 +25,15 @@ public class Provide {
 
 	private final Path path;
 
+	private final boolean isFeature;
+
 	private final Map<String, String> properties = new LinkedHashMap<>();
 
-	public Provide(String id, String version, Path path) {
+	public Provide(String id, String version, Path path, boolean isFeature) {
 		this.id = id;
 		this.version = version;
 		this.path = path;
+		this.isFeature = isFeature;
 	}
 
 	public String getId() {
@@ -43,6 +46,10 @@ public class Provide {
 
 	public Path getPath() {
 		return path;
+	}
+
+	public boolean isFeature() {
+		return isFeature;
 	}
 
 	public Map<String, String> getProperties() {
