@@ -101,18 +101,24 @@ public class RepositoryTest {
 
 		Path eclipseRoot = prefix.resolve("usr/lib/eclipse");
 		Path archDropins = prefix.resolve("usr/lib/eclipse/dropins");
+		Path archDroplets = prefix.resolve("usr/lib/eclipse/droplets");
 		Path noarchDropins = prefix.resolve("usr/share/eclipse/dropins");
+		Path noarchDroplets = prefix.resolve("usr/share/eclipse/droplets");
 		Path bundlesDir = prefix.resolve("usr/share/java");
 
 		Files.createDirectories(eclipseRoot);
 		Files.createDirectories(archDropins);
+		Files.createDirectories(archDroplets);
 		Files.createDirectories(noarchDropins);
+		Files.createDirectories(noarchDroplets);
 		Files.createDirectories(bundlesDir);
 
 		Properties conf = new Properties();
 		conf.setProperty("eclipse.root", eclipseRoot.toString());
 		conf.setProperty("eclipse.dropins.archful", archDropins.toString());
+		conf.setProperty("eclipse.droplets.archful", archDroplets.toString());
 		conf.setProperty("eclipse.dropins.noarch", noarchDropins.toString());
+		conf.setProperty("eclipse.droplets.noarch", noarchDroplets.toString());
 		conf.setProperty("eclipse.bundles", bundlesDir.toString());
 		conf.setProperty("scl.namespace", name);
 		conf.setProperty("scl.root", prefix.toString());

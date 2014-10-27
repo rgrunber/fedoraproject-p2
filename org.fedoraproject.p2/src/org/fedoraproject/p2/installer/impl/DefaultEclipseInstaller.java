@@ -167,9 +167,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 					dropinDir = currentScl.getTestBundleDir();
 				} else {
 					if (archfulDropin) {
-						dropinDir = currentScl.getArchDropinDir();
+						dropinDir = currentScl.getArchDropletDir();
 					} else {
-						dropinDir = currentScl.getNoarchDropinDir();
+						dropinDir = currentScl.getNoarchDropletDir();
 					}
 				}
 				if (dropinDir == null)

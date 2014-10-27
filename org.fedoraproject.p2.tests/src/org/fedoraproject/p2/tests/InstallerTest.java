@@ -214,9 +214,9 @@ public class InstallerTest extends RepositoryTest {
 		collectPlugins(platformPlugins, scl.getEclipseRoot().resolve("plugins"));
 		collectFeatures(platformFeatures, scl.getEclipseRoot().resolve("features"));
 		collectPlugins(internalPlugins,
-				scl.getNoarchDropinDir().resolve("foo/eclipse/plugins"));
+				scl.getNoarchDropletDir().resolve("foo/eclipse/plugins"));
 		collectFeatures(internalFeatures,
-				scl.getNoarchDropinDir().resolve("foo/eclipse/features"));
+				scl.getNoarchDropletDir().resolve("foo/eclipse/features"));
 		collectPlugins(externalPlugins, scl.getBundleLocations().iterator()
 				.next());
 
@@ -226,10 +226,10 @@ public class InstallerTest extends RepositoryTest {
 		replay(visitor);
 		if (visitArchful) {
 			visitDropins(buildRoot.resolve(Paths.get("/").relativize(
-					scl.getArchDropinDir())));
+					scl.getArchDropletDir())));
 		}
 		visitDropins(buildRoot.resolve(Paths.get("/").relativize(
-				scl.getNoarchDropinDir())));
+				scl.getNoarchDropletDir())));
 		visitResult(result);
 		verify(visitor);
 	}
@@ -277,7 +277,13 @@ public class InstallerTest extends RepositoryTest {
 						LinkOption.NOFOLLOW_LINKS));
 				assertEquals("eclipse", dropinSubdir.getFileName().toString());
 
+				if (Files.exists(Paths.get(dropinSubdir.toString(), "plugins"))) {
+					assertTrue(Files.exists(Paths.get(dropinSubdir.toString(), "fragment.info")));
+				}
 				for (Path categoryPath : Files.newDirectoryStream(dropinSubdir)) {
+				    if (categoryPath.getFileName().toString().equals("fragment.info")) {
+				        continue;
+				    }
 					assertTrue(Files.isDirectory(categoryPath,
 							LinkOption.NOFOLLOW_LINKS));
 					String cat = categoryPath.getFileName().toString();
@@ -421,7 +427,7 @@ public class InstallerTest extends RepositoryTest {
 		expectProvides("foo");
 		performTest();
 		Path dir = buildRoot.resolve(Paths.get("/")
-				.relativize(scl.getNoarchDropinDir())
+				.relativize(scl.getNoarchDropletDir())
 				.resolve("main/eclipse/plugins/foo_1.0.0"));
 		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
 	}
@@ -916,9 +922,9 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 		// check install locations
 		Path noarchDropin = buildRoot.resolve(Paths.get("/")
-				.relativize(scl.getNoarchDropinDir()).resolve("noarch-subpkg"));
+				.relativize(scl.getNoarchDropletDir()).resolve("noarch-subpkg"));
 		Path archfulDropin = buildRoot.resolve(Paths.get("/")
-				.relativize(scl.getArchDropinDir()).resolve("main"));
+				.relativize(scl.getArchDropletDir()).resolve("main"));
 		assertTrue(Files.exists(noarchDropin, LinkOption.NOFOLLOW_LINKS));
 		assertTrue(Files.exists(archfulDropin, LinkOption.NOFOLLOW_LINKS));
 	}

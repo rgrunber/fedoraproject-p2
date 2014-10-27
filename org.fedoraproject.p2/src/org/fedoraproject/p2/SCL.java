@@ -23,14 +23,18 @@ import java.util.Set;
 public class SCL {
 	private static final String PROP_ECLIPSE_ROOT = "eclipse.root";
 	private static final String PROP_NOARCH_DROPINS = "eclipse.dropins.noarch";
+	private static final String PROP_NOARCH_DROPLETS = "eclipse.droplets.noarch";
 	private static final String PROP_ARCH_DROPINS = "eclipse.dropins.archful";
+	private static final String PROP_ARCH_DROPLETS = "eclipse.droplets.archful";
 	private static final String PROP_BUNDLES = "eclipse.bundles";
 	private static final String PROP_SCL_NAME = "scl.namespace";
 	private static final String PROP_SCL_ROOT = "scl.root";
 
 	private final Path eclipseRoot;
 	private final Path noarchDropinDir;
+	private final Path noarchDropletDir;
 	private final Path archDropinDir;
+	private final Path archDropletDir;
 	private final Set<Path> bundleLocations;
 	private final String sclName;
 	private final Path sclRoot;
@@ -45,7 +49,9 @@ public class SCL {
 
 		eclipseRoot = getDirectory(prop, PROP_ECLIPSE_ROOT);
 		noarchDropinDir = getDirectory(prop, PROP_NOARCH_DROPINS);
+		noarchDropletDir = getDirectory(prop, PROP_NOARCH_DROPLETS);
 		archDropinDir = getDirectory(prop, PROP_ARCH_DROPINS);
+		archDropletDir = getDirectory(prop, PROP_ARCH_DROPLETS);
 		bundleLocations = getDirectories(prop, PROP_BUNDLES);
 		sclName = getString(prop, PROP_SCL_NAME);
 		sclRoot = getDirectory(prop, PROP_SCL_ROOT);
@@ -89,8 +95,16 @@ public class SCL {
 		return noarchDropinDir;
 	}
 
+	public Path getNoarchDropletDir() {
+		return noarchDropletDir;
+	}
+
 	public Path getArchDropinDir() {
 		return archDropinDir;
+	}
+
+	public Path getArchDropletDir() {
+		return archDropletDir;
 	}
 
 	public Set<Path> getDropinDirs() {
@@ -99,6 +113,10 @@ public class SCL {
 			set.add(archDropinDir);
 		if (noarchDropinDir != null)
 			set.add(noarchDropinDir);
+		if (archDropletDir != null)
+			set.add(archDropletDir);
+		if (noarchDropletDir != null)
+			set.add(noarchDropletDir);
 		return set;
 	}
 

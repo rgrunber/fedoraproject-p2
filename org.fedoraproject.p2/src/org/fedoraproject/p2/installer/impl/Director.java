@@ -108,6 +108,7 @@ public class Director {
 		repo2Runnable.addSource(sourceRepository.getDescripror());
 		repo2Runnable.addDestination(destinationRepository.getDescripror());
 		repo2Runnable.setFlagAsRunnable(true);
+		repo2Runnable.setCreateFragments(true);
 		IStatus status = repo2Runnable.run(null);
 		if (!status.isOK())
 			throw new ProvisionException(status);
