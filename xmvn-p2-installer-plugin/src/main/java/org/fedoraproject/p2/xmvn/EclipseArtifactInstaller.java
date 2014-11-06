@@ -120,9 +120,8 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 				// osgi bundle version, so we must pull the version from the
 				// manifest in order to be able to look it up correctly later
 				Attributes attrs = bundle.getManifest().getMainAttributes();
-				String name = attrs.getValue("Bundle-SymbolicName");
 				String version = attrs.getValue("Bundle-Version");
-				pluginMetadataMap.put(name + "_" + version, am);
+				pluginMetadataMap.put(am.getArtifactId() + "_" + version, am);
 			} catch (IOException e) {
 				throw new ArtifactInstallationException(
 						"Unable to inspect bundle manifest", e);
