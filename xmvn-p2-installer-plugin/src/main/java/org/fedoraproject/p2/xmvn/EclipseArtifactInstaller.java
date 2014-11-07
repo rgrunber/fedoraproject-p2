@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import org.fedoraproject.xmvn.artifact.Artifact;
 import org.fedoraproject.xmvn.artifact.DefaultArtifact;
+import org.fedoraproject.xmvn.config.Configuration;
+import org.fedoraproject.xmvn.config.Configurator;
 import org.fedoraproject.xmvn.config.PackagingRule;
 import org.fedoraproject.xmvn.metadata.ArtifactMetadata;
 import org.fedoraproject.xmvn.tools.install.ArtifactInstallationException;
@@ -52,6 +54,9 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 	@Inject
 	private OSGiServiceLocator equinox;
+
+	@Inject
+	private Configurator xmvnConfigurator;
 
 	private final EclipseInstallationRequest request = new EclipseInstallationRequest();
 
@@ -132,7 +137,10 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 	@Override
 	public void postInstallation() throws ArtifactInstallationException {
 		try {
-			request.addPrefix(Paths.get("/"));
+			Configuration conf = xmvnConfigurator.getConfiguration();
+			for (String prefix : conf.getResolverSettings().getPrefixes()) {
+				request.addPrefix(Paths.get(prefix));
+			}
 
 			Path tempRoot = Files.createTempDirectory("xmvn-root-");
 			request.setBuildRoot(tempRoot);
