@@ -16,7 +16,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -36,7 +35,8 @@ import org.eclipse.equinox.p2.query.QueryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.fedoraproject.p2.FedoraBundleRepository;
+import org.fedoraproject.p2.CompoundBundleRepository;
+import org.fedoraproject.p2.IFedoraBundleRepository;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
@@ -60,7 +60,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private LinkedList<Package> toProcess;
 
-	private FedoraBundleRepository index;
+	private IFedoraBundleRepository index;
 
 	@Override
 	public EclipseInstallationResult performInstallation(
@@ -72,14 +72,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		reactor = reactorRepo.getAllUnits();
 
 		logger.info("Indexing system bundles and features...");
-		// TODO: allow configuring roots for SCL support
 		List<Path> prefixes = request.getPrefixes();
-		if (prefixes.isEmpty())
-			prefixes = Collections.singletonList(Paths.get("/"));
-		if (prefixes.size() > 1)
-			throw new UnsupportedOperationException(
-					"Multiple prefixes (SCLs) are not yet supported");
-		index = new FedoraBundleRepository(prefixes.iterator().next().toFile());
+		index = new CompoundBundleRepository(prefixes);
 
 		dump("Platform units", index.getPlatformUnits());
 		dump("Internal units", index.getInternalUnits());
