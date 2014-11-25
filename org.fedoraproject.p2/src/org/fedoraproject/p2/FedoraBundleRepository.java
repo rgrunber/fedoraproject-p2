@@ -43,7 +43,7 @@ import org.osgi.framework.ServiceReference;
  * This acts as a front-end for all interactions/queries regarding the
  * locations and metadata associated with system bundles (OSGi, Feature).
  */
-public class FedoraBundleRepository {
+public class FedoraBundleRepository implements IFedoraBundleRepository {
 
 	private Set<IInstallableUnit> platformUnits;
 	private Set<IInstallableUnit> internalUnits;
@@ -133,38 +133,22 @@ public class FedoraBundleRepository {
 		return candidates;
 	}
 	
-	/**
-	 * @return A set of installable units part of the Eclipse platform installation.
-	 */
+	@Override
 	public Set<IInstallableUnit> getPlatformUnits() {
 		return Collections.unmodifiableSet(platformUnits);
 	}
 
-	/**
-	 * @return A set of installable units that are discovered by the Eclipse platform at runtime.
-	 * This refers to the 'dropins' mechanism of bundle discovery. Any platform units that are
-	 * also present as internal units are ignored.
-	 */
+	@Override
 	public Set<IInstallableUnit> getInternalUnits() {
 		return Collections.unmodifiableSet(internalUnits);
 	}
 
-	/**
-	 * @return a set of installable units that are OSGi bundles, but not in a location for
-	 * discovery, or inclusion as part of Eclipse. Any platform or internal units that are
-	 * also present as external units are ignored.
-	 */
+	@Override
 	public Set<IInstallableUnit> getExternalUnits() {
 		return Collections.unmodifiableSet(externalUnits);
 	}
 
-	/**
-	 * Retrieve the system path corresponding to the given ID and Version.
-	 * This assumes the artifact is an OSGi bundle.
-	 * @param key an ID and Version represented as an {@link IVersionedId}.
-	 * @return The system path on which to find the specified {@link IVersionedId}
-	 * or <code>null</code> if no such bundle could be found.
-	 */
+	@Override
 	public Path lookupBundle (IVersionedId key) {
 		for (FedoraBundleIndex index : fbindices.values()) {
 			IArtifactKey artKey;
