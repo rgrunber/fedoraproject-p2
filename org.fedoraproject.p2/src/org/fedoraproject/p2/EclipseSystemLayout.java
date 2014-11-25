@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -89,7 +88,7 @@ public class EclipseSystemLayout {
 	 * @return A set of String folder paths that may contain OSGi bundles.
 	 */
 	public static Set<String> getUserDefinedBundleLocations() {
-		Set<String> result = new HashSet<String>();
+		Set<String> result = new LinkedHashSet<>();
 		String value = System.getProperty("fedora.p2.repos");
 		if (value != null) {
 			String[] paths = value.split(",");

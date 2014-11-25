@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +52,8 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 	private Map<String, FedoraBundleIndex> fbindices;
 
 	public FedoraBundleRepository(File root) {
-		metaRepos = new HashMap<String, IMetadataRepository>();
-		fbindices = new HashMap<String, FedoraBundleIndex>();
+		metaRepos = new LinkedHashMap<>();
+		fbindices = new LinkedHashMap<>();
 
 		Set<String> platformLocations = new LinkedHashSet<>();
 		Set<String> dropinsLocations = new LinkedHashSet<>();

@@ -15,12 +15,14 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
+
 import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.FedoraBundleRepository;
+
 import org.junit.Test;
 
 public class FedoraBundleRepositoryTest {
@@ -56,7 +58,7 @@ public class FedoraBundleRepositoryTest {
 	@Test
 	public void simpleLookupTest () {
 		FedoraBundleRepository rep = new FedoraBundleRepository(new File("/"));
-		Set<IInstallableUnit> allUnits = new HashSet<IInstallableUnit> ();
+		Set<IInstallableUnit> allUnits = new LinkedHashSet<> ();
 		allUnits.addAll(rep.getPlatformUnits());
 		allUnits.addAll(rep.getInternalUnits());
 		allUnits.addAll(rep.getExternalUnits());

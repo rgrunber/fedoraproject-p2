@@ -17,7 +17,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -86,7 +86,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 
 	@Override
 	public Map<String, String> getProperties() {
-		return new HashMap<String, String> ();
+		return new LinkedHashMap<> ();
 	}
 
 	@Override

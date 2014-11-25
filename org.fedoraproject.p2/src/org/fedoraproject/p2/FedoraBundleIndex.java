@@ -14,8 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -41,7 +41,7 @@ public class FedoraBundleIndex {
 
 	public FedoraBundleIndex (File root) {
 		this.root = root;
-		index = new HashMap<IArtifactKey, File> ();
+		index = new LinkedHashMap<> ();
 	}
 
 	public Collection<File> getAllBundles (String classifier) {
@@ -53,7 +53,7 @@ public class FedoraBundleIndex {
 	}
 
 	private Collection<File> filterBundles (String classifier) {
-		Set<File> res = new HashSet<File> ();
+		Set<File> res = new LinkedHashSet<> ();
 		for (Entry<IArtifactKey, File> e : index.entrySet()) {
 			if (e.getKey().getClassifier().equals(classifier)) {
 				res.add(e.getValue());

@@ -14,8 +14,8 @@ import java.io.File;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,7 +48,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 	public FedoraMetadataRepository(IProvisioningAgent agent, URI location) {
 		this.agent = agent;
 		this.location = location;
-		this.unitCache = new HashSet<IInstallableUnit> ();
+		this.unitCache = new LinkedHashSet<> ();
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 
 	@Override
 	public Map<String, String> getProperties() {
-		return new HashMap<String, String> ();
+		return new LinkedHashMap<> ();
 	}
 
 	@Override

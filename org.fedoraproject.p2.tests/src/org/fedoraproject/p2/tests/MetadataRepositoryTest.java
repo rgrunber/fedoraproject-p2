@@ -15,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -25,7 +25,9 @@ import org.eclipse.equinox.p2.metadata.IProvidedCapability;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
+
 import org.fedoraproject.p2.FedoraMetadataRepository;
+
 import org.junit.Test;
 
 public class MetadataRepositoryTest extends RepositoryTest {
@@ -162,7 +164,7 @@ public class MetadataRepositoryTest extends RepositoryTest {
             IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
             IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
             Set<IInstallableUnit> units = res.toUnmodifiableSet();
-            Set<String> unitIds = new HashSet<String>();
+            Set<String> unitIds = new LinkedHashSet<>();
 
             // Gather all feature jars and feature groups
             for (IInstallableUnit u : units) {
