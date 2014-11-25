@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -102,19 +103,54 @@ public class EclipseSystemLayout {
 	}
 
 	/**
-	 * Get a set of the software collections installed on this system.
-	 * @return A set of the software collections installed on this system.
+	 * Get a set of roots the software collections installed on this system.
+	 * 
+	 * @return An ordered set of software collection roots
 	 */
 	public static Set<String> getSCLRoots() {
-		String jconfdirs = System.getenv("JAVACONFDIRS");
-		Set<String> roots = new HashSet<String>();
-		roots.add("/");
-		if (jconfdirs != null && !jconfdirs.isEmpty()) {
-			String[] jconfRoots = jconfdirs.split(":");
-			for (String jconfRoot : jconfRoots) {
-				roots.add(jconfRoot.replace("etc/java", ""));
-			}
+		try {
+			return getSCLRoots(System.getenv("JAVACONFDIRS"));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch(IllegalArgumentException e){
+			throw new RuntimeException(
+					"Invalid JAVACONFDIRS environmental variable", e);
 		}
+	}
+
+	/**
+	 * Get a set of roots the software collections from given Java configuration
+	 * directory list.
+	 * 
+	 * @param confDirs
+	 *            colon-delimited list of Java configuration directories
+	 * @return An ordered set of software collection roots
+	 * @throws IOException if I/O error occurs
+	 */
+	public static Set<String> getSCLRoots(String confDirs) throws IOException {
+		// Empty or unset JAVACONFDIRS means that no SCLs are enabled
+		if (confDirs == null || confDirs.isEmpty())
+			confDirs = "/etc/java";
+
+		Set<String> roots = new LinkedHashSet<>();
+		for (String confDirStr : confDirs.split(":")) {
+			Path confDir = Paths.get(confDirStr);
+			if (!confDir.toRealPath().equals(confDir))
+				throw new IllegalArgumentException(
+						"path is not absolute real path: " + confDir);
+			if (!Files.isDirectory(confDir))
+				throw new IllegalArgumentException(
+						"path does not represent a directory: " + confDir);
+			int n = confDir.getNameCount();
+			if (n < 2 || !confDir.getName(n - 2).toString().equals("etc")
+					|| !confDir.getName(n - 1).toString().equals("java"))
+				throw new IllegalArgumentException(
+						"path does not end with /etc/java/: " + confDir);
+			// Skip /etc/java/ part
+			Path root = confDir.getParent().getParent();
+			roots.add(root.toString());
+		}
+
 		return roots;
 	}
 
