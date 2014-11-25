@@ -17,9 +17,11 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -116,10 +118,12 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 		assertTrue(repo.getExternalUnits().isEmpty());
 	}
 
-	private void performTest(String... scls) {
+	private void performTest(String... scls) throws Exception {
 		List<Path> prefixes = new ArrayList<>(scls.length);
 		for (String scl : scls) {
-			prefixes.add(getTempDir().resolve(scl));
+			Path prefix = getTempDir().resolve(scl);
+			Files.createDirectories(prefix);
+			prefixes.add(prefix);
 		}
 		IFedoraBundleRepository repo = new CompoundBundleRepository(prefixes);
 		replay(visitor);
@@ -146,5 +150,22 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 		addInternalPlugin("foo", "baz", true);
 		addExternalPlugin("foo", "xyzzy", true);
 		performTest("foo");
+	}
+
+	@Test
+	public void layeredRepoTest() throws Exception {
+		for (String scl : Arrays.asList("base", "maven30", "thermostat1")) {
+			String p = scl.substring(0, 1);
+			addPlatformPlugin("base", p + "P", "1.0.0", true);
+			addPlatformPlugin("base", p + "P", "2.0.0", true);
+			addPlatformPlugin("base", p + "P3", true);
+			addInternalPlugin("base", p + "I", "1.0.0", true);
+			addInternalPlugin("base", p + "I", "2.0.0", true);
+			addInternalPlugin("base", p + "I3", true);
+			addExternalPlugin("base", p + "E", "1.0.0", true);
+			addExternalPlugin("base", p + "E", "2.0.0", true);
+			addExternalPlugin("base", p + "E3", true);
+		}
+		performTest("thermostat1", "empty-scl", "maven30", "base");
 	}
 }
