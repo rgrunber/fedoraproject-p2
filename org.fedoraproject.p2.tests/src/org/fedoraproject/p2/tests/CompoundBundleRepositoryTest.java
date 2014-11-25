@@ -10,63 +10,101 @@
  *******************************************************************************/
 package org.fedoraproject.p2.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
+import org.junit.Before;
 import org.junit.Test;
 
 import org.fedoraproject.p2.CompoundBundleRepository;
 import org.fedoraproject.p2.IFedoraBundleRepository;
 
+interface RepositoryVisitor {
+	void visitPlatformPlugin(String id, String ver);
+
+	void visitInternalPlugin(String id, String ver);
+
+	// For external plugins it does matter where they are located in the file
+	// system because they are being symlinked.
+	void visitExternalPlugin(String id, String ver, Path path);
+}
+
 public class CompoundBundleRepositoryTest extends RepositoryTest {
 
-	private void addPlugin(String path, String scl, String id, String ver)
+	private RepositoryVisitor visitor;
+
+	@Before
+	public void initMocks() {
+		visitor = createMock(RepositoryVisitor.class);
+	}
+
+	private Path addPlugin(String path, String scl, String id, String ver)
 			throws Exception {
 		Plugin plugin = new Plugin(id, ver);
 		Path dir = getTempDir().resolve(scl).resolve(path);
 		Files.createDirectories(dir);
 		String baseName = id + "_" + ver + ".jar";
-		plugin.writeBundle(dir.resolve(baseName));
+		Path bundle = dir.resolve(baseName);
+		plugin.writeBundle(bundle);
+		return bundle;
 	}
 
-	private void addPlatformPlugin(String scl, String id, String ver)
-			throws Exception {
+	private void addPlatformPlugin(String scl, String id, String ver,
+			boolean expect) throws Exception {
 		// Plugin discovery code should be free to ignore plugins with
 		// non-matching architecture, so we add the plugin to both lib and
 		// lib64 to make sure it is discovered on any arch.
 		addPlugin("usr/lib/eclipse/plugins", scl, id, ver);
 		addPlugin("usr/lib64/eclipse/plugins", scl, id, ver);
+		if (expect) {
+			visitor.visitPlatformPlugin(id, ver);
+			expectLastCall();
+		}
 	}
 
-	private void addPlatformPlugin(String scl, String id) throws Exception {
-		addPlatformPlugin(scl, id, "1.0.0");
-	}
-
-	private void addInternalPlugin(String scl, String id, String ver)
+	private void addPlatformPlugin(String scl, String id, boolean expect)
 			throws Exception {
+		addPlatformPlugin(scl, id, "1.0.0", expect);
+	}
+
+	private void addInternalPlugin(String scl, String id, String ver,
+			boolean expect) throws Exception {
 		addPlugin("usr/share/eclipse/dropins/dropin-name/eclipse/plugins", scl,
 				id, ver);
+		if (expect) {
+			visitor.visitInternalPlugin(id, ver);
+			expectLastCall();
+		}
 	}
 
-	private void addInternalPlugin(String scl, String id) throws Exception {
-		addInternalPlugin(scl, id, "1.0.0");
-	}
-
-	private void addExternalPlugin(String scl, String id, String ver)
+	private void addInternalPlugin(String scl, String id, boolean expect)
 			throws Exception {
-		addPlugin("usr/share/java/sub-directory", scl, id, ver);
+		addInternalPlugin(scl, id, "1.0.0", expect);
 	}
 
-	private void addExternalPlugin(String scl, String id) throws Exception {
-		addExternalPlugin(scl, id, "1.0.0");
+	private void addExternalPlugin(String scl, String id, String ver,
+			boolean expect) throws Exception {
+		Path path = addPlugin("usr/share/java/sub-directory", scl, id, ver);
+		if (expect) {
+			visitor.visitExternalPlugin(id, ver, path);
+			expectLastCall();
+		}
+	}
+
+	private void addExternalPlugin(String scl, String id, boolean expect)
+			throws Exception {
+		addExternalPlugin(scl, id, "1.0.0", expect);
 	}
 
 	@Test
@@ -78,34 +116,35 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 		assertTrue(repo.getExternalUnits().isEmpty());
 	}
 
-	private IFedoraBundleRepository createRepo(String... scls) {
+	private void performTest(String... scls) {
 		List<Path> prefixes = new ArrayList<>(scls.length);
 		for (String scl : scls) {
 			prefixes.add(getTempDir().resolve(scl));
 		}
-		return new CompoundBundleRepository(prefixes);
+		IFedoraBundleRepository repo = new CompoundBundleRepository(prefixes);
+		replay(visitor);
+		for (IInstallableUnit unit : repo.getPlatformUnits()) {
+			visitor.visitPlatformPlugin(unit.getId(), unit.getVersion()
+					.toString());
+		}
+		for (IInstallableUnit unit : repo.getInternalUnits()) {
+			visitor.visitInternalPlugin(unit.getId(), unit.getVersion()
+					.toString());
+		}
+		for (IInstallableUnit unit : repo.getExternalUnits()) {
+			Path path = repo.lookupBundle(unit);
+			assertNotNull(path);
+			visitor.visitExternalPlugin(unit.getId(), unit.getVersion()
+					.toString(), path);
+		}
+		verify(visitor);
 	}
 
 	@Test
 	public void singlePrefixTest() throws Exception {
-		addPlatformPlugin("foo", "bar");
-		addInternalPlugin("foo", "baz");
-		addExternalPlugin("foo", "xyzzy");
-		IFedoraBundleRepository repo = createRepo("foo");
-
-		Iterator<IInstallableUnit> platIt = repo.getPlatformUnits().iterator();
-		assertTrue(platIt.hasNext());
-		assertEquals("bar", platIt.next().getId());
-		assertFalse(platIt.hasNext());
-
-		Iterator<IInstallableUnit> intIt = repo.getInternalUnits().iterator();
-		assertTrue(intIt.hasNext());
-		assertEquals("baz", intIt.next().getId());
-		assertFalse(intIt.hasNext());
-
-		Iterator<IInstallableUnit> extIt = repo.getExternalUnits().iterator();
-		assertTrue(extIt.hasNext());
-		assertEquals("xyzzy", extIt.next().getId());
-		assertFalse(extIt.hasNext());
+		addPlatformPlugin("foo", "bar", true);
+		addInternalPlugin("foo", "baz", true);
+		addExternalPlugin("foo", "xyzzy", true);
+		performTest("foo");
 	}
 }
