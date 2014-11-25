@@ -168,4 +168,14 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 		}
 		performTest("thermostat1", "empty-scl", "maven30", "base");
 	}
+
+	// External bundles with the same BSN and version should be shadowed
+	@Test
+	public void shadowingTest() throws Exception {
+		addExternalPlugin("scl", "p", "1.2.3", true);
+		// Plugin from base is not expected to be discovered - it is shadowed by
+		// the same plugin from SCL
+		addExternalPlugin("base", "p", "1.2.3", false);
+		performTest("scl", "base");
+	}
 }
