@@ -21,28 +21,18 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
-import org.fedoraproject.p2.installer.Dropin;
-import org.fedoraproject.p2.installer.EclipseInstallationRequest;
-import org.fedoraproject.p2.installer.EclipseInstallationResult;
-import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.Provide;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -51,71 +41,11 @@ import org.junit.rules.TestName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-/**
- * @author Mikolaj Izdebski
- */
-class Plugin {
-	private final Set<String> imports = new LinkedHashSet<>();
-	private final Set<String> exports = new LinkedHashSet<>();
-	private final Set<String> requires = new LinkedHashSet<>();
-	private final Manifest mf = new Manifest();
-	private final Attributes attr = mf.getMainAttributes();
-
-	public Plugin(String id, String ver) {
-		attr.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-		attr.put(new Attributes.Name("Bundle-ManifestVersion"), "2");
-		attr.put(new Attributes.Name("Bundle-SymbolicName"), id);
-		attr.put(new Attributes.Name("Bundle-Version"), ver);
-	}
-
-	public String getId() {
-		return attr.getValue(new Attributes.Name("Bundle-SymbolicName"));
-	}
-
-	public String getVersion() {
-		return attr.getValue(new Attributes.Name("Bundle-Version"));
-	}
-
-	public Plugin importPackage(String name) {
-		imports.add(name);
-		return this;
-	}
-
-	public Plugin exportPackage(String name) {
-		exports.add(name);
-		return this;
-	}
-
-	public Plugin requireBundle(String name) {
-		requires.add(name);
-		return this;
-	}
-
-	public Plugin addMfEntry(String key, String value) {
-		attr.put(new Attributes.Name(key), value);
-		return this;
-	}
-
-	private void addManifestSet(Attributes attr, String key, Set<String> values) {
-		Iterator<String> it = values.iterator();
-		if (!it.hasNext())
-			return;
-		StringBuilder sb = new StringBuilder(it.next());
-		while (it.hasNext())
-			sb.append(',').append(it.next());
-		attr.put(new Attributes.Name(key), sb.toString());
-	}
-
-	public void writeBundle(Path path) throws IOException {
-		addManifestSet(attr, "Import-Package", imports);
-		addManifestSet(attr, "Export-Package", exports);
-		addManifestSet(attr, "Require-Bundle", requires);
-		try (OutputStream os = Files.newOutputStream(path)) {
-			try (OutputStream jos = new JarOutputStream(os, mf)) {
-			}
-		}
-	}
-}
+import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseInstallationRequest;
+import org.fedoraproject.p2.installer.EclipseInstallationResult;
+import org.fedoraproject.p2.installer.EclipseInstaller;
+import org.fedoraproject.p2.installer.Provide;
 
 interface BuildrootVisitor {
 	void visitPlugin(String dropin, String id, String ver);
