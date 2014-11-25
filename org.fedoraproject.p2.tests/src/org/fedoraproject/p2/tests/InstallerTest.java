@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -35,9 +34,7 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -64,7 +61,6 @@ interface BuildrootVisitor {
  */
 public class InstallerTest extends RepositoryTest {
 	private final EclipseInstaller installer;
-	private Path tempDir;
 	private Map<String, List<Plugin>> reactorPlugins;
 	private Map<String, List<Plugin>> platformPlugins;
 	private Map<String, List<Plugin>> internalPlugins;
@@ -74,9 +70,6 @@ public class InstallerTest extends RepositoryTest {
 	private Path root;
 	private Path buildRoot;
 	private Path reactor;
-
-	@Rule
-	public TestName testName = new TestName();
 
 	public InstallerTest() {
 		BundleContext context = getBundleContext();
@@ -89,11 +82,6 @@ public class InstallerTest extends RepositoryTest {
 
 	@Before
 	public void setUp() throws Exception {
-		tempDir = Paths.get("target/installer-test")
-				.resolve(testName.getMethodName()).toAbsolutePath();
-		delete(tempDir);
-		Files.createDirectories(tempDir);
-
 		reactorPlugins = new LinkedHashMap<>();
 		platformPlugins = new LinkedHashMap<>();
 		externalPlugins = new LinkedHashMap<>();
@@ -101,11 +89,11 @@ public class InstallerTest extends RepositoryTest {
 
 		visitor = createMock(BuildrootVisitor.class);
 
-		root = tempDir.resolve("root");
+		root = getTempDir().resolve("root");
 		Files.createDirectory(root);
-		buildRoot = tempDir.resolve("buildroot");
+		buildRoot = getTempDir().resolve("buildroot");
 		Files.createDirectory(buildRoot);
-		reactor = tempDir.resolve("reactor");
+		reactor = getTempDir().resolve("reactor");
 		Files.createDirectory(reactor);
 
 		request = new EclipseInstallationRequest();
@@ -113,14 +101,6 @@ public class InstallerTest extends RepositoryTest {
 		request.setTargetDropinDirectory(Paths.get("dropins"));
 		request.setMainPackageId("main");
 		request.addPrefix(root);
-	}
-
-	private void delete(Path path) throws IOException {
-		if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS))
-			for (Path child : Files.newDirectoryStream(path))
-				delete(child);
-
-		Files.deleteIfExists(path);
 	}
 
 	private Plugin addPlugin(String id, String ver, Map<String, List<Plugin>> map) {

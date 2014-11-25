@@ -10,6 +10,16 @@
  *******************************************************************************/
 package org.fedoraproject.p2.tests;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
@@ -36,6 +46,10 @@ public class RepositoryTest {
 	private static IProvisioningAgent agent;
 	private static IMetadataRepositoryManager metadataRM;
 	private static IArtifactRepositoryManager artifactRM;
+	private Path tempDir;
+
+	@Rule
+	public TestName testName = new TestName();
 
 	/**
 	 * All access to p2 services happen through the provisioning agent.
@@ -50,6 +64,22 @@ public class RepositoryTest {
 		artifactRM = (IArtifactRepositoryManager) agent.getService(IArtifactRepositoryManager.SERVICE_NAME);
 	}
 
+	@Before
+	public void createTestTempDir() throws Exception {
+		tempDir = Paths.get("target/repository-test")
+				.resolve(testName.getMethodName()).toAbsolutePath();
+		delete(tempDir);
+		Files.createDirectories(tempDir);
+	}
+
+	private void delete(Path path) throws IOException {
+		if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS))
+			for (Path child : Files.newDirectoryStream(path))
+				delete(child);
+
+		Files.deleteIfExists(path);
+	}
+
 	protected BundleContext getBundleContext () {
 		return bc;
 	}
@@ -60,6 +90,10 @@ public class RepositoryTest {
 
 	protected IArtifactRepositoryManager getArtifactRepoManager () {
 		return artifactRM;
+	}
+
+	protected Path getTempDir () {
+		return tempDir;
 	}
 
 	protected boolean isBundleShapeDir (IInstallableUnit u) {
