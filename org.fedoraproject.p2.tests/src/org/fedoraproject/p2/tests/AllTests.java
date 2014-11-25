@@ -17,7 +17,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({ ArtifactRepositoryTest.class, MetadataRepositoryTest.class, InstallTest.class,
 	MirrorTest.class, FedoraBundleRepositoryTest.class, InstallerTest.class,
-	CompoundBundleRepositoryTest.class })
+	CompoundBundleRepositoryTest.class, EclipseSystemLayoutTest.class })
 public class AllTests {
 
 }
