@@ -66,7 +66,7 @@ public class CompoundBundleRepository implements IFedoraBundleRepository {
 		if (internalUnits == null) {
 			internalUnits = new LinkedHashSet<>();
 			for (IFedoraBundleRepository index : indices) {
-				internalUnits.addAll(index.getPlatformUnits());
+				internalUnits.addAll(index.getInternalUnits());
 			}
 		}
 		return internalUnits;
@@ -77,7 +77,7 @@ public class CompoundBundleRepository implements IFedoraBundleRepository {
 		if (externalUnits == null) {
 			externalUnits = new LinkedHashSet<>();
 			for (IFedoraBundleRepository index : indices) {
-				externalUnits.addAll(index.getPlatformUnits());
+				externalUnits.addAll(index.getExternalUnits());
 			}
 		}
 		return externalUnits;
