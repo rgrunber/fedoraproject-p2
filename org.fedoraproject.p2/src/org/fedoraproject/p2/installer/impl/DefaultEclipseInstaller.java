@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.fedoraproject.p2.installer.impl;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +27,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.eclipse.equinox.p2.core.ProvisionException;
+import org.eclipse.equinox.p2.metadata.ITouchpointData;
+import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IInstallableUnitFragment;
@@ -127,33 +131,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				dump("Dropin physical units", content);
 				dump("Dropin symlinks", symlinks);
 
-				logger.debug("Creating runnable repository...");
-				Repository packageRepo = Repository.createTemp();
-				Director.mirror(packageRepo, reactorRepo, content);
 				Path installationPath = dropin.getPath().resolve("eclipse");
-				Repository runnableRepo = Repository.create(request
-						.getBuildRoot().resolve(installationPath));
-				Director.repo2runnable(runnableRepo, packageRepo);
-				Files.delete(request.getBuildRoot().resolve(installationPath)
-						.resolve("artifacts.jar"));
-				Files.delete(request.getBuildRoot().resolve(installationPath)
-						.resolve("content.jar"));
-
-				Path pluginsDir = runnableRepo.getLocation().resolve("plugins");
-				for (IInstallableUnit iu : symlinks) {
-					Files.createDirectories(pluginsDir);
-					Path path = index.lookupBundle(iu);
-					if (path == null) {
-						logger.error(
-								"Unable to locate dependency in index: {}", iu);
-					} else {
-						String baseName = iu.getId() + "_" + iu.getVersion();
-						String suffix = Files.isDirectory(path) ? "" : ".jar";
-						Files.createSymbolicLink(
-								pluginsDir.resolve(baseName + suffix), path);
-						logger.debug("Linked external dependency {} => {}",
-								baseName + suffix, path);
-					}
+				if (request.getBuildRoot() != null) {
+					createRunnableRepository(reactorRepo, request
+							.getBuildRoot().resolve(installationPath), content, symlinks);
 				}
 
 				for (IInstallableUnit unit : content) {
@@ -162,22 +143,13 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 							|| unit.getId().endsWith(".feature.jar"))
 						type = "features";
 					for (IArtifactKey artifact : unit.getArtifacts()) {
-						String baseName = artifact.getId() + "_"
+						String artifactName = artifact.getId() + "_"
 								+ artifact.getVersion();
-
-						Path path = null;
-						for (String artifactName : Arrays.asList(baseName,
-								baseName + ".jar")) {
-							if (Files.exists(runnableRepo.getLocation()
-									.resolve(type).resolve(artifactName)))
-								path = installationPath.resolve(type).resolve(
-										artifactName);
+						if (!isBundleShapeDir(unit)) {
+							artifactName += ".jar";
 						}
-
-						if (path == null)
-							throw new Exception(
-									"Unable to determine path for artifact "
-											+ artifact);
+						Path path = installationPath.resolve(type).resolve(
+								artifactName);
 
 						Provide provide = new Provide(artifact.getId(),
 								artifact.getVersion().toString(), Paths
@@ -327,6 +299,44 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		}
 
 		return requirements;
+	}
+
+	private void createRunnableRepository(Repository reactorRepo,
+			Path installationPath, Set<IInstallableUnit> content,
+			Set<IInstallableUnit> symlinks) throws Exception {
+		logger.debug("Creating runnable repository...");
+		Repository packageRepo = Repository.createTemp();
+		Director.mirror(packageRepo, reactorRepo, content);
+		Repository runnableRepo = Repository.create(installationPath);
+		Director.repo2runnable(runnableRepo, packageRepo);
+		Files.delete(installationPath.resolve("artifacts.jar"));
+		Files.delete(installationPath.resolve("content.jar"));
+
+		Path pluginsDir = runnableRepo.getLocation().resolve("plugins");
+		for (IInstallableUnit iu : symlinks) {
+			Files.createDirectories(pluginsDir);
+			Path path = index.lookupBundle(iu);
+			if (path == null) {
+				logger.error("Unable to locate dependency in index: {}", iu);
+			} else {
+				String baseName = iu.getId() + "_" + iu.getVersion();
+				String suffix = Files.isDirectory(path) ? "" : ".jar";
+				Files.createSymbolicLink(pluginsDir.resolve(baseName + suffix),
+						path);
+				logger.debug("Linked external dependency {} => {}", baseName
+						+ suffix, path);
+			}
+		}
+	}
+
+	private boolean isBundleShapeDir(IInstallableUnit u) {
+		for (ITouchpointData d : u.getTouchpointData()) {
+			ITouchpointInstruction i = d.getInstruction("zipped");
+			if (i != null && "true".equals(i.getBody())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void dump(String message, Set<IInstallableUnit> units) {
