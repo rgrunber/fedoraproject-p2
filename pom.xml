@@ -33,15 +33,36 @@
     <module>xmvn-p2-installer-plugin</module>
   </modules>
 
-  <!--
-  TODO: Either create profiles or use Eclipse target definition files
-  so we may support multiple targets.
-  -->
+  <profiles>
+    <profile>
+      <id>luna</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <platform-repo>http://download.eclipse.org/releases/luna</platform-repo>
+      </properties>
+    </profile>
+    <profile>
+      <id>mars</id>
+      <properties>
+        <platform-repo>http://download.eclipse.org/eclipse/updates/4.5milestones</platform-repo>
+      </properties>
+      <repositories>
+        <repository>
+          <id>orbit-repo</id>
+          <layout>p2</layout>
+          <url>http://download.eclipse.org/tools/orbit/downloads/drops/S20141023165154/repository/</url>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+
   <repositories>
     <repository>
-      <id>luna</id>
+      <id>eclipse-repo</id>
       <layout>p2</layout>
-      <url>http://download.eclipse.org/releases/luna</url>
+      <url>${platform-repo}</url>
     </repository>
   </repositories>
 
