@@ -39,6 +39,7 @@ import org.fedoraproject.xmvn.tools.install.JavaPackage;
 import org.fedoraproject.xmvn.tools.install.RegularFile;
 import org.fedoraproject.xmvn.tools.install.SymbolicLink;
 
+import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
@@ -144,10 +145,15 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 			Path tempRoot = Files.createTempDirectory("xmvn-root-");
 			request.setBuildRoot(tempRoot);
+
 			Path eclipseRoot = Paths.get(System.getProperty(
 					"xmvn.p2.eclipseRoot", "/usr/share/eclipse"));
-			request.setTargetDropinDirectory(Paths.get("/")
-					.relativize(eclipseRoot).resolve("dropins"));
+			Path sclRoot = Paths.get(EclipseSystemLayout.getCurrentSCLRoot());
+			Path relSclRoot = Paths.get("/").relativize(sclRoot);
+			Path dropinDir = eclipseRoot.resolve("dropins");
+			Path relDropinDir = Paths.get("/").relativize(dropinDir);
+			Path relSclDropinDir = relSclRoot.resolve(relDropinDir);
+			request.setTargetDropinDirectory(relSclDropinDir);
 
 			EclipseInstaller installer = equinox
 					.getService(EclipseInstaller.class);

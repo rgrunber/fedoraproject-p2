@@ -103,9 +103,19 @@ public class EclipseSystemLayout {
 	}
 
 	/**
+	 * Get root of current (topmost) SCL, i.e. the one into which packages are
+	 * being built.
+	 * 
+	 * @return path to current SCL root
+	 */
+	public static String getCurrentSCLRoot() {
+		return getSCLRoots().iterator().next();
+	}
+
+	/**
 	 * Get a set of roots the software collections installed on this system.
 	 * 
-	 * @return An ordered set of software collection roots
+	 * @return an ordered set of software collection roots
 	 */
 	public static Set<String> getSCLRoots() {
 		try {
