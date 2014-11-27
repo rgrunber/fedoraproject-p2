@@ -21,8 +21,12 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.junit.Ignore;
+
 import org.junit.Test;
 
+// FIXME This test needs to be rewritten completely
+@Ignore
 public class EclipseSystemLayoutTest extends RepositoryTest {
 
 	@Test

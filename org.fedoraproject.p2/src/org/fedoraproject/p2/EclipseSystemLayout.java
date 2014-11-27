@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -111,7 +112,7 @@ public class EclipseSystemLayout {
 			return getSCLRoots(System.getenv("JAVACONFDIRS"));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		} catch(IllegalArgumentException e){
+		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(
 					"Invalid JAVACONFDIRS environmental variable", e);
 		}
@@ -124,7 +125,8 @@ public class EclipseSystemLayout {
 	 * @param confDirs
 	 *            colon-delimited list of Java configuration directories
 	 * @return An ordered set of software collection roots
-	 * @throws IOException if I/O error occurs
+	 * @throws IOException
+	 *             if I/O error occurs
 	 */
 	public static Set<String> getSCLRoots(String confDirs) throws IOException {
 		// Empty or unset JAVACONFDIRS means that no SCLs are enabled
@@ -133,24 +135,65 @@ public class EclipseSystemLayout {
 
 		Set<String> roots = new LinkedHashSet<>();
 		for (String confDirStr : confDirs.split(":")) {
-			Path confDir = Paths.get(confDirStr);
-			if (!confDir.toRealPath().equals(confDir))
-				throw new IllegalArgumentException(
-						"path is not absolute real path: " + confDir);
-			if (!Files.isDirectory(confDir))
-				throw new IllegalArgumentException(
-						"path does not represent a directory: " + confDir);
-			int n = confDir.getNameCount();
-			if (n < 2 || !confDir.getName(n - 2).toString().equals("etc")
-					|| !confDir.getName(n - 1).toString().equals("java"))
-				throw new IllegalArgumentException(
-						"path does not end with /etc/java/: " + confDir);
-			// Skip /etc/java/ part
-			Path root = confDir.getParent().getParent();
-			roots.add(root.toString());
+			Path confDir = getRealDir(confDirStr);
+			Path confFile = confDir.resolve("java.conf");
+
+			// Skip missing config files (javapackages-tools skips them too)
+			if (Files.exists(confFile)) {
+				roots.add(getRootFromConfig(confFile).toString());
+			}
 		}
 
 		return roots;
+	}
+
+	/**
+	 * Obtain SCL root by parsing Java configuration file.
+	 * <p>
+	 * This function first tries to use ROOT property if defined. If not then it
+	 * falls back to using JAVA_LIBDIR and obtains value of root from its value.
+	 * 
+	 * @param confFile
+	 *            SCL Java configuration file
+	 * @return absolute path to SCL root
+	 * @throws IOException
+	 *             if I/O error occurs
+	 */
+	private static Path getRootFromConfig(Path confFile) throws IOException {
+		Properties conf = new Properties();
+		conf.load(Files.newInputStream(confFile));
+
+		if (conf.containsKey("ROOT")) {
+			return getRealDir(conf.getProperty("ROOT"));
+		}
+		if (!conf.containsKey("JAVA_LIBDIR"))
+			throw new IllegalArgumentException("Configuration file " + confFile
+					+ " contains neither ROOT nor JAVA_LIBDIR property");
+		Path javaDir = getRealDir(conf.getProperty("JAVA_LIBDIR"));
+
+		int n = javaDir.getNameCount();
+		if (n < 3 || !javaDir.getName(n - 3).toString().equals("usr")
+				|| !javaDir.getName(n - 2).toString().equals("share")
+				|| !javaDir.getName(n - 1).toString().equals("java")) {
+			throw new IllegalArgumentException("Java library directory "
+					+ javaDir + ", which was defined in " + confFile
+					+ " configuration file, does not end with /usr/share/java/"
+					+ " (you should define ROOT property in this case)");
+		}
+
+		// Skip the /usr/share/java/ part
+		return javaDir.getParent().getParent().getParent();
+	}
+
+	private static Path getRealDir(String dir) throws IOException {
+		Path path = Paths.get(dir);
+		if (!path.toRealPath().equals(path))
+			throw new IllegalArgumentException(
+					"path is not absolute real path: " + path);
+		if (!Files.isDirectory(path))
+			throw new IllegalArgumentException(
+					"path does not represent a directory: " + path);
+		return path;
 	}
 
 }
