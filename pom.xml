@@ -23,7 +23,7 @@
   <name>Fedora Project p2 Parent</name>
 
   <properties>
-    <tycho-version>0.21.0</tycho-version>
+    <tycho-version>0.22.0</tycho-version>
     <xmvn-version>2.1.0</xmvn-version>
   </properties>
 
