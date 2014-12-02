@@ -22,6 +22,7 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 
 import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.FedoraBundleRepository;
+import org.fedoraproject.p2.P2Utils;
 
 import org.junit.Test;
 
@@ -64,7 +65,7 @@ public class FedoraBundleRepositoryTest {
 		allUnits.addAll(rep.getExternalUnits());
 
 		for (IInstallableUnit u : allUnits) {
-			Path path = rep.lookupBundle(u);
+			Path path = P2Utils.getPath(u);
 			if (path != null) {
 			    assertTrue("Path for " + u.getId() + " " + u.getVersion() + " does not exist", path.toFile().exists());
 			    System.out.println(u.getId() + " " + u.getVersion() + " " + path.toString());

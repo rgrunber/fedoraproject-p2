@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import org.fedoraproject.p2.CompoundBundleRepository;
 import org.fedoraproject.p2.IFedoraBundleRepository;
+import org.fedoraproject.p2.P2Utils;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
@@ -312,7 +313,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		Path pluginsDir = runnableRepo.getLocation().resolve("plugins");
 		for (IInstallableUnit iu : symlinks) {
 			Files.createDirectories(pluginsDir);
-			Path path = index.lookupBundle(iu);
+			Path path = P2Utils.getPath(iu);
 			if (path == null) {
 				logger.error("Unable to locate dependency in index: {}", iu);
 			} else {

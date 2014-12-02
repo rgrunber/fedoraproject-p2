@@ -10,5 +10,8 @@
  *******************************************************************************/
 package org.fedoraproject.p2.tests;
 
+import org.junit.Ignore;
+
+@Ignore
 public class EclipseSystemLayoutTest extends RepositoryTest {
 }

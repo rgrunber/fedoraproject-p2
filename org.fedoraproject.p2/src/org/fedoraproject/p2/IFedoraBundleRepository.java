@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.fedoraproject.p2;
 
-import java.nio.file.Path;
 import java.util.Set;
 
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
-import org.eclipse.equinox.p2.metadata.IVersionedId;
 
 public interface IFedoraBundleRepository {
 	/**
@@ -35,13 +33,4 @@ public interface IFedoraBundleRepository {
 	 * also present as external units are ignored.
 	 */
 	Set<IInstallableUnit> getExternalUnits();
-
-	/**
-	 * Retrieve the system path corresponding to the given ID and Version.
-	 * This assumes the artifact is an OSGi bundle.
-	 * @param key an ID and Version represented as an {@link IVersionedId}.
-	 * @return The system path on which to find the specified {@link IVersionedId}
-	 * or <code>null</code> if no such bundle could be found.
-	 */
-	Path lookupBundle (IVersionedId key);
 }

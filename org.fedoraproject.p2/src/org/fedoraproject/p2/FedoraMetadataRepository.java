@@ -137,7 +137,9 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 
 	        for (File bundleFile : bundlePlugins) {
 	            IArtifactKey key = index.getKeyForFile(bundleFile);
-	            unitCache.add(PublisherUtil.createBundleIU(key, bundleFile));
+	            IInstallableUnit unit = PublisherUtil.createBundleIU(key, bundleFile);
+	            P2Utils.setPath(unit, bundleFile);
+	            unitCache.add(unit);
 	        }
 
 	        if (! bundleFeatures.isEmpty()) {

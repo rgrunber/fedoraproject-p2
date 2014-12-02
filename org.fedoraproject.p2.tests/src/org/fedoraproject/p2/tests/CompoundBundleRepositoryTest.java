@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import org.fedoraproject.p2.CompoundBundleRepository;
 import org.fedoraproject.p2.IFedoraBundleRepository;
+import org.fedoraproject.p2.P2Utils;
 
 interface RepositoryVisitor {
 	void visitPlatformPlugin(String id, String ver);
@@ -135,7 +136,7 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 					.toString());
 		}
 		for (IInstallableUnit unit : repo.getExternalUnits()) {
-			Path path = repo.lookupBundle(unit);
+			Path path = P2Utils.getPath(unit);
 			assertNotNull(path);
 			visitor.visitExternalPlugin(unit.getId(), unit.getVersion()
 					.toString(), path);

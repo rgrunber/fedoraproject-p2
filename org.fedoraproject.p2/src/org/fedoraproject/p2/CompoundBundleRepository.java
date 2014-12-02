@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
-import org.eclipse.equinox.p2.metadata.IVersionedId;
 
 /**
  * A compound bundle repository which consists of one or more layered bundle
@@ -81,16 +80,6 @@ public class CompoundBundleRepository implements IFedoraBundleRepository {
 			}
 		}
 		return externalUnits;
-	}
-
-	@Override
-	public Path lookupBundle(IVersionedId key) {
-		for (IFedoraBundleRepository index : indices) {
-			Path bundle = index.lookupBundle(key);
-			if (bundle != null)
-				return bundle;
-		}
-		return null;
 	}
 
 }

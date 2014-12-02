@@ -28,11 +28,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
-import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
-import org.eclipse.equinox.p2.metadata.IVersionedId;
-import org.eclipse.equinox.p2.publisher.eclipse.BundlesAction;
-import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
@@ -104,7 +100,7 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 
 		for (IInstallableUnit unit : commonUnits) {
 			try {
-				Path path = lookupBundle(unit);
+				Path path = P2Utils.getPath(unit);
 				if (path == null)
 					continue;
 				path = path.toRealPath();
@@ -146,26 +142,6 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 	@Override
 	public Set<IInstallableUnit> getExternalUnits() {
 		return Collections.unmodifiableSet(externalUnits);
-	}
-
-	@Override
-	public Path lookupBundle (IVersionedId key) {
-		for (FedoraBundleIndex index : fbindices.values()) {
-			IArtifactKey artKey;
-			if (key.getId().endsWith(".feature.jar") || key.getId().endsWith(".feature.group")) {
-				// classifier = 'org.eclipse.update.feature'
-				String adjustedID = key.getId().replaceAll("\\.feature\\.(jar|group)", "");
-				artKey = FeaturesAction.createFeatureArtifactKey(adjustedID, key.getVersion().toString());
-			} else {
-				// classifier = 'osgi.bundle'
-				artKey = BundlesAction.createBundleArtifactKey(key.getId(), key.getVersion().toString());
-			}
-			if (index.containsKey(artKey)) {
-				return index.getFileForKey(artKey).toPath();
-			}
-		}
-		// Either the unit doesn't exist, or it's a meta-unit (p2.inf)
-		return null;
 	}
 
 }

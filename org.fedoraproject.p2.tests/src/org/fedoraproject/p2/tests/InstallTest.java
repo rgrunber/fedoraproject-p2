@@ -31,8 +31,9 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
-import org.fedoraproject.p2.FedoraBundleRepository;
 import org.junit.Test;
+
+import org.fedoraproject.p2.P2Utils;
 
 public class InstallTest extends RepositoryTest {
 
@@ -107,8 +108,7 @@ public class InstallTest extends RepositoryTest {
 
 			File targetLoc = new File(installLoc + File.separator + "plugins" + File.separator + fileName);
 			assertTrue(targetLoc.exists());
-			FedoraBundleRepository repo = new FedoraBundleRepository(new File("/"));
-			File sysLoc = repo.lookupBundle(targetIU).toFile();
+			File sysLoc = P2Utils.getPath(targetIU).toFile();
 			assertEquals("Possible corruption : " + sysLoc.getAbsolutePath() + " and " + targetLoc.getAbsolutePath()
 			        + " do not appear to match in size.", sysLoc.length(), targetLoc.length());
 
