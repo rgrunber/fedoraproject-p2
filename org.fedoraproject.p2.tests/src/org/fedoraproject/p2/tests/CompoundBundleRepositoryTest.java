@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.fedoraproject.p2.CompoundBundleRepository;
 import org.fedoraproject.p2.IFedoraBundleRepository;
 import org.fedoraproject.p2.P2Utils;
+import org.fedoraproject.p2.SCL;
 
 interface RepositoryVisitor {
 	void visitPlatformPlugin(String id, String ver);
@@ -64,11 +65,7 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 
 	private void addPlatformPlugin(String scl, String id, String ver,
 			boolean expect) throws Exception {
-		// Plugin discovery code should be free to ignore plugins with
-		// non-matching architecture, so we add the plugin to both lib and
-		// lib64 to make sure it is discovered on any arch.
 		addPlugin("usr/lib/eclipse/plugins", scl, id, ver);
-		addPlugin("usr/lib64/eclipse/plugins", scl, id, ver);
 		if (expect) {
 			visitor.visitPlatformPlugin(id, ver);
 			expectLastCall();
@@ -111,21 +108,28 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 
 	@Test
 	public void emptyRepoTest() throws Exception {
+		Path conf = getTempDir().resolve("eclipse.conf");
+		Files.createFile(conf);
+		SCL scl = new SCL(conf);
 		IFedoraBundleRepository repo = new CompoundBundleRepository(
-				Collections.singletonList(getTempDir()));
+				Collections.singletonList(scl));
 		assertTrue(repo.getPlatformUnits().isEmpty());
 		assertTrue(repo.getInternalUnits().isEmpty());
 		assertTrue(repo.getExternalUnits().isEmpty());
 	}
 
-	private void performTest(String... scls) throws Exception {
-		List<Path> prefixes = new ArrayList<>(scls.length);
-		for (String scl : scls) {
-			Path prefix = getTempDir().resolve(scl);
+	private void performTest(String... sclNames) throws Exception {
+		List<SCL> scls = new ArrayList<>(sclNames.length);
+		for (String name : sclNames) {
+			Path prefix = getTempDir().resolve(name);
 			Files.createDirectories(prefix);
-			prefixes.add(prefix);
+
+			Path confPath = prefix.resolve("eclipse.conf");
+			writeSclConfig(confPath, name, prefix);
+			scls.add(new SCL(confPath));
 		}
-		IFedoraBundleRepository repo = new CompoundBundleRepository(prefixes);
+
+		IFedoraBundleRepository repo = new CompoundBundleRepository(scls);
 		replay(visitor);
 		for (IInstallableUnit unit : repo.getPlatformUnits()) {
 			visitor.visitPlatformPlugin(unit.getId(), unit.getVersion()

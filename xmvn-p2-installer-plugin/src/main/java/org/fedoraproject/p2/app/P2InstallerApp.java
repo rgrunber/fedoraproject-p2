@@ -54,7 +54,6 @@ public class P2InstallerApp {
 		}
 
 		EclipseInstallationRequest request = new EclipseInstallationRequest();
-		request.setTargetDropinDirectory(Paths.get(cliRequest.getDropinDir()));
 		request.setMainPackageId(cliRequest.getName());
 		if (!cliRequest.isDryRun())
 			request.setBuildRoot(Paths.get(cliRequest.getRoot()));

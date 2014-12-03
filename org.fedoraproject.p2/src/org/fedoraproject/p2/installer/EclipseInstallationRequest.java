@@ -29,9 +29,7 @@ public class EclipseInstallationRequest {
 
 	private Path buildRoot;
 
-	private Path targetDropinDirectory;
-
-	private final List<Path> prefixes = new ArrayList<>();
+	private final List<Path> configFiles = new ArrayList<>();
 
 	private final Map<String, String> packageMappings = new LinkedHashMap<>();
 
@@ -43,14 +41,6 @@ public class EclipseInstallationRequest {
 
 	public void setBuildRoot(Path buildRoot) {
 		this.buildRoot = buildRoot;
-	}
-
-	public Path getTargetDropinDirectory() {
-		return targetDropinDirectory;
-	}
-
-	public void setTargetDropinDirectory(Path targetDropinDirectory) {
-		this.targetDropinDirectory = targetDropinDirectory;
 	}
 
 	public Set<Path> getPlugins() {
@@ -69,12 +59,12 @@ public class EclipseInstallationRequest {
 		features.add(feature);
 	}
 
-	public List<Path> getPrefixes() {
-		return Collections.unmodifiableList(prefixes);
+	public List<Path> getConfigFiles() {
+		return Collections.unmodifiableList(configFiles);
 	}
 
-	public void addPrefix(Path prefix) {
-		prefixes.add(prefix);
+	public void addConfigFile(Path confFile) {
+		configFiles.add(confFile);
 	}
 
 	public Map<String, String> getPackageMappings() {

@@ -45,9 +45,6 @@ class CliRequest {
 	@Parameter(names = { "-p", "--print-deps" }, description = "Print resolved dependencies in machine-readable form")
 	private boolean printDeps = false;
 
-	@Parameter(names = { "-a", "--dropin-dir" }, description = "Directory relative to buildroot where dropins should be placed")
-	private String dropinDir = "usr/share/eclipse/dropins";
-
 	@Parameter(names = { "-n", "--name" }, required = true, description = "Name of main dropin")
 	private String name;
 
@@ -106,10 +103,6 @@ class CliRequest {
 
 	public boolean isPrintDeps() {
 		return printDeps;
-	}
-
-	public String getDropinDir() {
-		return dropinDir;
 	}
 
 	public String getName() {

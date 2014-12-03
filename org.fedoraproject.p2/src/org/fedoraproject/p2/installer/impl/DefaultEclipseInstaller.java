@@ -37,8 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.fedoraproject.p2.CompoundBundleRepository;
+import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.IFedoraBundleRepository;
 import org.fedoraproject.p2.P2Utils;
+import org.fedoraproject.p2.SCL;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
@@ -74,8 +76,17 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		reactor = reactorRepo.getAllUnits();
 
 		logger.info("Indexing system bundles and features...");
-		List<Path> prefixes = request.getPrefixes();
-		index = new CompoundBundleRepository(prefixes);
+		List<Path> sclConfs = request.getConfigFiles();
+		if (sclConfs.isEmpty())
+			sclConfs = EclipseSystemLayout.getSclConfFiles();
+		List<SCL> scls = new ArrayList<>(sclConfs.size());
+		for (Path conf : sclConfs) {
+			scls.add(new SCL(conf));
+		}
+		index = new CompoundBundleRepository(scls);
+
+		SCL currentScl = scls.iterator().next();
+		String namespace = currentScl.getSclName();
 
 		dump("Platform units", index.getPlatformUnits());
 		dump("Internal units", index.getInternalUnits());
@@ -116,8 +127,13 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 					.getPackageMap().entrySet()) {
 				String name = entry.getKey();
 				logger.info("Creating dropin {}...", name);
-				Dropin dropin = new Dropin(name, request
-						.getTargetDropinDirectory().resolve(name));
+				// TODO decide whether install to archful or noarch dropin dir
+				Path dropinDir = currentScl.getNoarchDropinDir();
+				if (dropinDir == null)
+					throw new RuntimeException(
+							"Current SCL is not capable of holding Eclipse plugins.");
+				dropinDir = Paths.get("/").relativize(dropinDir);
+				Dropin dropin = new Dropin(name, dropinDir.resolve(name));
 				dropins.add(dropin);
 
 				Set<IInstallableUnit> content = entry.getValue();
@@ -155,15 +171,19 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 								"features".equals(type));
 						dropin.addProvide(provide);
 
+						if (namespace != null && !namespace.isEmpty())
+							provide.setProperty("osgi.namespace", namespace);
+
 						Set<IInstallableUnit> requires = reactorRequires
 								.get(unit);
 						requires.removeAll(content);
 						Iterator<IInstallableUnit> it = requires.iterator();
 						if (it.hasNext()) {
-							StringBuilder sb = new StringBuilder(it.next()
-									.getId());
+							StringBuilder sb = new StringBuilder(
+									P2Utils.toString(it.next()));
 							while (it.hasNext())
-								sb.append(',').append(it.next().getId());
+								sb.append(',').append(
+										P2Utils.toString(it.next()));
 							provide.setProperty("osgi.requires", sb.toString());
 						}
 					}

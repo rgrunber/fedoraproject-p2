@@ -13,8 +13,9 @@ package org.fedoraproject.p2.tests;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -23,16 +24,18 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.FedoraBundleRepository;
 import org.fedoraproject.p2.P2Utils;
+import org.fedoraproject.p2.SCL;
 
 import org.junit.Test;
 
-public class FedoraBundleRepositoryTest {
+public class FedoraBundleRepositoryTest extends RepositoryTest {
 
 	static final String EMPTY = "/tmp/";
 
 	@Test
 	public void definitionTest () {
-		FedoraBundleRepository rep = new FedoraBundleRepository(new File("/"));
+		SCL scl = new SCL(Paths.get("/etc/java/eclipse.conf"));
+		FedoraBundleRepository rep = new FedoraBundleRepository(scl);
 		Set<IInstallableUnit> platformUnits = rep.getPlatformUnits();
 		Set<IInstallableUnit> internalUnits = rep.getInternalUnits();
 		Set<IInstallableUnit> externalUnits = rep.getExternalUnits();
@@ -49,8 +52,11 @@ public class FedoraBundleRepositoryTest {
 	}
 
 	@Test
-	public void emptyRepositoryTest () {
-		FedoraBundleRepository rep = new FedoraBundleRepository(new File(EMPTY));
+	public void emptyRepositoryTest () throws Exception {
+		Path conf = getTempDir().resolve("scl.conf");
+		Files.createFile(conf);
+		SCL scl = new SCL(conf);
+		FedoraBundleRepository rep = new FedoraBundleRepository(scl);
 		assertTrue(rep.getPlatformUnits().isEmpty());
 		assertTrue(rep.getInternalUnits().isEmpty());
 		assertTrue(rep.getExternalUnits().isEmpty());
@@ -58,7 +64,8 @@ public class FedoraBundleRepositoryTest {
 
 	@Test
 	public void simpleLookupTest () {
-		FedoraBundleRepository rep = new FedoraBundleRepository(new File("/"));
+		SCL scl = new SCL(Paths.get("/etc/java/eclipse.conf"));
+		FedoraBundleRepository rep = new FedoraBundleRepository(scl);
 		Set<IInstallableUnit> allUnits = new LinkedHashSet<> ();
 		allUnits.addAll(rep.getPlatformUnits());
 		allUnits.addAll(rep.getInternalUnits());
@@ -78,7 +85,7 @@ public class FedoraBundleRepositoryTest {
 	@Test
 	public void userDefinedLocationsTest () {
 		System.setProperty("fedora.p2.repos", "/tmp/notexist/,/usr/share/java/,/usr/lib/");
-		Set<String> res = EclipseSystemLayout.getUserDefinedBundleLocations();
+		Set<Path> res = EclipseSystemLayout.getUserDefinedBundleLocations();
 		assertTrue(res.size() == 2);
 	}
 

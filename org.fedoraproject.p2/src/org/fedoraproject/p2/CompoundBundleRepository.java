@@ -10,10 +10,7 @@
  *******************************************************************************/
 package org.fedoraproject.p2;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,12 +37,10 @@ public class CompoundBundleRepository implements IFedoraBundleRepository {
 	 * @param prefixes
 	 *            ordered list of prefixes to use
 	 */
-	public CompoundBundleRepository(List<Path> prefixes) {
-		if (prefixes.isEmpty())
-			prefixes = Collections.singletonList(Paths.get("/"));
-		indices = new ArrayList<>(prefixes.size());
-		for (Path prefix : prefixes) {
-			indices.add(new FedoraBundleRepository(prefix.toFile()));
+	public CompoundBundleRepository(List<SCL> scls) {
+		indices = new ArrayList<>(scls.size());
+		for (SCL scl : scls) {
+			indices.add(new FedoraBundleRepository(scl));
 		}
 	}
 

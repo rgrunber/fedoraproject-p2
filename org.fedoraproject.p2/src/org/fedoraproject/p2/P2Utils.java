@@ -19,6 +19,7 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 
 public class P2Utils {
 	private static final String PROP_PATH = "org.fedoraproject.p2.path";
+	private static final String PROP_NAMESPACE = "org.fedoraproject.p2.scl";
 
 	public static IInstallableUnit setProperty(IInstallableUnit unit,
 			String key, String value) {
@@ -35,5 +36,22 @@ public class P2Utils {
 
 	public static IInstallableUnit setPath(IInstallableUnit unit, File path) {
 		return setProperty(unit, PROP_PATH, path.getPath());
+	}
+
+	public static String getSclNamespace(IInstallableUnit unit) {
+		return unit.getProperty(PROP_NAMESPACE);
+	}
+
+	public static IInstallableUnit setSclNamespace(IInstallableUnit unit,
+			String namespace) {
+		return setProperty(unit, PROP_NAMESPACE, namespace);
+	}
+
+	public static String toString(IInstallableUnit unit) {
+		String namespace = getSclNamespace(unit);
+		String suffix = "";
+		if (namespace != null)
+			suffix = "(" + namespace + ")";
+		return unit.getId() + suffix;
 	}
 }

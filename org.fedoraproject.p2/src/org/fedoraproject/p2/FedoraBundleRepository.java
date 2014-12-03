@@ -10,17 +10,12 @@
  *******************************************************************************/
 package org.fedoraproject.p2;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,19 +39,19 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 	private Set<IInstallableUnit> platformUnits;
 	private Set<IInstallableUnit> internalUnits;
 	private Set<IInstallableUnit> externalUnits;
-	private Map<String, IMetadataRepository> metaRepos;
-	private Map<String, FedoraBundleIndex> fbindices;
+	private Map<Path, IMetadataRepository> metaRepos;
+	private Map<Path, FedoraBundleIndex> fbindices;
 
-	public FedoraBundleRepository(File root) {
+	public FedoraBundleRepository(SCL scl) {
 		metaRepos = new LinkedHashMap<>();
 		fbindices = new LinkedHashMap<>();
 
-		Set<String> platformLocations = new LinkedHashSet<>();
-		Set<String> dropinsLocations = new LinkedHashSet<>();
-		Set<String> externalLocations = new LinkedHashSet<>();
-		EclipseSystemLayout.initLocations(root.toPath(), platformLocations, dropinsLocations, externalLocations, true);
+		Set<Path> platformLocations = new LinkedHashSet<>();
+		Set<Path> dropinsLocations = new LinkedHashSet<>();
+		Set<Path> externalLocations = new LinkedHashSet<>();
+		EclipseSystemLayout.initLocations(scl, platformLocations, dropinsLocations, externalLocations, true);
 
-		List<String> allLocations = new ArrayList<String> ();
+		Set<Path> allLocations = new LinkedHashSet<>();
 		allLocations.addAll(platformLocations);
 		allLocations.addAll(dropinsLocations);
 		allLocations.addAll(externalLocations);
@@ -67,15 +62,14 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 		try {
 			IProvisioningAgent agent = pr.createAgent(null);
 			IMetadataRepositoryManager metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
-			for (String loc : allLocations) {
+			for (Path repoPath : allLocations) {
 				try {
-					Path repoPath = Paths.get(loc);
-					if (Files.exists(repoPath)) {
-						IMetadataRepository metaRepo = metadataRM.loadRepository(new URI("fedora:" + repoPath), new NullProgressMonitor());
-						FedoraBundleIndex index = new FedoraBundleIndex(repoPath.toFile());
-						metaRepos.put(loc, metaRepo);
-						fbindices.put(loc, index);
-					}
+					String fragment = scl.getSclName() != null ? "#" + scl.getSclName() : "";
+					URI uri = new URI("fedora:" + repoPath + fragment);
+					IMetadataRepository metaRepo = metadataRM.loadRepository(uri, new NullProgressMonitor());
+					FedoraBundleIndex index = new FedoraBundleIndex(repoPath.toFile());
+					metaRepos.put(repoPath, metaRepo);
+					fbindices.put(repoPath, index);
 				} catch (ProvisionException e) {
 					// ignore and continue if there are repository issues
 				}
@@ -104,8 +98,8 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 				if (path == null)
 					continue;
 				path = path.toRealPath();
-				for (String dropin : dropinsLocations) {
-					if (path.startsWith(Paths.get(dropin)))
+				for (Path dropin : dropinsLocations) {
+					if (path.startsWith(dropin))
 						internalUnits.add(unit);
 					else
 						externalUnits.add(unit);
@@ -118,9 +112,9 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 	/**
 	 * @return A set of installable units reachable from given locations.
 	 */
-	private Set<IInstallableUnit> enumerateUnits(Set<String> locations){
+	private Set<IInstallableUnit> enumerateUnits(Set<Path> locations){
 		Set<IInstallableUnit> candidates = new LinkedHashSet<IInstallableUnit>();
-		for (String loc : locations) {
+		for (Path loc : locations) {
 			IMetadataRepository repo = metaRepos.get(loc);
 			if (repo != null) {
 				candidates.addAll(repo.query(QueryUtil.ALL_UNITS, new NullProgressMonitor()).toUnmodifiableSet());

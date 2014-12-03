@@ -152,6 +152,9 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 	        }
 	    }
 
+		for (IInstallableUnit unit : unitCache)
+			P2Utils.setSclNamespace(unit, location.getFragment());
+
 	    return unitCache;
 	}
 

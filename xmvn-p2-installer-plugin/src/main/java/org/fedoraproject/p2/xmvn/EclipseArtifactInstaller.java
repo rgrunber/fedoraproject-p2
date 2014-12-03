@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import org.fedoraproject.xmvn.artifact.Artifact;
 import org.fedoraproject.xmvn.artifact.DefaultArtifact;
-import org.fedoraproject.xmvn.config.Configuration;
-import org.fedoraproject.xmvn.config.Configurator;
 import org.fedoraproject.xmvn.config.PackagingRule;
 import org.fedoraproject.xmvn.metadata.ArtifactMetadata;
 import org.fedoraproject.xmvn.tools.install.ArtifactInstallationException;
@@ -39,7 +37,6 @@ import org.fedoraproject.xmvn.tools.install.JavaPackage;
 import org.fedoraproject.xmvn.tools.install.RegularFile;
 import org.fedoraproject.xmvn.tools.install.SymbolicLink;
 
-import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
@@ -55,9 +52,6 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 	@Inject
 	private OSGiServiceLocator equinox;
-
-	@Inject
-	private Configurator xmvnConfigurator;
 
 	private final EclipseInstallationRequest request = new EclipseInstallationRequest();
 
@@ -138,22 +132,8 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 	@Override
 	public void postInstallation() throws ArtifactInstallationException {
 		try {
-			Configuration conf = xmvnConfigurator.getConfiguration();
-			for (String prefix : conf.getResolverSettings().getPrefixes()) {
-				request.addPrefix(Paths.get(prefix));
-			}
-
 			Path tempRoot = Files.createTempDirectory("xmvn-root-");
 			request.setBuildRoot(tempRoot);
-
-			Path eclipseRoot = Paths.get(System.getProperty(
-					"xmvn.p2.eclipseRoot", "/usr/share/eclipse"));
-			Path sclRoot = Paths.get(EclipseSystemLayout.getCurrentSCLRoot());
-			Path relSclRoot = Paths.get("/").relativize(sclRoot);
-			Path dropinDir = eclipseRoot.resolve("dropins");
-			Path relDropinDir = Paths.get("/").relativize(dropinDir);
-			Path relSclDropinDir = relSclRoot.resolve(relDropinDir);
-			request.setTargetDropinDirectory(relSclDropinDir);
 
 			EclipseInstaller installer = equinox
 					.getService(EclipseInstaller.class);

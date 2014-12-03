@@ -111,7 +111,7 @@ public class MetadataRepositoryTest extends RepositoryTest {
 	@Test
 	public void emptyRepositoryTest () {
 		try {
-			IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(EMPTY), new NullProgressMonitor());
+			IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI("fedora:" + getTempDir()), new NullProgressMonitor());
 			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> units = res.toUnmodifiableSet();
 			assertEquals("Metadata Repository must be empty", 0, units.size());

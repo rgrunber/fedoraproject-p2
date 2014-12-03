@@ -11,14 +11,12 @@
 package org.fedoraproject.p2.tests;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
+import java.util.Properties;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
@@ -28,7 +26,10 @@ import org.eclipse.equinox.p2.metadata.ITouchpointData;
 import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -37,7 +38,6 @@ public class RepositoryTest {
 	static final String NAMESPACE = "fedora:";
 	// TODO: Create our own test repositories in resoures/ folder
 	static final String JAVADIR = NAMESPACE + "/usr/share/java";
-	static final String EMPTY = NAMESPACE + "/tmp";
 	static final String ECLIPSE_DIR = NAMESPACE + "/usr/lib"
 						+ (System.getProperty("os.arch").contains("64") ? "64" : "")
 						+ "/eclipse/plugins";
@@ -106,4 +106,29 @@ public class RepositoryTest {
 		return false;
 	}
 
+	protected void writeSclConfig(Path confPath, String name, Path prefix)
+			throws Exception {
+
+		Path eclipseRoot = prefix.resolve("usr/lib/eclipse");
+		Path archDropins = prefix.resolve("usr/lib/eclipse/dropins");
+		Path noarchDropins = prefix.resolve("usr/share/eclipse/dropins");
+		Path bundlesDir = prefix.resolve("usr/share/java");
+
+		Files.createDirectories(eclipseRoot);
+		Files.createDirectories(archDropins);
+		Files.createDirectories(noarchDropins);
+		Files.createDirectories(bundlesDir);
+
+		Properties conf = new Properties();
+		conf.setProperty("eclipse.root", eclipseRoot.toString());
+		conf.setProperty("eclipse.dropins.archful", archDropins.toString());
+		conf.setProperty("eclipse.dropins.noarch", noarchDropins.toString());
+		conf.setProperty("eclipse.bundles", bundlesDir.toString());
+		conf.setProperty("scl.namespace", name);
+		conf.setProperty("scl.root", prefix.toString());
+
+		try (OutputStream stream = Files.newOutputStream(confPath)) {
+			conf.store(stream, "Conf for SCL " + name);
+		}
+	}
 }

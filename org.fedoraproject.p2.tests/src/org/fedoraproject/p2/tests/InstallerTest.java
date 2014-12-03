@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import org.fedoraproject.p2.SCL;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
@@ -70,6 +71,7 @@ public class InstallerTest extends RepositoryTest {
 	private Path root;
 	private Path buildRoot;
 	private Path reactor;
+	private SCL scl;
 
 	public InstallerTest() {
 		BundleContext context = getBundleContext();
@@ -98,12 +100,16 @@ public class InstallerTest extends RepositoryTest {
 
 		request = new EclipseInstallationRequest();
 		request.setBuildRoot(buildRoot);
-		request.setTargetDropinDirectory(Paths.get("dropins"));
 		request.setMainPackageId("main");
-		request.addPrefix(root);
+
+		Path sclConf = getTempDir().resolve("eclipse.conf");
+		writeSclConfig(sclConf, "", root);
+		request.addConfigFile(sclConf);
+		scl = new SCL(sclConf);
 	}
 
-	private Plugin addPlugin(String id, String ver, Map<String, List<Plugin>> map) {
+	private Plugin addPlugin(String id, String ver,
+			Map<String, List<Plugin>> map) {
 		List<Plugin> plugins = map.get(id);
 		if (plugins == null) {
 			plugins = new ArrayList<>();
@@ -149,16 +155,18 @@ public class InstallerTest extends RepositoryTest {
 	public void performTest() throws Exception {
 		for (Path path : collectPlugins(reactorPlugins, reactor))
 			request.addPlugin(path);
-		collectPlugins(platformPlugins, root.resolve("usr/lib/eclipse/plugins"));
+		collectPlugins(platformPlugins, scl.getEclipseRoot().resolve("plugins"));
 		collectPlugins(internalPlugins,
-				root.resolve("usr/lib/eclipse/dropins/foo/eclipse/plugins"));
-		collectPlugins(externalPlugins, root.resolve("usr/share/java"));
+				scl.getNoarchDropinDir().resolve("foo/eclipse/plugins"));
+		collectPlugins(externalPlugins, scl.getBundleLocations().iterator()
+				.next());
 
 		EclipseInstallationResult result = installer
 				.performInstallation(request);
 
 		replay(visitor);
-		visitDropins(buildRoot.resolve("dropins"));
+		visitDropins(buildRoot.resolve(Paths.get("/").relativize(
+				scl.getNoarchDropinDir())));
 		visitResult(result);
 		verify(visitor);
 	}
@@ -170,7 +178,8 @@ public class InstallerTest extends RepositoryTest {
 		for (Entry<String, List<Plugin>> entry : map.entrySet()) {
 			List<Plugin> plugins = entry.getValue();
 			for (Plugin plugin : plugins) {
-				Path path = dir.resolve(plugin.getId() + "_" + plugin.getVersion() + ".jar");
+				Path path = dir.resolve(plugin.getId() + "_"
+						+ plugin.getVersion() + ".jar");
 				plugin.writeBundle(path);
 				result.add(path);
 			}
@@ -210,7 +219,8 @@ public class InstallerTest extends RepositoryTest {
 						// We never symlink features
 						assertFalse(isFeature && isLink);
 						String id = name.replaceAll("_.*$", "");
-						String ver = name.replaceAll("^.*_", "").replaceAll("\\.jar$", "");
+						String ver = name.replaceAll("^.*_", "").replaceAll(
+								"\\.jar$", "");
 						if (isLink)
 							visitor.visitSymlink(dropin, id);
 						else if (isPlugin)
@@ -233,7 +243,8 @@ public class InstallerTest extends RepositoryTest {
 			assertFalse(dropin.getOsgiProvides().isEmpty());
 			Set<String> requires = new LinkedHashSet<>();
 			for (Provide provide : dropin.getOsgiProvides()) {
-				visitor.visitProvides(dropin.getId(), provide.getId(), provide.getVersion());
+				visitor.visitProvides(dropin.getId(), provide.getId(),
+						provide.getVersion());
 				String reqStr = provide.getProperties().get("osgi.requires");
 				if (reqStr == null)
 					continue;
@@ -330,7 +341,9 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("foo");
 		expectProvides("foo");
 		performTest();
-		Path dir = buildRoot.resolve("dropins/main/eclipse/plugins/foo_1.0.0");
+		Path dir = buildRoot.resolve(Paths.get("/")
+				.relativize(scl.getNoarchDropinDir())
+				.resolve("main/eclipse/plugins/foo_1.0.0"));
 		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
 	}
 
