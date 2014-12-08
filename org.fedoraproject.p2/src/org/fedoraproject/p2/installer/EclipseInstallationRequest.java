@@ -35,6 +35,8 @@ public class EclipseInstallationRequest {
 
 	private String mainPackageId;
 
+	private boolean ignoreOptional = false;
+
 	public Path getBuildRoot() {
 		return buildRoot;
 	}
@@ -81,5 +83,13 @@ public class EclipseInstallationRequest {
 
 	public void setMainPackageId(String mainPackageId) {
 		this.mainPackageId = mainPackageId;
+	}
+
+	public void setIgnoreOptional(boolean ignore) {
+		ignoreOptional = ignore;
+	}
+
+	public boolean ignoreOptional() {
+		return ignoreOptional;
 	}
 }

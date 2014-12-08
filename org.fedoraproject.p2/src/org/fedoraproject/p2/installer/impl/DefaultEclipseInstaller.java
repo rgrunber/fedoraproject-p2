@@ -33,9 +33,6 @@ import org.eclipse.equinox.p2.metadata.ITouchpointData;
 import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.QueryUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.fedoraproject.p2.CompoundBundleRepository;
 import org.fedoraproject.p2.EclipseSystemLayout;
 import org.fedoraproject.p2.IFedoraBundleRepository;
@@ -46,6 +43,8 @@ import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
 import org.fedoraproject.p2.installer.Provide;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Mikolaj Izdebski
@@ -66,6 +65,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private IFedoraBundleRepository index;
 
+	private boolean ignoreOptional;
+
 	@Override
 	public EclipseInstallationResult performInstallation(
 			EclipseInstallationRequest request) throws Exception {
@@ -74,6 +75,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		Director.publish(reactorRepo, request.getPlugins(),
 				request.getFeatures());
 		reactor = reactorRepo.getAllUnits();
+		ignoreOptional = request.ignoreOptional();
 
 		logger.info("Indexing system bundles and features...");
 		List<Path> sclConfs = request.getConfigFiles();
@@ -229,7 +231,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				Set<IInstallableUnit> requires = new LinkedHashSet<>();
 				reactorRequires.put(iu, requires);
 
-				for (IRequirement req : getRequirements(iu))
+				for (IRequirement req : getRequirements(iu, ignoreOptional))
 					resolveRequirement(iu, req);
 			}
 		}
@@ -299,7 +301,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		return true;
 	}
 
-	private static Collection<IRequirement> getRequirements(IInstallableUnit iu) {
+	private static Collection<IRequirement> getRequirements(IInstallableUnit iu, boolean ignoreOptional) {
 		List<IRequirement> requirements = new ArrayList<IRequirement>(
 				iu.getRequirements());
 		requirements.addAll(iu.getMetaRequirements());
@@ -312,7 +314,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		for (Iterator<IRequirement> iterator = requirements.iterator(); iterator
 				.hasNext();) {
 			IRequirement req = iterator.next();
-			if (req.getMax() == 0)
+			if (req.getMax() == 0 || (ignoreOptional && req.getMin() == 0))
 				iterator.remove();
 		}
 
