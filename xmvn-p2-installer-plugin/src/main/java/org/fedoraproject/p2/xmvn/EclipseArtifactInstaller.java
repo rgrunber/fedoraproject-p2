@@ -67,7 +67,9 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 			throws ArtifactInstallationException {
 		Path path = Paths.get(am.getPath());
 
-		if (!am.getExtension().equals("jar") || (!am.getClassifier().isEmpty() && !am.getClassifier().equals("sources")))
+		if (!am.getExtension().equals("jar")
+				|| (!am.getClassifier().isEmpty() && !am.getClassifier().equals("sources")
+						&& !am.getClassifier().equals("sources-feature")))
 			return;
 
 		String type = am.getProperties().getProperty("type");
