@@ -153,8 +153,8 @@ public class Repository {
 	}
 
 	public IInstallableUnit findUnit(String id, String version) {
-		VersionRange versionRange = version != null ? new VersionRange(version)
-				: null;
+		VersionRange versionRange = version != null ? new VersionRange("["
+				+ version + "," + version + "]") : null;
 		IQuery<IInstallableUnit> query = QueryUtil.createIUQuery(id,
 				versionRange);
 		Set<IInstallableUnit> result = executeQuery(query);
