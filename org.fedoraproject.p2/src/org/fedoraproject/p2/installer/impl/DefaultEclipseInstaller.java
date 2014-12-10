@@ -100,8 +100,14 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		for (Entry<String, String> entry : request.getPackageMappings()
 				.entrySet()) {
 			String unit = entry.getKey();
-			String unitId = unit.split("_")[0];
-			String unitVer = unit.split("_")[1];
+			String unitId = unit;
+			String unitVer = null;
+			// unit may be of form 'Id_qualifiedVersion' to guarantee uniqueness
+			String [] unitElements = unit.split("_");
+			if (unitElements.length == 2) {
+			    unitId = unitElements[0];
+			    unitVer = unitElements[1];
+			}
 			String packageId = entry.getValue();
 
 			Set<IInstallableUnit> pkg = packages.get(packageId);
