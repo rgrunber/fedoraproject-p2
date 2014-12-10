@@ -16,8 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -73,6 +71,7 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 			return;
 
 		String type = am.getProperties().getProperty("type");
+		String qualifiedVersion = am.getProperties().getProperty("qualifiedVersion");
 		boolean isFeature = type.equals("eclipse-feature");
 		if (type.equals("eclipse-plugin") || type.equals("eclipse-test-plugin"))
 			request.addPlugin(path);
@@ -94,18 +93,21 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		else if (!subpackageId.startsWith(commonId + "-"))
 			subpackageId = commonId + "-" + subpackageId;
 
+		// Generated source bundles and features are suffixed with ".source"
+		String artifactId = am.getArtifactId();
+		if ("sources".equals(am.getClassifier())
+				|| "sources-feature".equals(am.getClassifier())) {
+			artifactId += ".source";
+		}
+
 		if (isFeature
 				|| (rule.getTargetPackage() != null && !rule.getTargetPackage()
 						.isEmpty())) {
-			String unitId = null;
+			String unitId = artifactId;
 			if (isFeature) {
-				unitId = am.getArtifactId() + ".feature.group";
-			} else if ("sources".equals(am.getClassifier())) {
-				unitId = am.getArtifactId() + ".source";
-			} else {
-				unitId = am.getArtifactId();
+				unitId += ".feature.group";
 			}
-			request.addPackageMapping(unitId, subpackageId);
+			request.addPackageMapping(unitId + "_" + qualifiedVersion, subpackageId);
 		}
 
 		packageMap.put(subpackageId, targetPackage);
@@ -113,21 +115,11 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		// We must be able to distinguish between plug-ins and features with the
 		// same artifact ID, so keep two separate maps
 		if (isFeature) {
-			featureMetadataMap.put(am.getArtifactId(), am);
+			featureMetadataMap.put(artifactId, am);
 		} else {
 			// We must be able to distinguish between different versions of the
 			// same plug-in in the same reactor, so key by name_version
-			try (JarFile bundle = new JarFile(am.getPath())) {
-				// Also, the maven artifact version is likely to be different to the
-				// osgi bundle version, so we must pull the version from the
-				// manifest in order to be able to look it up correctly later
-				Attributes attrs = bundle.getManifest().getMainAttributes();
-				String version = attrs.getValue("Bundle-Version");
-				pluginMetadataMap.put(am.getArtifactId() + "_" + version, am);
-			} catch (IOException e) {
-				throw new ArtifactInstallationException(
-						"Unable to inspect bundle manifest", e);
-			}
+			pluginMetadataMap.put(artifactId + "_" + qualifiedVersion, am);
 		}
 	}
 

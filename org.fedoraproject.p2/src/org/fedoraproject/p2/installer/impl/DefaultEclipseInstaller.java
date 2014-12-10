@@ -99,7 +99,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 		for (Entry<String, String> entry : request.getPackageMappings()
 				.entrySet()) {
-			String unitId = entry.getKey();
+			String unit = entry.getKey();
+			String unitId = unit.split("_")[0];
+			String unitVer = unit.split("_")[1];
 			String packageId = entry.getValue();
 
 			Set<IInstallableUnit> pkg = packages.get(packageId);
@@ -108,13 +110,13 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				packages.put(packageId, pkg);
 			}
 
-			IInstallableUnit unit = reactorRepo.findUnit(unitId, null);
-			if (unit == null)
+			IInstallableUnit installableUnit = reactorRepo.findUnit(unitId, unitVer);
+			if (installableUnit == null)
 				throw new RuntimeException(
 						"Unresolvable unit present in package mappings: "
-								+ unitId);
+								+ unit);
 
-			pkg.add(unit);
+			pkg.add(installableUnit);
 		}
 
 		createMetapackages(packages);
