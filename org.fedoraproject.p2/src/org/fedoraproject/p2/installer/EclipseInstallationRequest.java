@@ -13,6 +13,7 @@ package org.fedoraproject.p2.installer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,7 +32,7 @@ public class EclipseInstallationRequest {
 
 	private final List<Path> configFiles = new ArrayList<>();
 
-	private final Map<String, String> packageMappings = new LinkedHashMap<>();
+	private final Map<Map<String, String>, String> packageMappings = new LinkedHashMap<>();
 
 	private String mainPackageId;
 
@@ -69,12 +70,15 @@ public class EclipseInstallationRequest {
 		configFiles.add(confFile);
 	}
 
-	public Map<String, String> getPackageMappings() {
+	public Map<Map<String, String>, String> getPackageMappings() {
 		return Collections.unmodifiableMap(packageMappings);
 	}
 
-	public void addPackageMapping(String artifactId, String packageId) {
-		packageMappings.put(artifactId, packageId);
+	public void addPackageMapping(String artifactId, String artifactVersion, String packageId) {
+		Map<String, String> artifact = new HashMap<>(2);
+		artifact.put("id", artifactId);
+		artifact.put("version", artifactVersion);
+		packageMappings.put(artifact, packageId);
 	}
 
 	public String getMainPackageId() {

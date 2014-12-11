@@ -218,8 +218,9 @@ public class InstallerTest extends RepositoryTest {
 						assertFalse(isLink && isDir);
 						// We never symlink features
 						assertFalse(isFeature && isLink);
-						String id = name.replaceAll("_.*$", "");
-						String ver = name.replaceAll("^.*_", "").replaceAll(
+						int _ = name.lastIndexOf("_");
+						String id = name.substring(0, _);
+						String ver = name.substring(_ + 1).replaceAll(
 								"\\.jar$", "");
 						if (isLink)
 							visitor.visitSymlink(dropin, id);
@@ -354,8 +355,8 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("foo");
 		addReactorPlugin("bar");
 		addReactorPlugin("baz");
-		request.addPackageMapping("foo", "sub1");
-		request.addPackageMapping("bar", "sub2");
+		request.addPackageMapping("foo", null, "sub1");
+		request.addPackageMapping("bar", null, "sub2");
 		expectPlugin("sub1", "foo");
 		expectPlugin("sub2", "bar");
 		expectPlugin("baz");
@@ -372,7 +373,7 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("A").requireBundle("B");
 		addReactorPlugin("B");
 		addReactorPlugin("C");
-		request.addPackageMapping("A", "sub");
+		request.addPackageMapping("A", null, "sub");
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "B");
 		expectPlugin("C");
@@ -394,9 +395,9 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("B2");
 		addReactorPlugin("B3");
 		addReactorPlugin("C").requireBundle("B2").requireBundle("B1");
-		request.addPackageMapping("A", "sub");
-		request.addPackageMapping("C", "sub");
-		request.addPackageMapping("B2", "different");
+		request.addPackageMapping("A", null, "sub");
+		request.addPackageMapping("C", null, "sub");
+		request.addPackageMapping("B2", null, "different");
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "C");
 		expectPlugin("sub", "B1");
@@ -419,8 +420,8 @@ public class InstallerTest extends RepositoryTest {
 		addReactorPlugin("A").requireBundle("B");
 		addReactorPlugin("B");
 		addReactorPlugin("C").requireBundle("B");
-		request.addPackageMapping("A", "sub1");
-		request.addPackageMapping("C", "sub2");
+		request.addPackageMapping("A", null, "sub1");
+		request.addPackageMapping("C", null, "sub2");
 		performTest();
 	}
 
@@ -478,8 +479,8 @@ public class InstallerTest extends RepositoryTest {
 		addJunitBundles();
 		addReactorPlugin("A").importPackage("junit.framework");
 		addReactorPlugin("B").requireBundle("org.junit");
-		request.addPackageMapping("A", "pkg1");
-		request.addPackageMapping("B", "pkg2");
+		request.addPackageMapping("A", null, "pkg1");
+		request.addPackageMapping("B", null, "pkg2");
 		expectPlugin("pkg1", "A");
 		expectSymlink("pkg1", "org.junit");
 		expectSymlink("pkg1", "org.hamcrest.core");
@@ -502,8 +503,8 @@ public class InstallerTest extends RepositoryTest {
 		addJunitBundles();
 		addReactorPlugin("A").importPackage("junit.framework");
 		addReactorPlugin("B").requireBundle("org.junit").requireBundle("A");
-		request.addPackageMapping("A", "pkg1");
-		request.addPackageMapping("B", "pkg2");
+		request.addPackageMapping("A", null, "pkg1");
+		request.addPackageMapping("B", null, "pkg2");
 		expectPlugin("pkg1", "A");
 		expectSymlink("pkg1", "org.junit");
 		expectSymlink("pkg1", "org.hamcrest.core");
@@ -659,6 +660,39 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("main", "A", "2.0.0");
 		expectProvides("main", "A", "1.0.0");
 		expectProvides("main", "A", "2.0.0");
+		performTest();
+	}
+
+	// Same as above, but with split packages
+	@Test
+	public void sameBundleSymbolicNamesSubpackageSplitTest() throws Exception {
+		addReactorPlugin("A", "1.0.0");
+		addReactorPlugin("A", "2.0.0");
+		addReactorPlugin("B", "2.0.0");
+		addReactorPlugin("C", "2.0.0");
+		request.addPackageMapping("A", "2.0.0", "pkg1");
+		request.addPackageMapping("B", "2.0.0", "pkg1");
+		expectPlugin("main", "A", "1.0.0");
+		expectPlugin("pkg1", "A", "2.0.0");
+		expectPlugin("pkg1", "B", "2.0.0");
+		expectPlugin("main", "C", "2.0.0");
+		expectProvides("main", "A", "1.0.0");
+		expectProvides("pkg1", "A", "2.0.0");
+		expectProvides("pkg1", "B", "2.0.0");
+		expectProvides("main", "C", "2.0.0");
+		performTest();
+	}
+
+	// Test we can install bundles whose names contain underscores
+	@Test
+	public void sneakyBundleNameUnderscoresTest() throws Exception {
+		addReactorPlugin("A");
+		addReactorPlugin("B_B");
+		request.addPackageMapping("B_B", "1.0.0", "pkg1");
+		expectPlugin("main", "A");
+		expectPlugin("pkg1", "B_B");
+		expectProvides("main", "A");
+		expectProvides("pkg1", "B_B");
 		performTest();
 	}
 }

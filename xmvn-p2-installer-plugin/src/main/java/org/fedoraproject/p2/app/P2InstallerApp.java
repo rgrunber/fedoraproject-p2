@@ -60,7 +60,7 @@ public class P2InstallerApp {
 		for (String arg : cliRequest.getParameters())
 			request.addPlugin(Paths.get(arg));
 		for (Entry<String, String> entry : cliRequest.getMappings().entrySet())
-			request.addPackageMapping(entry.getKey(), entry.getValue());
+			request.addPackageMapping(entry.getKey(), null, entry.getValue());
 
 		EclipseInstaller installer = serviceLocator
 				.getService(EclipseInstaller.class);

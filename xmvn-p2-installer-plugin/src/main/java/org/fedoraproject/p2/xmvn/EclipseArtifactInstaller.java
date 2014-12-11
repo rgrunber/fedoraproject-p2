@@ -107,7 +107,7 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 			if (isFeature) {
 				unitId += ".feature.group";
 			}
-			request.addPackageMapping(unitId + "_" + qualifiedVersion, subpackageId);
+			request.addPackageMapping(unitId, qualifiedVersion, subpackageId);
 		}
 
 		packageMap.put(subpackageId, targetPackage);

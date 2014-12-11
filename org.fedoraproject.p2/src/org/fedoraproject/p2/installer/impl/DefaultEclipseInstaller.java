@@ -97,17 +97,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 		Map<String, Set<IInstallableUnit>> packages = new LinkedHashMap<>();
 
-		for (Entry<String, String> entry : request.getPackageMappings()
+		for (Entry<Map<String, String>, String> entry : request.getPackageMappings()
 				.entrySet()) {
-			String unit = entry.getKey();
-			String unitId = unit;
-			String unitVer = null;
-			// unit may be of form 'Id_qualifiedVersion' to guarantee uniqueness
-			String [] unitElements = unit.split("_");
-			if (unitElements.length == 2) {
-			    unitId = unitElements[0];
-			    unitVer = unitElements[1];
-			}
+			String unitId = entry.getKey().get("id");
+			String unitVer = entry.getKey().get("version");
 			String packageId = entry.getValue();
 
 			Set<IInstallableUnit> pkg = packages.get(packageId);
@@ -120,7 +113,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			if (installableUnit == null)
 				throw new RuntimeException(
 						"Unresolvable unit present in package mappings: "
-								+ unit);
+								+ unitId + (unitVer == null ? "" : "/" + unitVer));
 
 			pkg.add(installableUnit);
 		}
