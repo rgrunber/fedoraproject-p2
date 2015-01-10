@@ -119,8 +119,11 @@ public class EclipseSystemLayout {
 	 */
 	public static List<Path> getSclConfFiles(String confDirs) throws IOException {
 		// Empty or unset JAVACONFDIRS means that no SCLs are enabled
-		if (confDirs == null || confDirs.isEmpty())
+		if (confDirs == null || confDirs.isEmpty()) {
 			confDirs = "/etc/java";
+		} else {
+			confDirs += ":/etc/java";
+		}
 
 		List<Path> confFiles = new ArrayList<>();
 		for (String confDirStr : confDirs.split(":")) {
