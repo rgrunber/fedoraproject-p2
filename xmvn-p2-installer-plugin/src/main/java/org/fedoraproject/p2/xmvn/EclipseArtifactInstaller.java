@@ -157,7 +157,9 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 					am.getProperties().setProperty("osgi.id", provide.getId());
 					am.getProperties().setProperty("osgi.version",
 							provide.getVersion());
-
+					if (am.getProperties().getProperty("osgi.namespace") != null) {
+						am.setNamespace(am.getProperties().getProperty("osgi.namespace"));
+					}
 					pkg.getMetadata().addArtifact(am);
 				}
 			}
