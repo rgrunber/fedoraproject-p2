@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -181,5 +181,27 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 		// the same plugin from SCL
 		addExternalPlugin("base", "p", "1.2.3", false);
 		performTest("scl", "base");
+	}
+
+	// If a bundle both internal and external (i.e. it is symlinked into a
+	// dropin)
+	// Then the bundle should always be considered external since it is not the
+	// dropin that provides it
+	@Test
+	public void shadowingIntExtSameSCL() throws Exception {
+		addInternalPlugin("devtoolset", "org.junit", "1.0.0", false);
+		addExternalPlugin("devtoolset", "org.junit", "1.0.0", true);
+		performTest("devtoolset");
+	}
+
+	// If a bundle both internal and external in different SCLs (i.e. it is
+	// symlinked into a dropin from a dependency SCL)
+	// Then the bundle should always be considered external since it is not the
+	// dropin that provides it
+	@Test
+	public void shadowingIntExtDifferentSCL() throws Exception {
+		addInternalPlugin("devtoolset", "org.junit", "1.0.0", false);
+		addExternalPlugin("java-common", "org.junit", "1.0.0", true);
+		performTest("devtoolset", "java-common");
 	}
 }
