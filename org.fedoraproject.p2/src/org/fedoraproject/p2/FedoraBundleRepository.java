@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.fedoraproject.p2;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -34,20 +33,17 @@ import org.osgi.framework.ServiceReference;
  * This acts as a front-end for all interactions/queries regarding the
  * locations and metadata associated with system bundles (OSGi, Feature).
  */
-public class FedoraBundleRepository implements IFedoraBundleRepository {
+public class FedoraBundleRepository extends AbstractBundleRepository {
 
-	private Set<IInstallableUnit> platformUnits;
-	private Set<IInstallableUnit> internalUnits;
-	private Set<IInstallableUnit> externalUnits;
 	private Map<Path, IMetadataRepository> metaRepos;
 	private Map<Path, FedoraBundleIndex> fbindices;
+	private Set<Path> dropinsLocations = new LinkedHashSet<>();
 
 	public FedoraBundleRepository(SCL scl) {
 		metaRepos = new LinkedHashMap<>();
 		fbindices = new LinkedHashMap<>();
 
 		Set<Path> platformLocations = new LinkedHashSet<>();
-		Set<Path> dropinsLocations = new LinkedHashSet<>();
 		Set<Path> externalLocations = new LinkedHashSet<>();
 		EclipseSystemLayout.initLocations(scl, platformLocations, dropinsLocations, externalLocations, true);
 
@@ -85,30 +81,8 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 
 		externalUnits = enumerateUnits(externalLocations);
 		externalUnits.removeAll(platformUnits);
-
-		Set<IInstallableUnit> commonUnits = new LinkedHashSet<>(internalUnits);
-		commonUnits.retainAll(externalUnits);
-
-		internalUnits.removeAll(commonUnits);
-		externalUnits.removeAll(commonUnits);
-
-		for (IInstallableUnit unit : commonUnits) {
-			try {
-				Path path = P2Utils.getPath(unit);
-				if (path == null)
-					continue;
-				path = path.toRealPath();
-				for (Path dropin : dropinsLocations) {
-					if (path.startsWith(dropin))
-						internalUnits.add(unit);
-					else
-						externalUnits.add(unit);
-				}
-			} catch (IOException e) {
-			}
-		}
 	}
-	
+
 	/**
 	 * @return A set of installable units reachable from given locations.
 	 */
@@ -124,18 +98,7 @@ public class FedoraBundleRepository implements IFedoraBundleRepository {
 	}
 	
 	@Override
-	public Set<IInstallableUnit> getPlatformUnits() {
-		return Collections.unmodifiableSet(platformUnits);
+	public Set<Path> getDropinsLocations() {
+		return Collections.unmodifiableSet(dropinsLocations);
 	}
-
-	@Override
-	public Set<IInstallableUnit> getInternalUnits() {
-		return Collections.unmodifiableSet(internalUnits);
-	}
-
-	@Override
-	public Set<IInstallableUnit> getExternalUnits() {
-		return Collections.unmodifiableSet(externalUnits);
-	}
-
 }
