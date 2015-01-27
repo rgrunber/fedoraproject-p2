@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,8 +14,14 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
+import org.eclipse.equinox.p2.publisher.eclipse.Feature;
+
+import org.fedoraproject.p2.P2Utils;
+
+import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.internal.repository.mirroring.Mirroring;
@@ -52,7 +58,16 @@ public class Director {
 				bundleFiles.add(bundle.toFile());
 
 			IPublisherAction action = new BundlesAction(
-					bundleFiles.toArray(new File[0]));
+					bundleFiles.toArray(new File[0])) {
+				@Override
+				protected IInstallableUnit doCreateBundleIU(
+						BundleDescription bd, IArtifactKey key,
+						IPublisherInfo info) {
+					return P2Utils.setPath(
+							super.doCreateBundleIU(bd, key, info),
+							new File(bd.getLocation()));
+				}
+			};
 			actions.add(action);
 		}
 
@@ -62,7 +77,24 @@ public class Director {
 				featureFiles.add(feature.toFile());
 
 			IPublisherAction action = new FeaturesAction(
-					featureFiles.toArray(new File[0]));
+					featureFiles.toArray(new File[0])) {
+				@Override
+				protected IInstallableUnit createGroupIU(Feature feature,
+						List<IInstallableUnit> childIUs,
+						IPublisherInfo publisherInfo) {
+					return P2Utils.setPath(super.createGroupIU(feature,
+							childIUs, publisherInfo),
+							new File(feature.getLocation()));
+				}
+
+				@Override
+				protected IInstallableUnit generateFeatureJarIU(
+						Feature feature, IPublisherInfo publisherInfo) {
+					return P2Utils.setPath(
+							super.generateFeatureJarIU(feature, publisherInfo),
+							new File(feature.getLocation()));
+				}
+			};
 			actions.add(action);
 		}
 
