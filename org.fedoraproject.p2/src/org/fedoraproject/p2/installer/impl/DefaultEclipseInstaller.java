@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -42,7 +42,7 @@ import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.Provide;
+import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,9 +72,25 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			EclipseInstallationRequest request) throws Exception {
 		logger.info("Creating reactor repository...");
 		Repository reactorRepo = Repository.createTemp();
-		Director.publish(reactorRepo, request.getPlugins(),
-				request.getFeatures());
+		Set<Path> plugins = new LinkedHashSet<>();
+		Set<Path> features = new LinkedHashSet<>();
+		Map<Path, EclipseArtifact> reactorMap = new LinkedHashMap<>();
+		for (EclipseArtifact artifact : request.getArtifacts()) {
+			Path path = artifact.getPath();
+			reactorMap.put(path, artifact);
+			if (artifact.isFeature())
+				features.add(path);
+			else
+				plugins.add(path);
+		}
+		Director.publish(reactorRepo, plugins, features);
 		reactor = reactorRepo.getAllUnits();
+		// sanity check: each feature is converted to two IUs (.feature.group
+		// and .feature.jar), while plugins are converted to one IU each
+		if (reactor.size() != plugins.size() + 2 * features.size())
+			throw new RuntimeException(
+					"Reactor contains unexpected number of installable units");
+
 		ignoreOptional = request.ignoreOptional();
 
 		logger.info("Indexing system bundles and features...");
@@ -97,25 +113,23 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 		Map<String, Set<IInstallableUnit>> packages = new LinkedHashMap<>();
 
-		for (Entry<Map<String, String>, String> entry : request.getPackageMappings()
-				.entrySet()) {
-			String unitId = entry.getKey().get("id");
-			String unitVer = entry.getKey().get("version");
-			String packageId = entry.getValue();
+		for (IInstallableUnit unit : reactor) {
+			Path path = P2Utils.getPath(unit);
+			EclipseArtifact provide = reactorMap.get(path);
+			if (provide == null) {
+				logger.debug("Skipped unit {}: provide is null", unit);
+				continue;
+			}
+			String packageId = provide.getTargetPackage();
+			if (packageId == null)
+				continue;
 
 			Set<IInstallableUnit> pkg = packages.get(packageId);
 			if (pkg == null) {
 				pkg = new LinkedHashSet<>();
 				packages.put(packageId, pkg);
 			}
-
-			IInstallableUnit installableUnit = reactorRepo.findUnit(unitId, unitVer);
-			if (installableUnit == null)
-				throw new RuntimeException(
-						"Unresolvable unit present in package mappings: "
-								+ unitId + (unitVer == null ? "" : "/" + unitVer));
-
-			pkg.add(installableUnit);
+			pkg.add(unit);
 		}
 
 		createMetapackages(packages);
@@ -155,10 +169,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				}
 
 				for (IInstallableUnit unit : content) {
-					String type = "plugins";
-					if (unit.getId().endsWith(".feature.group")
-							|| unit.getId().endsWith(".feature.jar"))
-						type = "features";
+					EclipseArtifact provide = reactorMap.get(P2Utils.getPath(unit));
+					String type = provide.isFeature() ? "features" : "plugins";
 					for (IArtifactKey artifact : unit.getArtifacts()) {
 						String artifactName = artifact.getId() + "_"
 								+ artifact.getVersion();
@@ -167,11 +179,15 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						}
 						Path path = installationPath.resolve(type).resolve(
 								artifactName);
+						if (provide.getInstalledPath() != null)
+							throw new RuntimeException(
+									"One provide has multiple artifacts: "
+											+ provide.getInstalledPath()
+											+ " and " + path);
+						provide.setInstalledPath(Paths.get("/").resolve(path));
 
-						Provide provide = new Provide(artifact.getId(),
-								artifact.getVersion().toString(), Paths
-										.get("/").resolve(path),
-								"features".equals(type));
+						provide.setId(artifact.getId());
+						provide.setVersion(artifact.getVersion().toString());
 						dropin.addProvide(provide);
 
 						if (namespace != null && !namespace.isEmpty())

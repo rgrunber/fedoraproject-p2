@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,26 +13,19 @@ package org.fedoraproject.p2.installer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Mikolaj Izdebski
  */
 public class EclipseInstallationRequest {
-	private final Set<Path> plugins = new LinkedHashSet<>();
-
-	private final Set<Path> features = new LinkedHashSet<>();
+	private final Set<EclipseArtifact> artifacts = new LinkedHashSet<>();
 
 	private Path buildRoot;
 
 	private final List<Path> configFiles = new ArrayList<>();
-
-	private final Map<Map<String, String>, String> packageMappings = new LinkedHashMap<>();
 
 	private String mainPackageId;
 
@@ -46,20 +39,12 @@ public class EclipseInstallationRequest {
 		this.buildRoot = buildRoot;
 	}
 
-	public Set<Path> getPlugins() {
-		return Collections.unmodifiableSet(plugins);
+	public Set<EclipseArtifact> getArtifacts() {
+		return Collections.unmodifiableSet(artifacts);
 	}
 
-	public void addPlugin(Path plugin) {
-		plugins.add(plugin);
-	}
-
-	public Set<Path> getFeatures() {
-		return Collections.unmodifiableSet(features);
-	}
-
-	public void addFeature(Path feature) {
-		features.add(feature);
+	public void addArtifact(EclipseArtifact artifact) {
+		artifacts.add(artifact);
 	}
 
 	public List<Path> getConfigFiles() {
@@ -68,17 +53,6 @@ public class EclipseInstallationRequest {
 
 	public void addConfigFile(Path confFile) {
 		configFiles.add(confFile);
-	}
-
-	public Map<Map<String, String>, String> getPackageMappings() {
-		return Collections.unmodifiableMap(packageMappings);
-	}
-
-	public void addPackageMapping(String artifactId, String artifactVersion, String packageId) {
-		Map<String, String> artifact = new HashMap<>(2);
-		artifact.put("id", artifactId);
-		artifact.put("version", artifactVersion);
-		packageMappings.put(artifact, packageId);
 	}
 
 	public String getMainPackageId() {

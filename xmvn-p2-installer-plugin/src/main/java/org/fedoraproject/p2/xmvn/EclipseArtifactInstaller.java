@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,12 +34,11 @@ import org.fedoraproject.xmvn.tools.install.File;
 import org.fedoraproject.xmvn.tools.install.JavaPackage;
 import org.fedoraproject.xmvn.tools.install.RegularFile;
 import org.fedoraproject.xmvn.tools.install.SymbolicLink;
-
 import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.Provide;
 import org.fedoraproject.p2.osgi.OSGiServiceLocator;
 
 @Named("eclipse")
@@ -55,10 +54,6 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 	private final Map<String, JavaPackage> packageMap = new LinkedHashMap<>();
 
-	private final Map<String, ArtifactMetadata> featureMetadataMap = new LinkedHashMap<>();
-
-	private final Map<String, ArtifactMetadata> pluginMetadataMap = new LinkedHashMap<>();
-
 	@Override
 	public void install(JavaPackage targetPackage, ArtifactMetadata am,
 			PackagingRule rule, String basePackageName)
@@ -71,14 +66,15 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 			return;
 
 		String type = am.getProperties().getProperty("type");
-		String qualifiedVersion = am.getProperties().getProperty("qualifiedVersion");
 		boolean isFeature = type.equals("eclipse-feature");
+		EclipseArtifact provide;
 		if (type.equals("eclipse-plugin") || type.equals("eclipse-test-plugin"))
-			request.addPlugin(path);
+			provide = new XMvnEclipseArtifact(path, false, am);
 		else if (isFeature)
-			request.addFeature(path);
+			provide = new XMvnEclipseArtifact(path, true, am);
 		else
 			return;
+		request.addArtifact(provide);
 
 		Artifact artifact = new DefaultArtifact(am.getGroupId(),
 				am.getArtifactId(), am.getExtension(), am.getClassifier(),
@@ -93,34 +89,13 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		else if (!subpackageId.startsWith(commonId + "-"))
 			subpackageId = commonId + "-" + subpackageId;
 
-		// Generated source bundles and features are suffixed with ".source"
-		String artifactId = am.getArtifactId();
-		if ("sources".equals(am.getClassifier())
-				|| "sources-feature".equals(am.getClassifier())) {
-			artifactId += ".source";
-		}
-
 		if (isFeature
 				|| (rule.getTargetPackage() != null && !rule.getTargetPackage()
 						.isEmpty())) {
-			String unitId = artifactId;
-			if (isFeature) {
-				unitId += ".feature.group";
-			}
-			request.addPackageMapping(unitId, qualifiedVersion, subpackageId);
+			provide.setTargetPackage(subpackageId);
 		}
 
 		packageMap.put(subpackageId, targetPackage);
-
-		// We must be able to distinguish between plug-ins and features with the
-		// same artifact ID, so keep two separate maps
-		if (isFeature) {
-			featureMetadataMap.put(artifactId, am);
-		} else {
-			// We must be able to distinguish between different versions of the
-			// same plug-in in the same reactor, so key by name_version
-			pluginMetadataMap.put(artifactId + "_" + qualifiedVersion, am);
-		}
 	}
 
 	@Override
@@ -138,21 +113,10 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 				JavaPackage pkg = packageMap.get(dropin.getId());
 				addAllFiles(pkg, tempRoot.resolve(dropin.getPath()), tempRoot);
 
-				for (Provide provide : dropin.getOsgiProvides()) {
-					ArtifactMetadata am = null;
-					if (provide.isFeature()) {
-						am = featureMetadataMap.remove(provide.getId());
-					} else {
-						am = pluginMetadataMap.remove(provide.getId() + "_"
-								+ provide.getVersion());
-					}
-					if (am == null) {
-						logger.warn("Could not generate metadata for bundle: "
-								+ provide.getId() + "_" + provide.getVersion());
-						continue;
-					}
+				for (EclipseArtifact provide : dropin.getOsgiProvides()) {
+					ArtifactMetadata am = ((XMvnEclipseArtifact)provide).getMetadata();
 
-					am.setPath(provide.getPath().toString());
+					am.setPath(provide.getInstalledPath().toString());
 					am.getProperties().putAll(provide.getProperties());
 					am.getProperties().setProperty("osgi.id", provide.getId());
 					am.getProperties().setProperty("osgi.version",

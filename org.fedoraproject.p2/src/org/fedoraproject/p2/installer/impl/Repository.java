@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,6 @@ import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.internal.repository.tools.RepositoryDescriptor;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
-import org.eclipse.equinox.p2.metadata.VersionRange;
 import org.eclipse.equinox.p2.publisher.Publisher;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.IQueryResult;
@@ -150,20 +149,6 @@ public class Repository {
 	public Set<IInstallableUnit> getAllUnits() {
 		IQuery<IInstallableUnit> query = QueryUtil.createIUAnyQuery();
 		return executeQuery(query);
-	}
-
-	public IInstallableUnit findUnit(String id, String version) {
-		VersionRange versionRange = version != null ? new VersionRange("["
-				+ version + "," + version + "]") : null;
-		IQuery<IInstallableUnit> query = QueryUtil.createIUQuery(id,
-				versionRange);
-		Set<IInstallableUnit> result = executeQuery(query);
-		if (result.isEmpty())
-			return null;
-		if (result.size() > 1)
-			throw new RuntimeException("More than one IU found for " + id
-					+ (version != null ? "/" + version : ""));
-		return result.iterator().next();
 	}
 
 	private static synchronized Path createTempDirectory() throws IOException {

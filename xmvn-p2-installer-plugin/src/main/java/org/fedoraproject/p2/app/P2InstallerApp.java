@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,6 @@
 package org.fedoraproject.p2.app;
 
 import java.nio.file.Paths;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -26,10 +25,10 @@ import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.WireModule;
 
 import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.Provide;
 import org.fedoraproject.p2.osgi.OSGiServiceLocator;
 
 /**
@@ -58,9 +57,9 @@ public class P2InstallerApp {
 		if (!cliRequest.isDryRun())
 			request.setBuildRoot(Paths.get(cliRequest.getRoot()));
 		for (String arg : cliRequest.getParameters())
-			request.addPlugin(Paths.get(arg));
-		for (Entry<String, String> entry : cliRequest.getMappings().entrySet())
-			request.addPackageMapping(entry.getKey(), null, entry.getValue());
+			request.addArtifact(new EclipseArtifact(Paths.get(arg), false));
+		if (!cliRequest.getMappings().isEmpty())
+			throw new RuntimeException("FIXME: for now subpackage mapping is disabled in P2InstallerApp");
 
 		EclipseInstaller installer = serviceLocator
 				.getService(EclipseInstaller.class);
@@ -82,7 +81,7 @@ public class P2InstallerApp {
 
 	private void printDeps(Set<Dropin> dropins) {
 		for (Dropin dropin : dropins) {
-			for (Provide provide : dropin.getOsgiProvides()) {
+			for (EclipseArtifact provide : dropin.getOsgiProvides()) {
 				String idVer = provide.getId() + " " + provide.getVersion();
 				String req = provide.getProperties().get("osgi.requires");
 				System.out.println(req == null ? idVer : idVer + " " + req);

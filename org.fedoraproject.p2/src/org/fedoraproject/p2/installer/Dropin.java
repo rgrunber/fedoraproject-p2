@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,7 @@ public class Dropin {
 
 	private final Path path;
 
-	private final Set<Provide> osgiProvides = new LinkedHashSet<>();
+	private final Set<EclipseArtifact> osgiProvides = new LinkedHashSet<>();
 
 	public Dropin(String id, Path path) {
 		this.id = id;
@@ -37,11 +37,11 @@ public class Dropin {
 		return path;
 	}
 
-	public Set<Provide> getOsgiProvides() {
+	public Set<EclipseArtifact> getOsgiProvides() {
 		return osgiProvides;
 	}
 
-	public void addProvide(Provide provide) {
+	public void addProvide(EclipseArtifact provide) {
 		osgiProvides.add(provide);
 	}
 
