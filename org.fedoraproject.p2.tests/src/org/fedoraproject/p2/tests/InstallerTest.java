@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,13 +37,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-
 import org.fedoraproject.p2.SCL;
 import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.Provide;
 
 interface BuildrootVisitor {
 	void visitPlugin(String dropin, String id, String ver);
@@ -153,8 +152,11 @@ public class InstallerTest extends RepositoryTest {
 	}
 
 	public void performTest() throws Exception {
-		for (Path path : collectPlugins(reactorPlugins, reactor))
-			request.addPlugin(path);
+		for (Plugin plugin : collectPlugins(reactorPlugins, reactor)) {
+			EclipseArtifact artifact = new EclipseArtifact(plugin.getPath(), false);
+			artifact.setTargetPackage(plugin.getTargetPackage());
+			request.addArtifact(artifact);
+		}
 		collectPlugins(platformPlugins, scl.getEclipseRoot().resolve("plugins"));
 		collectPlugins(internalPlugins,
 				scl.getNoarchDropinDir().resolve("foo/eclipse/plugins"));
@@ -171,17 +173,17 @@ public class InstallerTest extends RepositoryTest {
 		verify(visitor);
 	}
 
-	private Set<Path> collectPlugins(Map<String, List<Plugin>> map, Path dir)
+	private Set<Plugin> collectPlugins(Map<String, List<Plugin>> map, Path dir)
 			throws Exception {
 		Files.createDirectories(dir);
-		LinkedHashSet<Path> result = new LinkedHashSet<>();
+		LinkedHashSet<Plugin> result = new LinkedHashSet<>();
 		for (Entry<String, List<Plugin>> entry : map.entrySet()) {
 			List<Plugin> plugins = entry.getValue();
 			for (Plugin plugin : plugins) {
 				Path path = dir.resolve(plugin.getId() + "_"
 						+ plugin.getVersion() + ".jar");
 				plugin.writeBundle(path);
-				result.add(path);
+				result.add(plugin);
 			}
 		}
 		return result;
@@ -243,7 +245,7 @@ public class InstallerTest extends RepositoryTest {
 			assertNotNull(dropin);
 			assertFalse(dropin.getOsgiProvides().isEmpty());
 			Set<String> requires = new LinkedHashSet<>();
-			for (Provide provide : dropin.getOsgiProvides()) {
+			for (EclipseArtifact provide : dropin.getOsgiProvides()) {
 				visitor.visitProvides(dropin.getId(), provide.getId(),
 						provide.getVersion());
 				String reqStr = provide.getProperties().get("osgi.requires");
@@ -352,11 +354,9 @@ public class InstallerTest extends RepositoryTest {
 	// to main pkg
 	@Test
 	public void subpackageSplitTest() throws Exception {
-		addReactorPlugin("foo");
-		addReactorPlugin("bar");
+		addReactorPlugin("foo").assignToTargetPackage("sub1");
+		addReactorPlugin("bar").assignToTargetPackage("sub2");
 		addReactorPlugin("baz");
-		request.addPackageMapping("foo", null, "sub1");
-		request.addPackageMapping("bar", null, "sub2");
 		expectPlugin("sub1", "foo");
 		expectPlugin("sub2", "bar");
 		expectPlugin("baz");
@@ -370,10 +370,9 @@ public class InstallerTest extends RepositoryTest {
 	// together with A.
 	@Test
 	public void interdepSplitTest() throws Exception {
-		addReactorPlugin("A").requireBundle("B");
+		addReactorPlugin("A").requireBundle("B").assignToTargetPackage("sub");
 		addReactorPlugin("B");
 		addReactorPlugin("C");
-		request.addPackageMapping("A", null, "sub");
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "B");
 		expectPlugin("C");
@@ -390,14 +389,11 @@ public class InstallerTest extends RepositoryTest {
 	// in any package by user.
 	@Test
 	public void interdepCommonTest() throws Exception {
-		addReactorPlugin("A").requireBundle("B1").requireBundle("B2");
+		addReactorPlugin("A").requireBundle("B1").requireBundle("B2").assignToTargetPackage("sub");
 		addReactorPlugin("B1");
-		addReactorPlugin("B2");
+		addReactorPlugin("B2").assignToTargetPackage("different");
 		addReactorPlugin("B3");
-		addReactorPlugin("C").requireBundle("B2").requireBundle("B1");
-		request.addPackageMapping("A", null, "sub");
-		request.addPackageMapping("C", null, "sub");
-		request.addPackageMapping("B2", null, "different");
+		addReactorPlugin("C").requireBundle("B2").requireBundle("B1").assignToTargetPackage("sub");
 		expectPlugin("sub", "A");
 		expectPlugin("sub", "C");
 		expectPlugin("sub", "B1");
@@ -417,11 +413,9 @@ public class InstallerTest extends RepositoryTest {
 	// install B.
 	@Test(expected = RuntimeException.class)
 	public void interdepImpossibleSplitTest() throws Exception {
-		addReactorPlugin("A").requireBundle("B");
+		addReactorPlugin("A").requireBundle("B").assignToTargetPackage("sub1");
 		addReactorPlugin("B");
-		addReactorPlugin("C").requireBundle("B");
-		request.addPackageMapping("A", null, "sub1");
-		request.addPackageMapping("C", null, "sub2");
+		addReactorPlugin("C").requireBundle("B").assignToTargetPackage("sub2");
 		performTest();
 	}
 
@@ -477,10 +471,8 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void indepPluginsCommonDep() throws Exception {
 		addJunitBundles();
-		addReactorPlugin("A").importPackage("junit.framework");
-		addReactorPlugin("B").requireBundle("org.junit");
-		request.addPackageMapping("A", null, "pkg1");
-		request.addPackageMapping("B", null, "pkg2");
+		addReactorPlugin("A").importPackage("junit.framework").assignToTargetPackage("pkg1");
+		addReactorPlugin("B").requireBundle("org.junit").assignToTargetPackage("pkg2");
 		expectPlugin("pkg1", "A");
 		expectSymlink("pkg1", "org.junit");
 		expectSymlink("pkg1", "org.hamcrest.core");
@@ -501,10 +493,8 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void depPluginsCommonDep() throws Exception {
 		addJunitBundles();
-		addReactorPlugin("A").importPackage("junit.framework");
-		addReactorPlugin("B").requireBundle("org.junit").requireBundle("A");
-		request.addPackageMapping("A", null, "pkg1");
-		request.addPackageMapping("B", null, "pkg2");
+		addReactorPlugin("A").importPackage("junit.framework").assignToTargetPackage("pkg1");
+		addReactorPlugin("B").requireBundle("org.junit").requireBundle("A").assignToTargetPackage("pkg2");
 		expectPlugin("pkg1", "A");
 		expectSymlink("pkg1", "org.junit");
 		expectSymlink("pkg1", "org.hamcrest.core");
@@ -667,11 +657,9 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void sameBundleSymbolicNamesSubpackageSplitTest() throws Exception {
 		addReactorPlugin("A", "1.0.0");
-		addReactorPlugin("A", "2.0.0");
-		addReactorPlugin("B", "2.0.0");
+		addReactorPlugin("A", "2.0.0").assignToTargetPackage("pkg1");
+		addReactorPlugin("B", "2.0.0").assignToTargetPackage("pkg1");
 		addReactorPlugin("C", "2.0.0");
-		request.addPackageMapping("A", "2.0.0", "pkg1");
-		request.addPackageMapping("B", "2.0.0", "pkg1");
 		expectPlugin("main", "A", "1.0.0");
 		expectPlugin("pkg1", "A", "2.0.0");
 		expectPlugin("pkg1", "B", "2.0.0");
@@ -687,8 +675,7 @@ public class InstallerTest extends RepositoryTest {
 	@Test
 	public void sneakyBundleNameUnderscoresTest() throws Exception {
 		addReactorPlugin("A");
-		addReactorPlugin("B_B");
-		request.addPackageMapping("B_B", "1.0.0", "pkg1");
+		addReactorPlugin("B_B").assignToTargetPackage("pkg1");
 		expectPlugin("main", "A");
 		expectPlugin("pkg1", "B_B");
 		expectProvides("main", "A");

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2015 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,6 +30,8 @@ class Plugin {
 	private final Set<String> requires = new LinkedHashSet<>();
 	private final Manifest mf = new Manifest();
 	private final Attributes attr = mf.getMainAttributes();
+	private Path path;
+	private String targetPackage;
 
 	public Plugin(String id, String ver) {
 		attr.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -44,6 +46,14 @@ class Plugin {
 
 	public String getVersion() {
 		return attr.getValue(new Attributes.Name("Bundle-Version"));
+	}
+
+	public Path getPath() {
+		return path;
+	}
+
+	public String getTargetPackage() {
+		return targetPackage;
 	}
 
 	public Plugin importPackage(String name) {
@@ -66,6 +76,11 @@ class Plugin {
 		return this;
 	}
 
+	public Plugin assignToTargetPackage(String pkg) {
+		targetPackage = pkg;
+		return this;
+	}
+
 	private void addManifestSet(Attributes attr, String key, Set<String> values) {
 		Iterator<String> it = values.iterator();
 		if (!it.hasNext())
@@ -84,5 +99,6 @@ class Plugin {
 			try (OutputStream jos = new JarOutputStream(os, mf)) {
 			}
 		}
+		this.path = path;
 	}
 }
