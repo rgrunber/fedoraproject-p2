@@ -37,6 +37,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.easymock.IExpectationSetters;
 import org.fedoraproject.p2.SCL;
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseArtifact;
@@ -62,8 +63,11 @@ interface BuildrootVisitor {
 public class InstallerTest extends RepositoryTest {
 	private final EclipseInstaller installer;
 	private Map<String, List<Plugin>> reactorPlugins;
+	private Map<String, List<Feature>> reactorFeatures;
 	private Map<String, List<Plugin>> platformPlugins;
+	private Map<String, List<Feature>> platformFeatures;
 	private Map<String, List<Plugin>> internalPlugins;
+	private Map<String, List<Feature>> internalFeatures;
 	private Map<String, List<Plugin>> externalPlugins;
 	private BuildrootVisitor visitor;
 	private EclipseInstallationRequest request;
@@ -84,9 +88,12 @@ public class InstallerTest extends RepositoryTest {
 	@Before
 	public void setUp() throws Exception {
 		reactorPlugins = new LinkedHashMap<>();
+		reactorFeatures = new LinkedHashMap<>();
 		platformPlugins = new LinkedHashMap<>();
-		externalPlugins = new LinkedHashMap<>();
+		platformFeatures = new LinkedHashMap<>();
 		internalPlugins = new LinkedHashMap<>();
+		internalFeatures = new LinkedHashMap<>();
+		externalPlugins = new LinkedHashMap<>();
 
 		visitor = createMock(BuildrootVisitor.class);
 
@@ -151,15 +158,59 @@ public class InstallerTest extends RepositoryTest {
 		return addPlugin(id, ver, externalPlugins);
 	}
 
+	private Feature addFeature(String id, String ver,
+			Map<String, List<Feature>> map) {
+		List<Feature> features = map.get(id);
+		if (features == null) {
+			features = new ArrayList<>();
+			map.put(id, features);
+		}
+		Feature feature = new Feature(id, ver);
+		features.add(feature);
+		return feature;
+	}
+
+	public Feature addReactorFeature(String id) {
+		return addReactorFeature(id, "1.0.0");
+	}
+
+	public Feature addReactorFeature(String id, String ver) {
+		return addFeature(id, ver, reactorFeatures);
+	}
+
+	public Feature addPlatformFeature(String id) {
+		return addPlatformFeature(id, "1.0.0");
+	}
+
+	public Feature addPlatformFeature(String id, String ver) {
+		return addFeature(id, ver, platformFeatures);
+	}
+
+	public Feature addInternalFeature(String id) {
+		return addInternalFeature(id, "1.0.0");
+	}
+
+	public Feature addInternalFeature(String id, String ver) {
+		return addFeature(id, ver, internalFeatures);
+	}
+
 	public void performTest() throws Exception {
 		for (Plugin plugin : collectPlugins(reactorPlugins, reactor)) {
 			EclipseArtifact artifact = new EclipseArtifact(plugin.getPath(), false);
 			artifact.setTargetPackage(plugin.getTargetPackage());
 			request.addArtifact(artifact);
 		}
+		for (Feature feature : collectFeatures(reactorFeatures, reactor)) {
+			EclipseArtifact artifact = new EclipseArtifact(feature.getPath(), true);
+			artifact.setTargetPackage(feature.getTargetPackage());
+			request.addArtifact(artifact);
+		}
 		collectPlugins(platformPlugins, scl.getEclipseRoot().resolve("plugins"));
+		collectFeatures(platformFeatures, scl.getEclipseRoot().resolve("features"));
 		collectPlugins(internalPlugins,
 				scl.getNoarchDropinDir().resolve("foo/eclipse/plugins"));
+		collectFeatures(internalFeatures,
+				scl.getNoarchDropinDir().resolve("foo/eclipse/features"));
 		collectPlugins(externalPlugins, scl.getBundleLocations().iterator()
 				.next());
 
@@ -184,6 +235,21 @@ public class InstallerTest extends RepositoryTest {
 						+ plugin.getVersion() + ".jar");
 				plugin.writeBundle(path);
 				result.add(plugin);
+			}
+		}
+		return result;
+	}
+
+	private Set<Feature> collectFeatures(Map<String, List<Feature>> map, Path dir)
+			throws Exception {
+		LinkedHashSet<Feature> result = new LinkedHashSet<>();
+		for (Entry<String, List<Feature>> entry : map.entrySet()) {
+			List<Feature> features = entry.getValue();
+			for (Feature feature : features) {
+				Path path = dir.resolve(feature.getId() + "_"
+						+ feature.getVersion());
+				feature.write(path);
+				result.add(feature);
 			}
 		}
 		return result;
@@ -259,61 +325,61 @@ public class InstallerTest extends RepositoryTest {
 		}
 	}
 
-	public void expectPlugin(String plugin) {
-		expectPlugin("main", plugin, "1.0.0");
+	public IExpectationSetters<Object> expectPlugin(String plugin) {
+		return expectPlugin("main", plugin, "1.0.0");
 	}
 
-	public void expectPlugin(String dropin, String plugin) {
-		expectPlugin(dropin, plugin, "1.0.0");
+	public IExpectationSetters<Object> expectPlugin(String dropin, String plugin) {
+		return expectPlugin(dropin, plugin, "1.0.0");
 	}
 
-	public void expectPlugin(String dropin, String plugin, String version) {
+	public IExpectationSetters<Object> expectPlugin(String dropin, String plugin, String version) {
 		visitor.visitPlugin(dropin, plugin, version);
-		expectLastCall();
+		return expectLastCall();
 	}
 
-	public void expectFeature(String feature) {
-		expectFeature("main", feature, "1.0.0");
+	public IExpectationSetters<Object> expectFeature(String feature) {
+		return expectFeature("main", feature, "1.0.0");
 	}
 
-	public void expectFeature(String dropin, String feature) {
-		expectFeature(dropin, feature, "1.0.0");
+	public IExpectationSetters<Object> expectFeature(String dropin, String feature) {
+		return expectFeature(dropin, feature, "1.0.0");
 	}
 
-	public void expectFeature(String dropin, String feature, String version) {
+	public IExpectationSetters<Object> expectFeature(String dropin, String feature, String version) {
 		visitor.visitFeature(dropin, feature, version);
-		expectLastCall();
+		return expectLastCall();
 	}
 
-	public void expectSymlink(String plugin) {
-		expectSymlink("main", plugin);
+	public IExpectationSetters<Object> expectSymlink(String plugin) {
+		return expectSymlink("main", plugin);
 	}
 
-	public void expectSymlink(String dropin, String plugin) {
+	public IExpectationSetters<Object> expectSymlink(String dropin, String plugin) {
 		visitor.visitSymlink(dropin, plugin);
-		expectLastCall();
+		return expectLastCall();
 	}
 
-	public void expectRequires(String req) {
-		expectRequires("main", req);
+	public IExpectationSetters<Object> expectRequires(String req) {
+		return expectRequires("main", req);
 	}
 
-	public void expectRequires(String dropin, String req) {
+	public IExpectationSetters<Object> expectRequires(String dropin, String req) {
 		visitor.visitRequires(dropin, req);
-		expectLastCall();
+		return expectLastCall();
 	}
 
-	public void expectProvides(String prov) {
-		expectProvides("main", prov, "1.0.0");
+	public IExpectationSetters<Object> expectProvides(String prov) {
+		return expectProvides("main", prov, "1.0.0");
 	}
 
-	public void expectProvides(String dropin, String prov) {
-		expectProvides(dropin, prov, "1.0.0");
+	public IExpectationSetters<Object> expectProvides(String dropin, String prov) {
+		return expectProvides(dropin, prov, "1.0.0");
 	}
 
-	public void expectProvides(String dropin, String prov, String version) {
+	public IExpectationSetters<Object> expectProvides(String dropin, String prov, String version) {
 		visitor.visitProvides(dropin, prov, version);
-		expectLastCall();
+		return expectLastCall();
 	}
 
 	// The simplest case possible: one plugin with no deps
@@ -680,6 +746,56 @@ public class InstallerTest extends RepositoryTest {
 		expectPlugin("pkg1", "B_B");
 		expectProvides("main", "A");
 		expectProvides("pkg1", "B_B");
+		performTest();
+	}
+
+	// Test feature installation
+	@Test
+	public void featureSimpleTest() throws Exception {
+		addReactorFeature("feat");
+		expectFeature("feat");
+		expectProvides("feat");
+		performTest();
+	}
+
+	// Test feature installation to subpagkage
+	@Test
+	public void featureSplitTest() throws Exception {
+		addReactorFeature("A");
+		addReactorFeature("B").assignToTargetPackage("subpkg");
+		expectFeature("A");
+		expectFeature("subpkg", "B");
+		expectProvides("A");
+		expectProvides("subpkg", "B");
+		performTest();
+	}
+
+	// Test duplicate feature symbolic name
+	@Test
+	public void duplicateFeatureTest() throws Exception {
+		addReactorFeature("A", "1.0.0");
+		addReactorFeature("A", "2.0.0");
+		expectFeature("main", "A", "1.0.0");
+		expectFeature("main", "A", "2.0.0");
+		expectProvides("main", "A", "1.0.0");
+		expectProvides("main", "A", "2.0.0");
+		performTest();
+	}
+
+	// Make sure that installation of plugins and features with identical
+	// symbolic names is supported.
+	@Test
+	public void duplicateFeatureAndPluginTest() throws Exception {
+		addReactorPlugin("A", "1.0.0");
+		addReactorPlugin("A", "2.0.0");
+		addReactorFeature("A", "1.0.0");
+		addReactorFeature("A", "2.0.0");
+		expectPlugin("main", "A", "1.0.0");
+		expectPlugin("main", "A", "2.0.0");
+		expectFeature("main", "A", "1.0.0");
+		expectFeature("main", "A", "2.0.0");
+		expectProvides("main", "A", "1.0.0").times(2);
+		expectProvides("main", "A", "2.0.0").times(2);
 		performTest();
 	}
 }
