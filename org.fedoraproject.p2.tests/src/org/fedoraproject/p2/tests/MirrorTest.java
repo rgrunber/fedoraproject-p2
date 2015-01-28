@@ -38,7 +38,7 @@ public class MirrorTest extends RepositoryTest {
 	@Test
 	public void simpleMirrorTest() {
 		try {
-			List<IInstallableUnit> roots = new ArrayList<IInstallableUnit>();
+			List<IInstallableUnit> roots = new ArrayList<>();
 			IMetadataRepository sourceRepo = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
 			IQueryResult<IInstallableUnit> res = sourceRepo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> units = res.toUnmodifiableSet();

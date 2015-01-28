@@ -210,7 +210,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	}
 
 	private File[] getAllFiles(File root) {
-		List<File> res = new ArrayList<File>();
+		List<File> res = new ArrayList<>();
 		for (File child : root.listFiles()) {
 			File [] tmp;
 			if (child.isDirectory() && child.canRead()) {

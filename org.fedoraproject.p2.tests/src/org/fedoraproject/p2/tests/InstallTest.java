@@ -144,7 +144,7 @@ public class InstallTest extends RepositoryTest {
 	}
 
 	private File[] getProfileFiles(File root) {
-		List<File> res = new ArrayList<File>();
+		List<File> res = new ArrayList<>();
 		for (File child : root.listFiles()) {
 			File [] tmp = null;
 			if (child.isDirectory() && child.canRead()) {

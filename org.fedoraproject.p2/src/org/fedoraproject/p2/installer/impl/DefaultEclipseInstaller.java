@@ -319,7 +319,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 	}
 
 	private static Collection<IRequirement> getRequirements(IInstallableUnit iu, boolean ignoreOptional) {
-		List<IRequirement> requirements = new ArrayList<IRequirement>(
+		List<IRequirement> requirements = new ArrayList<>(
 				iu.getRequirements());
 		requirements.addAll(iu.getMetaRequirements());
 

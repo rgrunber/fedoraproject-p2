@@ -87,7 +87,7 @@ public class FedoraBundleRepository extends AbstractBundleRepository {
 	 * @return A set of installable units reachable from given locations.
 	 */
 	private Set<IInstallableUnit> enumerateUnits(Set<Path> locations){
-		Set<IInstallableUnit> candidates = new LinkedHashSet<IInstallableUnit>();
+		Set<IInstallableUnit> candidates = new LinkedHashSet<>();
 		for (Path loc : locations) {
 			IMetadataRepository repo = metaRepos.get(loc);
 			if (repo != null) {
