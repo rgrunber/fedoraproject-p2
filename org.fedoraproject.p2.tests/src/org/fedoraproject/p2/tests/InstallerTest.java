@@ -286,9 +286,9 @@ public class InstallerTest extends RepositoryTest {
 						assertFalse(isLink && isDir);
 						// We never symlink features
 						assertFalse(isFeature && isLink);
-						int _ = name.lastIndexOf("_");
-						String id = name.substring(0, _);
-						String ver = name.substring(_ + 1).replaceAll(
+						int uscore = name.lastIndexOf("_");
+						String id = name.substring(0, uscore);
+						String ver = name.substring(uscore + 1).replaceAll(
 								"\\.jar$", "");
 						if (isLink)
 							visitor.visitSymlink(dropin, id);
