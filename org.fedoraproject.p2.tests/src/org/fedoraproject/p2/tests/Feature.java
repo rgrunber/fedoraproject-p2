@@ -13,6 +13,7 @@ package org.fedoraproject.p2.tests;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 
 /**
  * @author Mikolaj Izdebski
@@ -22,6 +23,7 @@ class Feature {
 	private final String version;
 	private Path path;
 	private String targetPackage;
+	private Properties p2inf = new Properties();
 
 	public Feature(String id, String version) {
 		this.id = id;
@@ -49,10 +51,20 @@ class Feature {
 		return this;
 	}
 
+	public Feature addP2Inf(String key, String value){
+		p2inf.setProperty(key, value);
+		return this;
+	}
+
 	public void write(Path path) throws Exception {
 		Files.createDirectories(path);
 		try (PrintWriter pw = new PrintWriter(path.resolve("feature.xml").toFile())) {
 			pw.printf("<feature id=\"%s\" version=\"%s\"/>", id, version);
+		}
+		if (!p2inf.isEmpty()){
+			try (PrintWriter pw = new PrintWriter(path.resolve("p2.inf").toFile())) {
+				p2inf.store(pw, "p2.inf");
+			}
 		}
 		this.path = path;
 	}

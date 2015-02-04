@@ -798,4 +798,19 @@ public class InstallerTest extends RepositoryTest {
 		expectProvides("main", "A", "2.0.0").times(2);
 		performTest();
 	}
+
+	// Test installing of virtual bundles provided by p2.inf
+	@Test
+	public void p2infProvideTest() throws Exception {
+		Feature f = addReactorFeature("A");
+		f.addP2Inf("units.1.id", "org.maven.ide.eclipse");
+		f.addP2Inf("units.1.version", "$version$");
+		f.addP2Inf("units.1.singleton", "true");
+		f.addP2Inf("units.1.provides.0.namespace", "osgi.bundle");
+		f.addP2Inf("units.1.provides.0.name", "org.maven.ide.eclipse");
+		f.addP2Inf("units.1.provides.0.version", "$version$");
+		expectFeature("A");
+		expectProvides("A");
+		performTest();
+	}
 }
