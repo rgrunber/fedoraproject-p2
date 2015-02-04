@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
@@ -85,11 +86,11 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		}
 		Director.publish(reactorRepo, plugins, features);
 		reactor = reactorRepo.getAllUnits();
-		// sanity check: each feature is converted to two IUs (.feature.group
-		// and .feature.jar), while plugins are converted to one IU each
-		if (reactor.size() != plugins.size() + 2 * features.size())
+		if (reactor.stream().collect(Collectors.summingInt(u -> u.getArtifacts().size()))
+				!= plugins.size() + features.size()) {
 			throw new RuntimeException(
 					"Reactor contains unexpected number of installable units");
+		}
 
 		ignoreOptional = request.ignoreOptional();
 
@@ -169,9 +170,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				}
 
 				for (IInstallableUnit unit : content) {
-					EclipseArtifact provide = reactorMap.get(P2Utils.getPath(unit));
-					String type = provide.isFeature() ? "features" : "plugins";
 					for (IArtifactKey artifact : unit.getArtifacts()) {
+						EclipseArtifact provide = reactorMap.get(P2Utils.getPath(unit));
+						String type = provide.isFeature() ? "features" : "plugins";
 						String artifactName = artifact.getId() + "_"
 								+ artifact.getVersion();
 						if (!isBundleShapeDir(unit)) {
