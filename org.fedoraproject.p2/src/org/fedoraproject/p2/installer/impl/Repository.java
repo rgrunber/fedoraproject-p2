@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
-import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.internal.repository.tools.RepositoryDescriptor;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
@@ -29,50 +28,13 @@ import org.eclipse.equinox.p2.query.IQueryable;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
-import org.fedoraproject.p2.Activator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.fedoraproject.p2.P2Utils;
 
 /**
  * @author Mikolaj Izdebski
  */
 @SuppressWarnings("restriction")
 public class Repository {
-	private static IProvisioningAgent agent;
-
-	static synchronized IProvisioningAgent getAgent() throws ProvisionException {
-		if (agent != null)
-			return agent;
-
-		BundleContext context = Activator.getContext();
-
-		ServiceReference<IProvisioningAgent> agentRef = context
-				.getServiceReference(IProvisioningAgent.class);
-		if (agentRef != null) {
-			agent = context.getService(agentRef);
-			if (agent != null)
-				return agent;
-		}
-
-		ServiceReference<IProvisioningAgentProvider> providerRef = context
-				.getServiceReference(IProvisioningAgentProvider.class);
-		if (providerRef == null)
-			throw new RuntimeException("No registered OSGi services for "
-					+ IProvisioningAgentProvider.class);
-
-		try {
-			IProvisioningAgentProvider provider = context
-					.getService(providerRef);
-			if (provider == null)
-				throw new RuntimeException("Unable to get OSGi service for "
-						+ IProvisioningAgentProvider.class);
-
-			agent = provider.createAgent(null);
-			return agent;
-		} finally {
-			context.ungetService(providerRef);
-		}
-	}
 
 	private static Path tempDir;
 
@@ -96,7 +58,7 @@ public class Repository {
 	}
 
 	public static Repository create(Path location) throws ProvisionException {
-		IProvisioningAgent agent = getAgent();
+		IProvisioningAgent agent = P2Utils.getAgent();
 		URI uri = location.toUri();
 		String name = "xmvn-p2-repo";
 
@@ -110,7 +72,7 @@ public class Repository {
 	}
 
 	public static Repository load(Path location) throws ProvisionException {
-		IProvisioningAgent agent = getAgent();
+		IProvisioningAgent agent = P2Utils.getAgent();
 		URI uri = location.toUri();
 
 		IArtifactRepository artifactRepository = Publisher

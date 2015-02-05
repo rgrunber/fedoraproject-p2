@@ -73,7 +73,7 @@ public class InstallTest extends RepositoryTest {
 			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> units = res.toUnmodifiableSet();
 			for (IInstallableUnit u : units) {
-				if (isBundleShapeDir(u)) {
+				if (P2Utils.isBundleShapeDir(u)) {
 					targetIU = u;
 					break;
 				}
@@ -102,7 +102,7 @@ public class InstallTest extends RepositoryTest {
 		try {
 			// See org.eclipse.equinox.internal.p2.artifact.repository.simple.Mapper
 			String fileName = targetIU.getId() + "_" + targetIU.getVersion();
-			if (! isBundleShapeDir(targetIU)) {
+			if (! P2Utils.isBundleShapeDir(targetIU)) {
 				fileName += ".jar";
 			}
 

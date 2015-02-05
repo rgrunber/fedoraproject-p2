@@ -20,14 +20,11 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
-import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
 import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  * This acts as a front-end for all interactions/queries regarding the
@@ -50,11 +47,8 @@ public class FedoraBundleRepository extends AbstractBundleRepository {
 		allLocations.addAll(dropinsLocations);
 		allLocations.addAll(externalLocations);
 
-		BundleContext bc = Activator.getContext();
-		ServiceReference<?> sr = (ServiceReference<?>) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
-		IProvisioningAgentProvider pr = (IProvisioningAgentProvider) bc.getService(sr);
 		try {
-			IProvisioningAgent agent = pr.createAgent(null);
+			IProvisioningAgent agent = P2Utils.getAgent();
 			IMetadataRepositoryManager metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
 			for (Path repoPath : allLocations) {
 				try {

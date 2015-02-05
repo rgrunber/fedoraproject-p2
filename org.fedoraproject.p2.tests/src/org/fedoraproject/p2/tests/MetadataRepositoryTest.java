@@ -25,9 +25,8 @@ import org.eclipse.equinox.p2.metadata.IProvidedCapability;
 import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
-
 import org.fedoraproject.p2.FedoraMetadataRepository;
-
+import org.fedoraproject.p2.P2Utils;
 import org.junit.Test;
 
 public class MetadataRepositoryTest extends RepositoryTest {
@@ -133,7 +132,7 @@ public class MetadataRepositoryTest extends RepositoryTest {
 					// We want to find OSGi bundles
 					if (cap.getNamespace().equals("org.eclipse.equinox.p2.eclipse.type")
 							&& cap.getName().equals("bundle")) {
-						if (isBundleShapeDir(u)) {
+						if (P2Utils.isBundleShapeDir(u)) {
 							hasBundleShapeDir = true;
 						}
 					}

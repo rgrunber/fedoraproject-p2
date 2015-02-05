@@ -23,15 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IInstallableUnitFragment;
 import org.eclipse.equinox.p2.metadata.IRequirement;
-import org.eclipse.equinox.p2.metadata.ITouchpointData;
-import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.query.IQuery;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.fedoraproject.p2.CompoundBundleRepository;
@@ -104,10 +101,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		SCL currentScl = scls.iterator().next();
 		String namespace = currentScl.getSclName();
 
-		dump("Platform units", index.getPlatformUnits());
-		dump("Internal units", index.getInternalUnits());
-		dump("External units", index.getExternalUnits());
-		dump("Reactor contents", reactor);
+		P2Utils.dump("Platform units", index.getPlatformUnits());
+		P2Utils.dump("Internal units", index.getInternalUnits());
+		P2Utils.dump("External units", index.getExternalUnits());
+		P2Utils.dump("Reactor contents", reactor);
 
 		Map<String, Set<IInstallableUnit>> packages = new LinkedHashMap<>();
 
@@ -152,13 +149,13 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				dropins.add(dropin);
 
 				Set<IInstallableUnit> content = entry.getValue();
-				dump("Metapackage contents", content);
+				P2Utils.dump("Metapackage contents", content);
 				Set<IInstallableUnit> symlinks = new LinkedHashSet<>();
 				symlinks.addAll(content);
 				content.retainAll(reactor);
 				symlinks.removeAll(content);
-				dump("Dropin physical units", content);
-				dump("Dropin symlinks", symlinks);
+				P2Utils.dump("Dropin physical units", content);
+				P2Utils.dump("Dropin symlinks", symlinks);
 
 				Path installationPath = dropin.getPath().resolve("eclipse");
 				if (request.getBuildRoot() != null) {
@@ -172,7 +169,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						String type = provide.isFeature() ? "features" : "plugins";
 						String artifactName = artifact.getId() + "_"
 								+ artifact.getVersion();
-						if (!isBundleShapeDir(unit)) {
+						if (!P2Utils.isBundleShapeDir(unit)) {
 							artifactName += ".jar";
 						}
 						Path path = installationPath.resolve(type).resolve(
@@ -358,26 +355,5 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						+ suffix, path);
 			}
 		}
-	}
-
-	private boolean isBundleShapeDir(IInstallableUnit u) {
-		for (ITouchpointData d : u.getTouchpointData()) {
-			ITouchpointInstruction i = d.getInstruction("zipped");
-			if (i != null && "true".equals(i.getBody())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void dump(String message, Set<IInstallableUnit> units) {
-		logger.debug("{}:", message);
-		Set<String> sorted = new TreeSet<>();
-		for (IInstallableUnit unit : units)
-			sorted.add(unit.toString());
-		for (String unit : sorted)
-			logger.debug("  * {}", unit);
-		if (sorted.isEmpty())
-			logger.debug("  (none)");
 	}
 }

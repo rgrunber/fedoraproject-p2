@@ -21,9 +21,6 @@ import java.util.Properties;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.IProvisioningAgentProvider;
-import org.eclipse.equinox.p2.metadata.IInstallableUnit;
-import org.eclipse.equinox.p2.metadata.ITouchpointData;
-import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.junit.Before;
@@ -94,16 +91,6 @@ public class RepositoryTest {
 
 	protected Path getTempDir () {
 		return tempDir;
-	}
-
-	protected boolean isBundleShapeDir (IInstallableUnit u) {
-		for (ITouchpointData d : u.getTouchpointData()) {
-			ITouchpointInstruction i = d.getInstruction("zipped");
-			if (i != null && "true".equals(i.getBody())) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	protected void writeSclConfig(Path confPath, String name, Path prefix)
