@@ -36,12 +36,10 @@ import org.osgi.framework.ServiceReference;
 public class FedoraBundleRepository extends AbstractBundleRepository {
 
 	private Map<Path, IMetadataRepository> metaRepos;
-	private Map<Path, FedoraBundleIndex> fbindices;
 	private Set<Path> dropinsLocations = new LinkedHashSet<>();
 
 	public FedoraBundleRepository(SCL scl) {
 		metaRepos = new LinkedHashMap<>();
-		fbindices = new LinkedHashMap<>();
 
 		Set<Path> platformLocations = new LinkedHashSet<>();
 		Set<Path> externalLocations = new LinkedHashSet<>();
@@ -63,9 +61,7 @@ public class FedoraBundleRepository extends AbstractBundleRepository {
 					String fragment = scl.getSclName() != null ? "#" + scl.getSclName() : "";
 					URI uri = new URI("fedora:" + repoPath + fragment);
 					IMetadataRepository metaRepo = metadataRM.loadRepository(uri, new NullProgressMonitor());
-					FedoraBundleIndex index = new FedoraBundleIndex(repoPath.toFile());
 					metaRepos.put(repoPath, metaRepo);
-					fbindices.put(repoPath, index);
 				} catch (ProvisionException e) {
 					// ignore and continue if there are repository issues
 				}
