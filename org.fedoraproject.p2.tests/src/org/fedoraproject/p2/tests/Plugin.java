@@ -14,12 +14,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 /**
  * @author Mikolaj Izdebski
@@ -82,13 +82,10 @@ class Plugin {
 	}
 
 	private void addManifestSet(Attributes attr, String key, Set<String> values) {
-		Iterator<String> it = values.iterator();
-		if (!it.hasNext())
+		if (values.isEmpty())
 			return;
-		StringBuilder sb = new StringBuilder(it.next());
-		while (it.hasNext())
-			sb.append(',').append(it.next());
-		attr.put(new Attributes.Name(key), sb.toString());
+		attr.put(new Attributes.Name(key),
+				values.stream().collect(Collectors.joining(",")));
 	}
 
 	public void writeBundle(Path path) throws IOException {

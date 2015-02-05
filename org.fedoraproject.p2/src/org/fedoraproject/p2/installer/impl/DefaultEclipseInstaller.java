@@ -98,10 +98,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		List<Path> sclConfs = request.getConfigFiles();
 		if (sclConfs.isEmpty())
 			sclConfs = EclipseSystemLayout.getSclConfFiles();
-		List<SCL> scls = new ArrayList<>(sclConfs.size());
-		for (Path conf : sclConfs) {
-			scls.add(new SCL(conf));
-		}
+		List<SCL> scls = sclConfs.stream().map(c -> new SCL(c)).collect(Collectors.toList());
 		index = new CompoundBundleRepository(scls);
 
 		SCL currentScl = scls.iterator().next();
@@ -197,14 +194,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						Set<IInstallableUnit> requires = reactorRequires
 								.get(unit);
 						requires.removeAll(content);
-						Iterator<IInstallableUnit> it = requires.iterator();
-						if (it.hasNext()) {
-							StringBuilder sb = new StringBuilder(
-									P2Utils.toString(it.next()));
-							while (it.hasNext())
-								sb.append(',').append(
-										P2Utils.toString(it.next()));
-							provide.setProperty("osgi.requires", sb.toString());
+						if (!requires.isEmpty()) {
+							provide.setProperty("osgi.requires", requires
+									.stream().map(u -> P2Utils.toString(u))
+									.collect(Collectors.joining(",")));
 						}
 					}
 				}
