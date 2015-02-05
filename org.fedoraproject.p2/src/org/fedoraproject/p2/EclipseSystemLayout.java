@@ -53,11 +53,11 @@ public class EclipseSystemLayout {
 			if (expandDropins) {
 				try {
 					for (Path dropin : Files.newDirectoryStream(dropinsDir)) {
-						Path realDropin = dropin;
-						if (!Files.isDirectory(dropin.resolve("plugins"))) {
-							realDropin = dropin.resolve("eclipse");
-							internalDirs.add(realDropin);
+						Path realDropin = dropin.resolve("eclipse");
+						if (!Files.isDirectory(realDropin)) {
+							realDropin = dropin;
 						}
+						internalDirs.add(realDropin);
 					}
 				} catch (IOException e) {
 					// ignore
