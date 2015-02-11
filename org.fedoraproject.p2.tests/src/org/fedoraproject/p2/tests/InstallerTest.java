@@ -813,4 +813,19 @@ public class InstallerTest extends RepositoryTest {
 		expectProvides("A");
 		performTest();
 	}
+
+	// Package ending in '-tests' should install to correct directory
+	@Test
+	public void testSubPackageTest() throws Exception {
+	    addReactorPlugin("A");
+	    addReactorPlugin("testA").assignToTargetPackage("pkg-tests");
+	    expectPlugin("main", "A");
+	    expectProvides("main", "A");
+	    expectProvides("pkg-tests", "testA");
+	    performTest();
+	    Path bundle = buildRoot.resolve(Paths.get("/")
+                .relativize(scl.getTestBundleDir())
+                .resolve("pkg-tests/eclipse/plugins/testA_1.0.0.jar"));
+	    assertTrue(Files.exists(bundle, LinkOption.NOFOLLOW_LINKS));
+	}
 }

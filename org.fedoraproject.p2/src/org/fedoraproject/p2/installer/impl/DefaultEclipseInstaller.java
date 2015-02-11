@@ -141,6 +141,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				logger.info("Creating dropin {}...", name);
 				// TODO decide whether install to archful or noarch dropin dir
 				Path dropinDir = currentScl.getNoarchDropinDir();
+				if (name.endsWith("-tests")) {
+				    dropinDir = currentScl.getTestBundleDir();
+				}
 				if (dropinDir == null)
 					throw new RuntimeException(
 							"Current SCL is not capable of holding Eclipse plugins.");

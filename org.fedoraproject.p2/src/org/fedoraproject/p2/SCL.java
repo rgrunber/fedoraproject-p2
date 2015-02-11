@@ -113,4 +113,13 @@ public class SCL {
 	public Path getSclRoot() {
 		return sclRoot;
 	}
+
+	public Path getTestBundleDir() {
+	    Path dir = null;
+	    if (bundleLocations.size() > 0) {
+	        // First value should be the standard location
+	        dir = bundleLocations.iterator().next();
+	    }
+	    return dir;
+	}
 }
