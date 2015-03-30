@@ -83,10 +83,12 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		}
 		Director.publish(reactorRepo, plugins, features);
 		reactor = reactorRepo.getAllUnits();
+		Set<Path> reactorPaths = reactor.stream().map(u -> P2Utils.getPath(u)).collect(Collectors.toSet());
+		request.getArtifacts().stream().filter(a -> !reactorPaths.contains(a.getPath()))
+				.forEach(a -> logger.error("Not a valid {}: {}", a.isFeature() ? "feature" : "plugin", a.getPath()));
 		if (reactor.stream().collect(Collectors.summingInt(u -> u.getArtifacts().size()))
 				!= plugins.size() + features.size()) {
-			throw new RuntimeException(
-					"Reactor contains unexpected number of installable units");
+			throw new RuntimeException("Reactor contains invalid plugin or feature");
 		}
 
 		ignoreOptional = request.ignoreOptional();
