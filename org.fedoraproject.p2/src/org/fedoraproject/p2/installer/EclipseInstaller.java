@@ -16,12 +16,16 @@ package org.fedoraproject.p2.installer;
  * @author Mikolaj Izdebski
  */
 public interface EclipseInstaller {
-	/**
-	 * Perform installation of Eclipse artifacts.
-	 * 
-	 * @throws Exception
-	 *             if installation fails
-	 */
+    /**
+     * Perform installation of Eclipse artifacts.
+     *
+     * @param request
+     *            The set of requested installation parameters.
+     * @return The installation result, containing the OSGi provided
+     *         capabilities.
+     * @throws Exception
+     *             if installation fails
+     */
 	EclipseInstallationResult performInstallation(
 			EclipseInstallationRequest request) throws Exception;
 }

@@ -28,12 +28,12 @@ public class CompoundBundleRepository extends AbstractBundleRepository {
 	private final List<FedoraBundleRepository> indices;
 
 	/**
-	 * Create a compound repository backed by file system locations at given
-	 * prefixes.
-	 * 
-	 * @param prefixes
-	 *            ordered list of prefixes to use
-	 */
+     * Create a compound repository backed by file system locations at given
+     * prefixes.
+     *
+     * @param scls
+     *            ordered list of prefixes to use
+     */
 	public CompoundBundleRepository(List<SCL> scls) {
 		indices = new ArrayList<>(scls.size());
 		for (SCL scl : scls) {

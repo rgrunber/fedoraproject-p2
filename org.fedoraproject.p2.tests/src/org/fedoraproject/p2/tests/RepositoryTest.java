@@ -48,9 +48,12 @@ public class RepositoryTest {
 	@Rule
 	public TestName testName = new TestName();
 
-	/**
-	 * All access to p2 services happen through the provisioning agent.
-	 */
+    /**
+     * All access to p2 services happen through the provisioning agent.
+     *
+     * @throws Exception
+     *             If the provisioning agent could not be created.
+     */
 	@BeforeClass
 	public static void beforeClass() throws Exception {
 		bc = Platform.getBundle("org.fedoraproject.p2.tests").getBundleContext();

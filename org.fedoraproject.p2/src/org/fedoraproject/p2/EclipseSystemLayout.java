@@ -28,6 +28,7 @@ public class EclipseSystemLayout {
 
 	/**
 	 * Populate the sets containing platform, internal, and external OSGi bundle directories.
+	 * @param scl The software collection for which initialization be performed.
 	 * @param platformDirs A set expected to contain paths for platform directories.
 	 * @param internalDirs A set expected to contain paths for internal directories.
 	 * @param externalDirs A set expected to contain paths for external directories.
