@@ -57,7 +57,7 @@ public class P2InstallerApp {
 		if (!cliRequest.isDryRun())
 			request.setBuildRoot(Paths.get(cliRequest.getRoot()));
 		for (String arg : cliRequest.getParameters())
-			request.addArtifact(new EclipseArtifact(Paths.get(arg), false));
+			request.addArtifact(new EclipseArtifact(Paths.get(arg), false, false));
 		if (!cliRequest.getMappings().isEmpty())
 			throw new RuntimeException("FIXME: for now subpackage mapping is disabled in P2InstallerApp");
 

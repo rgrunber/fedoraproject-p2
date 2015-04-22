@@ -19,14 +19,13 @@ class XMvnEclipseArtifact extends EclipseArtifact {
 
 	private final ArtifactMetadata metadata;
 
-	public XMvnEclipseArtifact(Path path, boolean isFeature,
+	public XMvnEclipseArtifact(Path path, boolean isFeature, boolean isNative,
 			ArtifactMetadata metadata) {
-		super(path, isFeature);
+		super(path, isFeature, isNative);
 		this.metadata = metadata;
 	}
 
 	public ArtifactMetadata getMetadata() {
 		return metadata;
 	}
-
 }

@@ -32,6 +32,7 @@ class Plugin {
 	private final Attributes attr = mf.getMainAttributes();
 	private Path path;
 	private String targetPackage;
+	private boolean isNative;
 
 	public Plugin(String id, String ver) {
 		attr.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -56,6 +57,10 @@ class Plugin {
 		return targetPackage;
 	}
 
+	public boolean isNative() {
+		return isNative;
+	}
+
 	public Plugin importPackage(String name) {
 		imports.add(name);
 		return this;
@@ -78,6 +83,11 @@ class Plugin {
 
 	public Plugin assignToTargetPackage(String pkg) {
 		targetPackage = pkg;
+		return this;
+	}
+
+	public Plugin hasNative() {
+		isNative = true;
 		return this;
 	}
 
