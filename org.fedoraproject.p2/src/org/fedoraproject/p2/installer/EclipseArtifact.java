@@ -24,6 +24,8 @@ public class EclipseArtifact {
 
 	private final boolean isFeature;
 
+	private final boolean isNative;
+
 	private String targetPackage;
 
 	private String id;
@@ -34,9 +36,10 @@ public class EclipseArtifact {
 
 	private final Map<String, String> properties = new LinkedHashMap<>();
 
-	public EclipseArtifact(Path path, boolean isFeature) {
+	public EclipseArtifact(Path path, boolean isFeature, boolean isNative) {
 		this.path = path;
 		this.isFeature = isFeature;
+		this.isNative = isNative;
 	}
 
 	public Path getPath() {
@@ -45,6 +48,10 @@ public class EclipseArtifact {
 
 	public boolean isFeature() {
 		return isFeature;
+	}
+
+	public boolean isNative() {
+		return isNative;
 	}
 
 	public String getTargetPackage() {

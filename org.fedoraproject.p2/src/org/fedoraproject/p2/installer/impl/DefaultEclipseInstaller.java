@@ -140,20 +140,37 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			for (Entry<String, Set<IInstallableUnit>> entry : metapkg
 					.getPackageMap().entrySet()) {
 				String name = entry.getKey();
-				logger.info("Creating dropin {}...", name);
-				// TODO decide whether install to archful or noarch dropin dir
-				Path dropinDir = currentScl.getNoarchDropinDir();
+				Set<IInstallableUnit> content = entry.getValue();
+
+				// Find if any IUs in this package use or contain native components
+				boolean archfulDropin = false;
+				for (IInstallableUnit unit : content) {
+					EclipseArtifact provide = reactorMap.get(P2Utils.getPath(unit));
+					if (provide != null && provide.isNative()) {
+						archfulDropin = true;
+					}
+				}
+
+				// Determine the dropins directory to use
+				Path dropinDir;
 				if (name.endsWith("-tests")) {
-				    dropinDir = currentScl.getTestBundleDir();
+					dropinDir = currentScl.getTestBundleDir();
+				} else {
+					if (archfulDropin) {
+						dropinDir = currentScl.getArchDropinDir();
+					} else {
+						dropinDir = currentScl.getNoarchDropinDir();
+					}
 				}
 				if (dropinDir == null)
 					throw new RuntimeException(
 							"Current SCL is not capable of holding Eclipse plugins.");
 				dropinDir = Paths.get("/").relativize(dropinDir);
+
+				logger.info("Creating {} dropin {}...", archfulDropin ? "archful" : "noarch", name);
 				Dropin dropin = new Dropin(name, dropinDir.resolve(name));
 				dropins.add(dropin);
 
-				Set<IInstallableUnit> content = entry.getValue();
 				P2Utils.dump("Metapackage contents", content);
 				Set<IInstallableUnit> symlinks = new LinkedHashSet<>();
 				symlinks.addAll(content);

@@ -20,9 +20,9 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.fedoraproject.xmvn.artifact.Artifact;
 import org.fedoraproject.xmvn.artifact.DefaultArtifact;
 import org.fedoraproject.xmvn.config.PackagingRule;
@@ -31,6 +31,7 @@ import org.fedoraproject.xmvn.tools.install.ArtifactInstallationException;
 import org.fedoraproject.xmvn.tools.install.ArtifactInstaller;
 import org.fedoraproject.xmvn.tools.install.Directory;
 import org.fedoraproject.xmvn.tools.install.File;
+import org.fedoraproject.xmvn.tools.install.JarUtils;
 import org.fedoraproject.xmvn.tools.install.JavaPackage;
 import org.fedoraproject.xmvn.tools.install.RegularFile;
 import org.fedoraproject.xmvn.tools.install.SymbolicLink;
@@ -65,13 +66,18 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 						&& !am.getClassifier().equals("sources-feature")))
 			return;
 
+		boolean isNative = false;
+		if (JarUtils.usesNativeCode(path) || JarUtils.containsNativeCode(path)) {
+			isNative = true;
+		}
+
 		String type = am.getProperties().getProperty("type");
 		boolean isFeature = type.equals("eclipse-feature");
 		EclipseArtifact provide;
 		if (type.equals("eclipse-plugin") || type.equals("eclipse-test-plugin"))
-			provide = new XMvnEclipseArtifact(path, false, am);
+			provide = new XMvnEclipseArtifact(path, false, isNative, am);
 		else if (isFeature)
-			provide = new XMvnEclipseArtifact(path, true, am);
+			provide = new XMvnEclipseArtifact(path, true, isNative, am);
 		else
 			return;
 		request.addArtifact(provide);

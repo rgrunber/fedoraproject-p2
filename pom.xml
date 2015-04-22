@@ -24,7 +24,7 @@
 
   <properties>
     <tycho-version>0.22.0</tycho-version>
-    <xmvn-version>2.1.0</xmvn-version>
+    <xmvn-version>2.4.0-SNAPSHOT</xmvn-version>
   </properties>
 
   <modules>

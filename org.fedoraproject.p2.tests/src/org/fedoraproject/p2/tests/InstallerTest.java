@@ -195,13 +195,19 @@ public class InstallerTest extends RepositoryTest {
 	}
 
 	public void performTest() throws Exception {
+		boolean visitArchful = false;
 		for (Plugin plugin : collectPlugins(reactorPlugins, reactor)) {
-			EclipseArtifact artifact = new EclipseArtifact(plugin.getPath(), false);
+			EclipseArtifact artifact = new EclipseArtifact(plugin.getPath(),
+					false, plugin.isNative());
 			artifact.setTargetPackage(plugin.getTargetPackage());
 			request.addArtifact(artifact);
+			if (plugin.isNative()) {
+				visitArchful = true;
+			}
 		}
 		for (Feature feature : collectFeatures(reactorFeatures, reactor)) {
-			EclipseArtifact artifact = new EclipseArtifact(feature.getPath(), true);
+			EclipseArtifact artifact = new EclipseArtifact(feature.getPath(),
+					true, false);
 			artifact.setTargetPackage(feature.getTargetPackage());
 			request.addArtifact(artifact);
 		}
@@ -218,6 +224,10 @@ public class InstallerTest extends RepositoryTest {
 				.performInstallation(request);
 
 		replay(visitor);
+		if (visitArchful) {
+			visitDropins(buildRoot.resolve(Paths.get("/").relativize(
+					scl.getArchDropinDir())));
+		}
 		visitDropins(buildRoot.resolve(Paths.get("/").relativize(
 				scl.getNoarchDropinDir())));
 		visitResult(result);
@@ -817,15 +827,42 @@ public class InstallerTest extends RepositoryTest {
 	// Package ending in '-tests' should install to correct directory
 	@Test
 	public void testSubPackageTest() throws Exception {
-	    addReactorPlugin("A");
-	    addReactorPlugin("testA").assignToTargetPackage("pkg-tests");
-	    expectPlugin("main", "A");
-	    expectProvides("main", "A");
-	    expectProvides("pkg-tests", "testA");
-	    performTest();
-	    Path bundle = buildRoot.resolve(Paths.get("/")
-                .relativize(scl.getTestBundleDir())
-                .resolve("pkg-tests/eclipse/plugins/testA_1.0.0.jar"));
-	    assertTrue(Files.exists(bundle, LinkOption.NOFOLLOW_LINKS));
+		addReactorPlugin("A");
+		addReactorPlugin("testA").assignToTargetPackage("pkg-tests");
+		expectPlugin("main", "A");
+		expectProvides("main", "A");
+		expectProvides("pkg-tests", "testA");
+		performTest();
+		Path bundle = buildRoot.resolve(Paths.get("/")
+				.relativize(scl.getTestBundleDir())
+				.resolve("pkg-tests/eclipse/plugins/testA_1.0.0.jar"));
+		assertTrue(Files.exists(bundle, LinkOption.NOFOLLOW_LINKS));
+	}
+
+	// If at least one bundle in the dropin has a native component or uses
+	// native code then the dropin should be installed into the "archful"
+	// dropins location
+	@Test
+	public void archfulDropinInstallTest() throws Exception {
+		addReactorPlugin("A");
+		addReactorPlugin("B").hasNative();
+		addReactorPlugin("A_A").assignToTargetPackage("noarch-subpkg");
+		addReactorPlugin("B_B").assignToTargetPackage("noarch-subpkg");
+		expectPlugin("A");
+		expectPlugin("B");
+		expectProvides("A");
+		expectProvides("B");
+		expectPlugin("noarch-subpkg", "A_A");
+		expectPlugin("noarch-subpkg", "B_B");
+		expectProvides("noarch-subpkg", "A_A");
+		expectProvides("noarch-subpkg", "B_B");
+		performTest();
+		// check install locations
+		Path noarchDropin = buildRoot.resolve(Paths.get("/")
+				.relativize(scl.getNoarchDropinDir()).resolve("noarch-subpkg"));
+		Path archfulDropin = buildRoot.resolve(Paths.get("/")
+				.relativize(scl.getArchDropinDir()).resolve("main"));
+		assertTrue(Files.exists(noarchDropin, LinkOption.NOFOLLOW_LINKS));
+		assertTrue(Files.exists(archfulDropin, LinkOption.NOFOLLOW_LINKS));
 	}
 }
