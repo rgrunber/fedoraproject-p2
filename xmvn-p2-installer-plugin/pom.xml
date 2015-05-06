@@ -61,6 +61,7 @@
     <dependency>
       <groupId>org.eclipse.osgi</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
+      <version>${equinox-version}</version>
     </dependency>
     <dependency>
       <groupId>org.fedoraproject.xmvn</groupId>
