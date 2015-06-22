@@ -38,12 +38,15 @@ import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.IRepositoryReference;
 import org.eclipse.equinox.p2.repository.IRunnableWithProgress;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FedoraMetadataRepository implements IMetadataRepository {
 
 	private IProvisioningAgent agent;
 	private URI location;
 	private Set<IInstallableUnit> unitCache;
+	private final Logger logger = LoggerFactory.getLogger(FedoraMetadataRepository.class);
 
 	public FedoraMetadataRepository(IProvisioningAgent agent, URI location) {
 		this.agent = agent;
@@ -137,9 +140,13 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 
 	        for (File bundleFile : bundlePlugins) {
 	            IArtifactKey key = index.getKeyForFile(bundleFile);
-	            IInstallableUnit unit = PublisherUtil.createBundleIU(key, bundleFile);
-	            P2Utils.setPath(unit, bundleFile);
-	            unitCache.add(unit);
+	            try {
+	                IInstallableUnit unit = PublisherUtil.createBundleIU(key, bundleFile);
+	                P2Utils.setPath(unit, bundleFile);
+	                unitCache.add(unit);
+	            } catch (RuntimeException e) {
+	                logger.warn("{} ({}) is not a valid bundle so it will be ignored.", key, bundleFile);
+	            }
 	        }
 
 	        if (! bundleFeatures.isEmpty()) {
