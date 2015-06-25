@@ -36,7 +36,6 @@ public class MetadataRepositoryTest extends RepositoryTest {
 		try {
 			IMetadataRepository repo = getMetadataRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
 			assertEquals(FedoraMetadataRepository.class.getName() + " must own the proper namespace", FedoraMetadataRepository.class.getName(), repo.getType());
-			System.out.println(repo.getName() + ", " + repo.getDescription() + ", " + repo.getProvider());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail ();
@@ -50,9 +49,6 @@ public class MetadataRepositoryTest extends RepositoryTest {
 			IQueryResult<IInstallableUnit> res = repo.query(QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
 			Set<IInstallableUnit> units = res.toUnmodifiableSet();
 			assertTrue("Metadata Repository must not be empty", units.size() > 0);
-			for (IInstallableUnit u : units) {
-				System.out.println(u.getId() + " " + u.getVersion());
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail();
