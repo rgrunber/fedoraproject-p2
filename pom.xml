@@ -23,7 +23,7 @@
   <name>Fedora Project p2 Parent</name>
 
   <properties>
-    <tycho-version>0.22.0</tycho-version>
+    <tycho-version>0.23.0</tycho-version>
     <xmvn-version>2.4.0</xmvn-version>
     <equinox-version>3.4.0.v20140613-1134</equinox-version>
   </properties>
@@ -37,23 +37,23 @@
   <profiles>
     <profile>
       <id>luna</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <platform-repo>http://download.eclipse.org/releases/luna</platform-repo>
       </properties>
     </profile>
     <profile>
       <id>mars</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
-        <platform-repo>http://download.eclipse.org/eclipse/updates/4.5milestones</platform-repo>
+        <platform-repo>http://download.eclipse.org/releases/mars</platform-repo>
       </properties>
       <repositories>
         <repository>
           <id>orbit-repo</id>
           <layout>p2</layout>
-          <url>http://download.eclipse.org/tools/orbit/downloads/drops/S20141023165154/repository/</url>
+          <url>http://download.eclipse.org/tools/orbit/downloads/drops/R20150519210750/repository/</url>
         </repository>
       </repositories>
     </profile>
