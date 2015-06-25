@@ -59,7 +59,7 @@
       <classifier>no_aop</classifier>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.osgi</groupId>
+      <groupId>org.eclipse.tycho</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
       <version>${equinox-version}</version>
     </dependency>
@@ -76,20 +76,6 @@
       <artifactId>guava</artifactId>
     </dependency>
   </dependencies>
-  <repositories>
-    <repository>
-      <id>xmvn</id>
-      <url>http://mizdebsk.fedorapeople.org/xmvn/repo/</url>
-      <snapshots>
-        <enabled>true</enabled>
-        <checksumPolicy>fail</checksumPolicy>
-      </snapshots>
-      <releases>
-        <enabled>true</enabled>
-        <checksumPolicy>fail</checksumPolicy>
-      </releases>
-    </repository>
-  </repositories>
   <build>
     <pluginManagement>
       <plugins>
