@@ -100,8 +100,6 @@ public class EclipseSystemLayout {
 	public static List<Path> getSclConfFiles() {
 		try {
 			return getSclConfFiles(System.getenv("JAVACONFDIRS"));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(
 					"Invalid JAVACONFDIRS environmental variable", e);
@@ -115,10 +113,8 @@ public class EclipseSystemLayout {
 	 * @param confDirs
 	 *            colon-delimited list of Java configuration directories
 	 * @return An ordered set of software collection roots
-	 * @throws IOException
-	 *             if I/O error occurs
 	 */
-	public static List<Path> getSclConfFiles(String confDirs) throws IOException {
+	public static List<Path> getSclConfFiles(String confDirs) {
 		// Empty or unset JAVACONFDIRS means that no SCLs are enabled
 		if (confDirs == null || confDirs.isEmpty()) {
 			confDirs = "/etc/java";

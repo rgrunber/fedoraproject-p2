@@ -57,7 +57,7 @@ public class RepositoryTest {
 	@BeforeClass
 	public static void beforeClass() throws Exception {
 		bc = Platform.getBundle("org.fedoraproject.p2.tests").getBundleContext();
-		ServiceReference<?> sr = (ServiceReference<?>) bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
+		ServiceReference<?> sr = bc.getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);
 		IProvisioningAgentProvider pr = (IProvisioningAgentProvider) bc.getService(sr);
 		agent = pr.createAgent(null);
 		metadataRM = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);

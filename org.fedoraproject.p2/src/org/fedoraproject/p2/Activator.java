@@ -21,11 +21,8 @@ public class Activator implements BundleActivator {
 		return context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
-	 */
-	public void start(BundleContext bundleContext) throws Exception {
+	@Override
+	public void start(BundleContext bundleContext) {
 		Activator.context = bundleContext;
 		/**
 		 *  TODO: It would be nice if the RepositorySelectionGroup dialog
@@ -41,11 +38,8 @@ public class Activator implements BundleActivator {
 		//getContext().registerService(URLStreamHandlerService.class.getName(), new FedoraURLHandler(), properties);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
-	 */
-	public void stop(BundleContext bundleContext) throws Exception {
+	@Override
+	public void stop(BundleContext bundleContext) {
 		Activator.context = null;
 	}
 

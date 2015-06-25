@@ -57,8 +57,7 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 
 	@Override
 	public void install(JavaPackage targetPackage, ArtifactMetadata am,
-			PackagingRule rule, String basePackageName)
-			throws ArtifactInstallationException {
+			PackagingRule rule, String basePackageName) {
 		Path path = Paths.get(am.getPath());
 
 		if (!am.getExtension().equals("jar")

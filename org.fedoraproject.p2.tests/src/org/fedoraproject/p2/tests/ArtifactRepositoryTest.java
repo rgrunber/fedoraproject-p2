@@ -32,7 +32,6 @@ public class ArtifactRepositoryTest extends RepositoryTest {
 		try {
 			IArtifactRepository repo = getArtifactRepoManager().loadRepository(new URI (JAVADIR), new NullProgressMonitor());
 			assertEquals(FedoraArtifactRepository.class.getName() + " must own the proper namespace", FedoraArtifactRepository.class.getName(), repo.getType());
-			System.out.println(repo.getName() + ", " + repo.getDescription() + ", " + repo.getProvider());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail ();
@@ -46,9 +45,6 @@ public class ArtifactRepositoryTest extends RepositoryTest {
 			IQueryResult<IArtifactKey> res = repo.query(ArtifactKeyQuery.ALL_KEYS, new NullProgressMonitor());
 			Set<IArtifactKey> keys = res.toUnmodifiableSet();
 			assertTrue("Artifact Repository must not be empty", keys.size() > 0);
-			for (IArtifactKey k : keys) {
-				System.out.println(k.getClassifier() + " " + k.getId() + " " + k.getVersion());
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail();
