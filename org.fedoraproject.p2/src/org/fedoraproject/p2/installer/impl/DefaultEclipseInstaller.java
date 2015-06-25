@@ -37,10 +37,10 @@ import org.fedoraproject.p2.IFedoraBundleRepository;
 import org.fedoraproject.p2.P2Utils;
 import org.fedoraproject.p2.SCL;
 import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

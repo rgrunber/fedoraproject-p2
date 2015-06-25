@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
-import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.Version;
 import org.eclipse.equinox.p2.publisher.eclipse.BundlesAction;
@@ -187,20 +186,13 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 			if (file.isDirectory()) {
 				createJarFromDir(file, destination);
 			} else {
-				FileInputStream fi = null;
-				try {
-					fi = new FileInputStream(file);
+				try (FileInputStream fi = new FileInputStream(file);){
 					byte [] buf = new byte[4096];
 					int len;
 					while ((len = fi.read(buf)) != -1) {
 						destination.write(buf, 0, len);
 					}
 				} catch (IOException e) {
-				} finally {
-					try {
-						fi.close();
-					} catch (IOException e) {
-					}
 				}
 			}
 		} else if (key.getClassifier().equals("org.eclipse.update.feature")) {
@@ -271,8 +263,7 @@ public class FedoraArtifactRepository implements IArtifactRepository {
 	}
 
 	@Override
-	public OutputStream getOutputStream(IArtifactDescriptor descriptor)
-			throws ProvisionException {
+	public OutputStream getOutputStream(IArtifactDescriptor descriptor) {
 		return null;
 	}
 
