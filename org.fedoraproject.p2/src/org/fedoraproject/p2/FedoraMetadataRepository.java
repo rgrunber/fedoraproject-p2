@@ -122,7 +122,7 @@ public class FedoraMetadataRepository implements IMetadataRepository {
 	}
 
 	@Override
-	public Object getAdapter(Class adapter) {
+	public <T> T getAdapter(Class<T> adapter) {
 		return null;
 	}
 
