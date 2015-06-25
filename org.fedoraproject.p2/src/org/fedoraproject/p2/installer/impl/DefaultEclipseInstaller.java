@@ -213,6 +213,11 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						Set<IInstallableUnit> requires = reactorRequires
 								.get(unit);
 						requires.removeAll(content);
+						// Remove all fragments from requires generation
+						requires.removeAll(requires.stream().filter(
+						        r -> r.getProvidedCapabilities().stream().anyMatch(
+						                p -> p.getNamespace().equals("osgi.fragment")))
+                                        .collect(Collectors.toSet()));
 						if (!requires.isEmpty()) {
 							provide.setProperty("osgi.requires", requires
 									.stream().map(u -> P2Utils.toString(u))
