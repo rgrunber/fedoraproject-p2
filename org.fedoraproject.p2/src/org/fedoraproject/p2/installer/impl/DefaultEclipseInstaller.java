@@ -83,6 +83,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		}
 		Director.publish(reactorRepo, plugins, features);
 		reactor = reactorRepo.getAllUnits();
+		// Remove all host localization fragments
+		reactor.removeAll(reactor.stream()
+                .filter(u -> u.getId().endsWith("translated_host_properties"))
+                .collect(Collectors.toSet()));
 		Set<Path> reactorPaths = reactor.stream().map(u -> P2Utils.getPath(u)).collect(Collectors.toSet());
 		request.getArtifacts().stream().filter(a -> !reactorPaths.contains(a.getPath()))
 				.forEach(a -> logger.error("Not a valid {}: {}", a.isFeature() ? "feature" : "plugin", a.getPath()));
