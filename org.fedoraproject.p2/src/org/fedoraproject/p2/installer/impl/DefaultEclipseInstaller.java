@@ -14,7 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -64,6 +67,8 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 	private IFedoraBundleRepository index;
 
 	private boolean ignoreOptional;
+
+	private Set<IInstallableUnit> unitCache;
 
 	@Override
 	public EclipseInstallationResult performInstallation(
@@ -255,6 +260,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private void resolveDeps() {
 		reactorRequires = new LinkedHashMap<>();
+		unitCache = new LinkedHashSet<>();
 
 		metapackageLookup = new LinkedHashMap<>();
 		for (Package metapackage : metapackages)
@@ -307,34 +313,57 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			boolean generateDep, boolean generateReq) {
 		IQuery<IInstallableUnit> query = QueryUtil.createMatchQuery(req
 				.getMatches());
-		Set<IInstallableUnit> matches = query.perform(repo.iterator())
-				.toUnmodifiableSet();
+		List<IInstallableUnit> matches = Arrays.asList(query.perform(repo.iterator())
+				.toUnmodifiableSet().toArray(new IInstallableUnit[0]));
 		if (matches.isEmpty())
 			return false;
-		if (matches.size() > 1)
-			logger.warn(
-					"More than one {} unit satisfies dependency from {} to {}",
-					desc, iu, req);
 
-		for (IInstallableUnit match : matches) {
-			logger.debug("      => {} ({})", match, desc);
+		IInstallableUnit match = null;
+		if (matches.size() > 1) {
+		    logger.warn(
+		            "More than one {} unit satisfies dependency from {} to {}",
+		            desc, iu, req);
 
-			if (generateDep) {
-				Package dep = metapackageLookup.get(match);
-				if (dep == null) {
-					dep = Package.creeateVirtual(match, true);
-					metapackageLookup.put(match, dep);
-					toProcess.add(dep);
-					metapackages.add(dep);
+			for (IInstallableUnit u : matches) {
+				if (unitCache.contains(u)) {
+					match = u;
+					break;
 				}
-				Package metapackage = metapackageLookup.get(iu);
-				metapackage.addDependency(dep);
 			}
+		}
+		if (match == null) {
+            Collections.sort(matches, new Comparator<IInstallableUnit>() {
+                @Override
+                public int compare(IInstallableUnit u, IInstallableUnit v) {
+                    int vRet = u.getVersion().compareTo(v.getVersion());
+                    if (vRet == 0) {
+                        return u.getProvidedCapabilities().size() <= v.getProvidedCapabilities().size() ? -1 : 1;
+                    } else {
+                        return -vRet;
+                    }
+                }
+            });
+            match = matches.get(0);
+        }
+
+		unitCache.add(match);
+		logger.debug("      => {} ({})", match, desc);
+
+		if (generateDep) {
+		    Package dep = metapackageLookup.get(match);
+		    if (dep == null) {
+		        dep = Package.creeateVirtual(match, true);
+		        metapackageLookup.put(match, dep);
+		        toProcess.add(dep);
+		        metapackages.add(dep);
+		    }
+		    Package metapackage = metapackageLookup.get(iu);
+		    metapackage.addDependency(dep);
 		}
 
 		if (generateReq) {
 			Set<IInstallableUnit> requires = reactorRequires.get(iu);
-			requires.addAll(matches);
+			requires.add(match);
 		}
 
 		return true;

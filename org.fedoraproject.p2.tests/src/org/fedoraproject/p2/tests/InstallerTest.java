@@ -606,27 +606,26 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 	}
 
-	// Two unit satisfy one dependency. Both should be symlinked to let OSGi
-	// framework choose better provider at runtime.
+	// Multiple units satisfy one dependency.
+	// highest versioned unit, with least provides should be symlinked
 	@Test
 	public void multipleProvidersTest() throws Exception {
-		addExternalPlugin("lib1").exportPackage("foo.bar");
-		addExternalPlugin("another-lib").exportPackage("foo.bar");
+		addExternalPlugin("lib1", "5.0.0").exportPackage("foo.bar").exportPackage("baz").exportPackage("biz");
+		addExternalPlugin("lib2", "5.0.0").exportPackage("foo.bar").exportPackage("baz");
+		addExternalPlugin("lib3", "3.0.0").exportPackage("foo.bar");
 		addReactorPlugin("A").importPackage("foo.bar");
 		expectPlugin("A");
-		expectSymlink("lib1");
-		expectSymlink("another-lib");
-		expectRequires("lib1");
-		expectRequires("another-lib");
+		expectSymlink("lib2");
+		expectRequires("lib2");
 		expectProvides("A");
 		performTest();
 	}
 
 	private void addVersionedPlugins() {
-		addExternalPlugin("P2").exportPackage("foo.bar;version=2");
-		addExternalPlugin("P3").exportPackage("foo.bar;version=3");
-		addExternalPlugin("P4").exportPackage("foo.bar;version=4");
-		addExternalPlugin("P5").exportPackage("foo.bar;version=5");
+		addExternalPlugin("P2", "2").exportPackage("foo.bar;version=2");
+		addExternalPlugin("P3", "3").exportPackage("foo.bar;version=3");
+		addExternalPlugin("P4", "4").exportPackage("foo.bar;version=4");
+		addExternalPlugin("P5", "5").exportPackage("foo.bar;version=5");
 	}
 
 	// Versioned requirement must be satisfied only by bundles with matching
@@ -636,9 +635,7 @@ public class InstallerTest extends RepositoryTest {
 		addVersionedPlugins();
 		addReactorPlugin("A").importPackage("foo.bar;version=4.0.0");
 		expectPlugin("A");
-		expectSymlink("P4");
 		expectSymlink("P5");
-		expectRequires("P4");
 		expectRequires("P5");
 		expectProvides("A");
 		performTest();
@@ -650,9 +647,7 @@ public class InstallerTest extends RepositoryTest {
 		addVersionedPlugins();
 		addReactorPlugin("A").importPackage("foo.bar;version=\"[2.5,5.0.0)\"");
 		expectPlugin("A");
-		expectSymlink("P3");
 		expectSymlink("P4");
-		expectRequires("P3");
 		expectRequires("P4");
 		expectProvides("A");
 		performTest();
@@ -664,13 +659,7 @@ public class InstallerTest extends RepositoryTest {
 		addVersionedPlugins();
 		addReactorPlugin("A").importPackage("foo.bar;version=0.0.0");
 		expectPlugin("A");
-		expectSymlink("P2");
-		expectSymlink("P3");
-		expectSymlink("P4");
 		expectSymlink("P5");
-		expectRequires("P2");
-		expectRequires("P3");
-		expectRequires("P4");
 		expectRequires("P5");
 		expectProvides("A");
 		performTest();
