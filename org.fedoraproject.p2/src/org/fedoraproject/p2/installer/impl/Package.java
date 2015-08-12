@@ -169,12 +169,12 @@ public class Package {
 		S.push(v);
 
 		for (Package w : v.deps) {
-			if (v.index == 0) {
+			if (w.index == 0) {
 				strongconnect(V, w, index, S);
 
 				v.lowlink = Math.min(v.lowlink, w.lowlink);
 			} else if (S.contains(w)) {
-				v.lowlink = Math.min(v.lowlink, w.lowlink);
+				v.lowlink = Math.min(v.lowlink, w.index);
 			}
 		}
 
