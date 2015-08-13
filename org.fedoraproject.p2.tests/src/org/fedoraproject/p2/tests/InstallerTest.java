@@ -583,6 +583,74 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 	}
 
+	@Test
+	public void trickyExpandVirtualPackagesLogic() throws Exception {
+		// mockito -> junit
+		addExternalPlugin("org.junit").exportPackage("org.junit");
+		addExternalPlugin("org.mockito")
+		.exportPackage("org.mockito")
+		.importPackage("org.junit");
+
+		// mylyn-sdk -> junit
+		addReactorPlugin("org.eclipse.mylyn.sdk")
+		.exportPackage("org.eclipse.mylyn.test.util")
+		.importPackage("org.junit")
+		.assignToTargetPackage("mylyn-sdk");
+
+		// mylyn-test -> mylyn-sdk
+		// mylyn-test -> mockito
+		// mylyn-test -> junit
+		addReactorPlugin("org.eclipse.mylyn.test")
+		.importPackage("org.eclipse.mylyn.test.util")
+		.importPackage("org.junit")
+		.importPackage("org.mockito")
+		.assignToTargetPackage("mylyn-test");
+
+		expectPlugin("mylyn-test", "org.eclipse.mylyn.test");
+		expectProvides("mylyn-test", "org.eclipse.mylyn.test");
+		expectPlugin("mylyn-sdk", "org.eclipse.mylyn.sdk");
+		expectProvides("mylyn-sdk", "org.eclipse.mylyn.sdk");
+
+		expectSymlink("mylyn-test", "org.junit");
+		expectSymlink("mylyn-test", "org.mockito");
+		expectRequires("mylyn-test", "org.eclipse.mylyn.sdk");
+		expectRequires("mylyn-test", "org.junit");
+		expectRequires("mylyn-test", "org.mockito");
+
+		expectSymlink("mylyn-sdk", "org.junit");
+		expectRequires("mylyn-sdk", "org.junit");
+
+		/*
+		 * expectSymlink("mylyn-sdk", "org.mockito");
+		 * This line was would have been expected in the past.
+		 * 
+		 * [junit], [mockito], [mylyn-sdk], [mylyn-test]
+		 * 
+		 * mylyn-test, mylyn-sdk, and mockito depend on the junit
+		 * virtual package, so it was merged into each of these.
+		 * 
+		 * [mockito, junit], [mylyn-sdk, junit], [mylyn-test, junit]
+		 * 
+		 * The thing to note is that [mylyn-sdk, junit] actually depends
+		 * on [mockito, junit]. This is because the merging states
+		 * (among other things) that [mockito, junit] shall inherit all
+		 * the reverse dependencies of [junit]. In other words, if
+		 * something depended on [junit] before (eg. [mylyn-sdk], it
+		 * now must depend on [mockito, junit]. This is fine for
+		 * mylyn-test since it needs mockito, but mylyn-sdk has
+		 * basically grown an extraneous dependency.
+		 * 
+		 * Now, the virtual package containing mockito and junit
+		 * get merged into mylyn-test and mylyn-sdk, causing this
+		 * bug, because mylyn-sdk doesn't need mockito.
+		 * 
+		 * [mylyn-sdk, junit, mockito], [mylyn-test, junit, mockito]
+		 * 
+		 */
+
+		performTest();
+	}
+
 	// Unresolved dependencies shouldn't cause installation failure.
 	@Test
 	public void unresolvedDependencyTest() throws Exception {
