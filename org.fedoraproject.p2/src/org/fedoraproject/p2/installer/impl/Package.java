@@ -183,7 +183,10 @@ public class Package {
 				if (w.revdeps.size() == 1 || w.isSplittable) {
 					iw.remove();
 					for (Package v : w.revdeps) {
-						v.merge(w);
+						// Do not merge into virtual packages
+						if (v.virtual.isEmpty()) {
+							v.merge(w);
+						}
 					}
 
 					continue main_loop;
