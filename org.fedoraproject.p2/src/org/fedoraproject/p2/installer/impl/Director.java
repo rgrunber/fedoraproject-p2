@@ -38,7 +38,6 @@ import org.fedoraproject.p2.P2Utils;
 /**
  * @author Mikolaj Izdebski
  */
-@SuppressWarnings("restriction")
 public class Director {
 	public static void publish(Repository repository, Iterable<Path> bundles,
 			Iterable<Path> features) throws ProvisionException {

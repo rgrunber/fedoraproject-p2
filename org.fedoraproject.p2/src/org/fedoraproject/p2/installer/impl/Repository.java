@@ -33,7 +33,6 @@ import org.fedoraproject.p2.P2Utils;
 /**
  * @author Mikolaj Izdebski
  */
-@SuppressWarnings("restriction")
 public class Repository {
 
 	private static Path tempDir;
