@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.slf4j.Logger;
@@ -61,6 +62,20 @@ public class Package {
 		metapackage.isSplittable = isSplittable;
 
 		return metapackage;
+	}
+
+	private Package split() {
+		Package v = new Package();
+		v.isSplittable = true;
+		v.virtual.addAll(virtual);
+		v.deps.addAll(deps);
+		Iterator<Package> iw = revdeps.iterator();
+		v.revdeps.add(iw.next());
+		iw.remove();
+		for (Package w : deps) {
+			w.revdeps.add(v);
+		}
+		return v;
 	}
 
 	private void merge(Package v) {
@@ -113,6 +128,15 @@ public class Package {
 		if (dep != this) {
 			deps.add(dep);
 			dep.revdeps.add(this);
+		}
+	}
+
+	public static void splitSplittable(Set<Package> V) {
+		Set<Package> Vs = V.stream().filter(v -> v.isSplittable).collect(Collectors.toSet());
+		for (Package v : Vs) {
+			while (v.revdeps.size() > 1) {
+				V.add(v.split());
+			}
 		}
 	}
 
@@ -180,7 +204,7 @@ public class Package {
 					continue main_loop;
 				}
 
-				if (w.revdeps.size() == 1 || w.isSplittable) {
+				if (w.revdeps.size() == 1) {
 					iw.remove();
 					for (Package v : w.revdeps) {
 						v.merge(w);

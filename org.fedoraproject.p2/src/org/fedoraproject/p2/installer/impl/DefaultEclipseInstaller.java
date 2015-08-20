@@ -141,6 +141,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		createMetapackages(packages);
 		resolveDeps();
 		Package.detectStrongComponents(metapackages);
+		Package.splitSplittable(metapackages);
 		Package.expandVirtualPackages(metapackages, request.getMainPackageId());
 
 		Set<Dropin> dropins = new LinkedHashSet<>();
