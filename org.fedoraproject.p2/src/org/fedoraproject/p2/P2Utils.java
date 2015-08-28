@@ -124,4 +124,17 @@ public class P2Utils {
 		if (sorted.isEmpty())
 			logger.debug("  (none)");
 	}
+
+	public static void delete (File root) {
+		if (root.isDirectory()) {
+			for (File child : root.listFiles()) {
+				if (child.isDirectory() && child.canRead()) {
+					delete(child);
+				} else {
+					child.delete();
+				}
+			}
+		}
+		root.delete();
+	}
 }

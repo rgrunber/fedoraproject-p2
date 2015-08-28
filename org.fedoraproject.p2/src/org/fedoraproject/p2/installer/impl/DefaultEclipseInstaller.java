@@ -191,7 +191,13 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 				Path installationPath = dropin.getPath().resolve("eclipse");
 				if (request.getBuildRoot() != null) {
-					createRunnableRepository(reactorRepo, request
+					Repository dropinRepo = Repository.createTemp();
+					Set<Path> dropinPaths = new LinkedHashSet<> (plugins);
+					dropinPaths.addAll(
+							symlinks.stream().map(u -> P2Utils.getPath(u))
+									.collect(Collectors.toSet()));
+					Director.publish(dropinRepo, dropinPaths, features);
+					createRunnableRepository(dropinRepo, request
 							.getBuildRoot().resolve(installationPath), content, symlinks);
 				}
 
@@ -395,7 +401,9 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			Set<IInstallableUnit> symlinks) throws Exception {
 		logger.debug("Creating runnable repository...");
 		Repository packageRepo = Repository.createTemp();
-		Director.mirror(packageRepo, reactorRepo, content);
+		Set<IInstallableUnit> dropinContent = new LinkedHashSet<>(content);
+		dropinContent.addAll(symlinks);
+		Director.mirror(packageRepo, reactorRepo, dropinContent);
 		Repository runnableRepo = Repository.create(installationPath);
 		Director.repo2runnable(runnableRepo, packageRepo);
 		Files.delete(installationPath.resolve("artifacts.jar"));
@@ -410,6 +418,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			} else {
 				String baseName = iu.getId() + "_" + iu.getVersion();
 				String suffix = Files.isDirectory(path) ? "" : ".jar";
+				P2Utils.delete(pluginsDir.resolve(baseName + suffix).toFile());
 				Files.createSymbolicLink(pluginsDir.resolve(baseName + suffix),
 						path);
 				logger.debug("Linked external dependency {} => {}", baseName
