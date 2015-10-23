@@ -69,9 +69,14 @@ public class Package {
 		v.isSplittable = true;
 		v.virtual.addAll(virtual);
 		v.deps.addAll(deps);
-		Iterator<Package> iw = revdeps.iterator();
-		v.revdeps.add(iw.next());
-		iw.remove();
+
+		Iterator<Package> iu = revdeps.iterator();
+		Package u = iu.next();
+		u.deps.remove(this);
+		iu.remove();
+		u.deps.add(v);
+		v.revdeps.add(u);
+
 		for (Package w : deps) {
 			w.revdeps.add(v);
 		}
