@@ -136,11 +136,19 @@ public class Package {
 		}
 	}
 
+	private static Set<Package> splittable(Set<Package> V) {
+		return V.stream().filter(v -> v.isSplittable && v.revdeps.size() > 1).collect(Collectors.toSet());
+	}
+
 	public static void splitSplittable(Set<Package> V) {
-		Set<Package> Vs = V.stream().filter(v -> v.isSplittable).collect(Collectors.toSet());
-		for (Package v : Vs) {
+		Set<Package> Vs = new LinkedHashSet<>(splittable(V));
+		while (!Vs.isEmpty()) {
+			Iterator<Package> vi = Vs.iterator();
+			Package v = vi.next();
+			vi.remove();
 			while (v.revdeps.size() > 1) {
 				V.add(v.split());
+				Vs.addAll(splittable(v.deps));
 			}
 		}
 	}
