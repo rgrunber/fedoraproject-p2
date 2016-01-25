@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014-2016 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -927,5 +927,19 @@ public class InstallerTest extends RepositoryTest {
 				.relativize(scl.getArchDropletDir()).resolve("main"));
 		assertTrue(Files.exists(noarchDropin, LinkOption.NOFOLLOW_LINKS));
 		assertTrue(Files.exists(archfulDropin, LinkOption.NOFOLLOW_LINKS));
+	}
+
+	// If a feature's external plug-ins have a cyclic dependency, we should be
+	// able to deal with that
+	@Test
+	public void cyclicDepsInFeatureExternalPlugins() throws Exception {
+		addExternalPlugin("slf4j.api", "1.7.12").importPackage("org.slf4j.impl").exportPackage("org.slf4j");
+		addExternalPlugin("slf4j.simple", "1.7.12").importPackage("org.slf4j").exportPackage("org.slf4j.impl");
+		addReactorFeature("org.eclipse.foo").addPlugin("slf4j.api", "1.7.12").addPlugin("slf4j.simple", "1.7.12");
+		expectFeature("org.eclipse.foo");
+		expectProvides("org.eclipse.foo");
+		expectSymlink("slf4j.api");
+		expectSymlink("slf4j.simple");
+		performTest();
 	}
 }

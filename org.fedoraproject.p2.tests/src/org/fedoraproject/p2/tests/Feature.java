@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Red Hat Inc.
+ * Copyright (c) 2015-2016 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,9 @@ package org.fedoraproject.p2.tests;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -24,6 +27,7 @@ class Feature {
 	private Path path;
 	private String targetPackage;
 	private Properties p2inf = new Properties();
+	private Map<String, String> plugins = new HashMap<>();
 
 	public Feature(String id, String version) {
 		this.id = id;
@@ -51,17 +55,28 @@ class Feature {
 		return this;
 	}
 
-	public Feature addP2Inf(String key, String value){
+	public Feature addP2Inf(String key, String value) {
 		p2inf.setProperty(key, value);
+		return this;
+	}
+
+	public Feature addPlugin(String id, String version) {
+		plugins.put(id, version);
 		return this;
 	}
 
 	public void write(Path path) throws Exception {
 		Files.createDirectories(path);
 		try (PrintWriter pw = new PrintWriter(path.resolve("feature.xml").toFile())) {
-			pw.printf("<feature id=\"%s\" version=\"%s\"/>", id, version);
+			pw.printf("<feature id=\"%s\" version=\"%s\">\n", id, version);
+			for (Entry<String, String> plugin : plugins.entrySet()) {
+				pw.printf(
+						"<plugin id=\"%s\" download-size=\"1024\" install-size=\"1024\" version=\"%s\" unpack=\"false\"/>\n",
+						plugin.getKey(), plugin.getValue());
+			}
+			pw.printf("</feature>");
 		}
-		if (!p2inf.isEmpty()){
+		if (!p2inf.isEmpty()) {
 			try (PrintWriter pw = new PrintWriter(path.resolve("p2.inf").toFile())) {
 				p2inf.store(pw, "p2.inf");
 			}
