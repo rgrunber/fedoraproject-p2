@@ -168,7 +168,7 @@ public class Package {
 		v.index = v.lowlink = index.incrementAndGet();
 		S.push(v);
 
-		for (Package w : v.deps) {
+		for (Package w : new LinkedHashSet<>(v.deps)) {
 			if (w.index == 0) {
 				strongconnect(V, w, index, S);
 
