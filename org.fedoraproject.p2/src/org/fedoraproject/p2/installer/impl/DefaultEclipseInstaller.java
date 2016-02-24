@@ -28,11 +28,18 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IInstallableUnitFragment;
 import org.eclipse.equinox.p2.metadata.IRequirement;
+import org.eclipse.equinox.p2.publisher.IPublisherInfo;
+import org.eclipse.equinox.p2.publisher.IPublisherResult;
+import org.eclipse.equinox.p2.publisher.PublisherInfo;
+import org.eclipse.equinox.p2.publisher.PublisherResult;
+import org.eclipse.equinox.p2.publisher.actions.JREAction;
 import org.eclipse.equinox.p2.query.IQuery;
+import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.fedoraproject.p2.CompoundBundleRepository;
 import org.fedoraproject.p2.EclipseSystemLayout;
@@ -308,6 +315,10 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				"external", true, true))
 			return;
 
+		if (tryResolveRequirementFrom(iu, req, getMetaUnits(),
+				"meta", false, false))
+			return;
+
 		if (req.getMin() == 0)
 			logger.info("Unable to satisfy optional dependency from {} to {}",
 					iu, req);
@@ -425,5 +436,15 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 						+ suffix, path);
 			}
 		}
+	}
+
+	private static Set<IInstallableUnit> getMetaUnits() {
+		IPublisherInfo info = new PublisherInfo();
+		IPublisherResult result = new PublisherResult();
+		JREAction jreAction = new JREAction((String) null);
+		jreAction.perform(info, result, new NullProgressMonitor());
+		IQueryResult<IInstallableUnit> units = result.query(
+				QueryUtil.createIUAnyQuery(), new NullProgressMonitor());
+		return units.toUnmodifiableSet();
 	}
 }
