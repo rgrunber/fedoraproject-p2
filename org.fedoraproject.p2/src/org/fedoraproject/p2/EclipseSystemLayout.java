@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2016 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@ package org.fedoraproject.p2;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,8 +53,8 @@ public class EclipseSystemLayout {
 
 		for (Path dropinsDir : scl.getDropinDirs()) {
 			if (expandDropins) {
-				try {
-					for (Path dropin : Files.newDirectoryStream(dropinsDir)) {
+				try(DirectoryStream<Path> stream = Files.newDirectoryStream(dropinsDir)) {
+					for (Path dropin : stream) {
 						Path realDropin = dropin.resolve("eclipse");
 						if (!Files.isDirectory(realDropin)) {
 							realDropin = dropin;

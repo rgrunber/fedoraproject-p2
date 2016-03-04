@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014-2016 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,18 +11,25 @@
 package org.fedoraproject.p2.xmvn;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.fedoraproject.p2.installer.Dropin;
+import org.fedoraproject.p2.installer.EclipseArtifact;
+import org.fedoraproject.p2.installer.EclipseInstallationRequest;
+import org.fedoraproject.p2.installer.EclipseInstallationResult;
+import org.fedoraproject.p2.installer.EclipseInstaller;
+import org.fedoraproject.p2.osgi.OSGiServiceLocator;
 import org.fedoraproject.xmvn.artifact.Artifact;
 import org.fedoraproject.xmvn.artifact.DefaultArtifact;
 import org.fedoraproject.xmvn.config.PackagingRule;
@@ -35,12 +42,8 @@ import org.fedoraproject.xmvn.tools.install.JarUtils;
 import org.fedoraproject.xmvn.tools.install.JavaPackage;
 import org.fedoraproject.xmvn.tools.install.RegularFile;
 import org.fedoraproject.xmvn.tools.install.SymbolicLink;
-import org.fedoraproject.p2.installer.Dropin;
-import org.fedoraproject.p2.installer.EclipseArtifact;
-import org.fedoraproject.p2.installer.EclipseInstallationRequest;
-import org.fedoraproject.p2.installer.EclipseInstallationResult;
-import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.osgi.OSGiServiceLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Named("eclipse")
 @Singleton
@@ -143,7 +146,15 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 		pkg.addFile(new Directory(root.relativize(dropin)));
 
 		if (Files.isDirectory(dropin)) {
-			for (Path path : Files.newDirectoryStream(dropin)) {
+			// Generate list of paths before recursing to avoid running
+			// out of file handles
+			List<Path> paths = new ArrayList<>();
+			try(DirectoryStream<Path> stream = Files.newDirectoryStream(dropin)) {
+				for (Path path : stream) {
+					paths.add(path);
+				}
+			}
+			for (Path path : paths) {
 				Path relativePath = root.relativize(path);
 				if (Files.isDirectory(path))
 					addAllFiles(pkg, path, root);
