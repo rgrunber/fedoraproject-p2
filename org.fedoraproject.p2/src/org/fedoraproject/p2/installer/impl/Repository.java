@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014-2016 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,9 +12,12 @@ package org.fedoraproject.p2.installer.impl;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
@@ -134,9 +137,19 @@ public class Repository {
 		}
 
 		private void delete(Path path) throws IOException {
-			if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS))
-				for (Path child : Files.newDirectoryStream(path))
+			if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+				// Generate list of paths before recursing to avoid running
+				// out of file handles
+				List<Path> paths = new ArrayList<>();
+				try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+					for (Path dirEntry : stream) {
+						paths.add(dirEntry);
+					}
+				}
+				for (Path child : paths) {
 					delete(child);
+				}
+			}
 
 			Files.delete(path);
 		}
