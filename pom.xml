@@ -24,7 +24,7 @@
 
   <properties>
     <tycho-version>0.23.0</tycho-version>
-    <xmvn-version>2.4.0</xmvn-version>
+    <xmvn-version>2.5.0</xmvn-version>
     <equinox-version>3.10.100.v20150521-1310</equinox-version>
   </properties>
 
