@@ -7,6 +7,7 @@ Bundle-Vendor: Fedora
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.fedoraproject.p2,
  org.junit,
+ org.hamcrest.core,
  org.easymock,
  org.eclipse.osgi,
  org.eclipse.equinox.p2.core,

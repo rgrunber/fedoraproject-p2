@@ -942,4 +942,25 @@ public class InstallerTest extends RepositoryTest {
 		expectSymlink("slf4j.simple");
 		performTest();
 	}
+
+	// What if a plug-in depends on a different version of an external bundle
+	// that already exists in the platform?
+	@Test
+	public void externalDepOrPlatformDep() throws Exception {
+		addPlatformPlugin("org.lucene", "5.0.0");
+		addExternalPlugin("org.lucene", "3.0.0");
+		addReactorPlugin("com.example.old").requireBundle("org.lucene;bundle-version=\"[3.0.0,4.0.0)\"");
+		addReactorPlugin("com.example.new").requireBundle("org.lucene;bundle-version=\"[5.0.0,6.0.0)\"");
+		expectPlugin("com.example.old");
+		expectPlugin("com.example.new");
+		expectProvides("com.example.old");
+		expectProvides("com.example.new");
+		expectSymlink("org.lucene");
+		expectRequires("org.lucene");
+		performTest();
+		Path plugins = buildRoot.resolve(Paths.get("/")
+				.relativize(scl.getNoarchDropletDir()).resolve("main/eclipse/plugins"));
+		assertTrue(Files.exists(plugins.resolve("org.lucene_3.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
+		assertFalse(Files.exists(plugins.resolve("org.lucene_5.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
+	}
 }
