@@ -10,9 +10,19 @@
  *******************************************************************************/
 package org.fedoraproject.p2;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -23,6 +33,7 @@ import org.eclipse.equinox.p2.core.ProvisionException;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.ITouchpointData;
 import org.eclipse.equinox.p2.metadata.ITouchpointInstruction;
+import org.eclipse.osgi.framework.util.Headers;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
@@ -31,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public class P2Utils {
 	private static final String PROP_PATH = "org.fedoraproject.p2.path";
 	private static final String PROP_NAMESPACE = "org.fedoraproject.p2.scl";
+	private static final String PROP_MANIFEST = "org.fedoraproject.p2.manifest";
 
 	private static final Logger logger = LoggerFactory.getLogger(P2Utils.class);
 
@@ -96,6 +108,15 @@ public class P2Utils {
 		return setProperty(unit, PROP_NAMESPACE, namespace);
 	}
 
+	public static Map<String, String> getManifest(IInstallableUnit unit) {
+		return decodeManifest(unit.getProperty(PROP_MANIFEST));
+	}
+
+	public static IInstallableUnit setManifest(IInstallableUnit unit,
+			Headers headers) {
+		return setProperty(unit, PROP_MANIFEST, encodeManifest(headers));
+	}
+
 	public static String toString(IInstallableUnit unit) {
 		String namespace = getSclNamespace(unit);
 		String suffix = "";
@@ -136,5 +157,32 @@ public class P2Utils {
 			}
 		}
 		root.delete();
+	}
+
+	private static Map<String, String> decodeManifest(String base64) {
+		if (base64 == null)
+			return null;
+		byte[] data = Base64.getDecoder().decode(base64);
+		try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
+			return Collections.unmodifiableMap((Map<String, String>) ois.readObject());
+		} catch (IOException | ReflectiveOperationException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static String encodeManifest(Headers<String, String> headers) {
+		Map<String, String> manifest = new LinkedHashMap<>();
+		Enumeration<String> keys = headers.keys();
+		while (keys.hasMoreElements()) {
+			String key = keys.nextElement();
+			manifest.put(key, headers.get(key));
+		}
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+			oos.writeObject(new LinkedHashMap<>(manifest));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return Base64.getEncoder().encodeToString(baos.toByteArray());
 	}
 }

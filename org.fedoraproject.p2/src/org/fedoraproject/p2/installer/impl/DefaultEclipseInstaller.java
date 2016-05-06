@@ -33,6 +33,8 @@ import org.eclipse.equinox.p2.metadata.IArtifactKey;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IInstallableUnitFragment;
 import org.eclipse.equinox.p2.metadata.IRequirement;
+import org.eclipse.equinox.p2.metadata.MetadataFactory;
+import org.eclipse.equinox.p2.metadata.VersionRange;
 import org.eclipse.equinox.p2.publisher.IPublisherInfo;
 import org.eclipse.equinox.p2.publisher.IPublisherResult;
 import org.eclipse.equinox.p2.publisher.PublisherInfo;
@@ -326,13 +328,18 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			logger.warn("Unable to satisfy dependency from {} to {}", iu, req);
 	}
 
-	private boolean tryResolveRequirementFrom(IInstallableUnit iu,
-			IRequirement req, Set<IInstallableUnit> repo, String desc,
-			boolean generateDep, boolean generateReq) {
+	private List<IInstallableUnit> match(IRequirement req, Set<IInstallableUnit> repo){
 		IQuery<IInstallableUnit> query = QueryUtil.createMatchQuery(req
 				.getMatches());
 		List<IInstallableUnit> matches = Arrays.asList(query.perform(repo.iterator())
 				.toUnmodifiableSet().toArray(new IInstallableUnit[0]));
+		return matches;
+	}
+
+	private boolean tryResolveRequirementFrom(IInstallableUnit iu,
+			IRequirement req, Set<IInstallableUnit> repo, String desc,
+			boolean generateDep, boolean generateReq) {
+		List<IInstallableUnit> matches = match(req, repo);
 		if (matches.isEmpty())
 			return false;
 
@@ -387,7 +394,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		return true;
 	}
 
-	private static Collection<IRequirement> getRequirements(IInstallableUnit iu, boolean ignoreOptional) {
+	private Collection<IRequirement> getRequirements(IInstallableUnit iu, boolean ignoreOptional) {
 		List<IRequirement> requirements = new ArrayList<>(
 				iu.getRequirements());
 		requirements.addAll(iu.getMetaRequirements());
@@ -397,14 +404,35 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			requirements.addAll(fragment.getHost());
 		}
 
+		Set<IInstallableUnit> ignored = getIgnoredDeps(iu);
+
 		for (Iterator<IRequirement> iterator = requirements.iterator(); iterator
 				.hasNext();) {
 			IRequirement req = iterator.next();
-			if (req.getMax() == 0 || (ignoreOptional && req.getMin() == 0))
+			if (req.getMax() == 0 || (ignoreOptional && req.getMin() == 0) || !match(req, ignored).isEmpty())
 				iterator.remove();
 		}
 
 		return requirements;
+	}
+
+	private Set<IInstallableUnit> getIgnoredDeps(IInstallableUnit iu) {
+		Map<String, String> mf = P2Utils.getManifest(iu);
+		if (mf == null)
+			return Collections.emptySet();
+		String skippedDepsStr = mf.get("X-Fedora-IgnoreDeps");
+		if (skippedDepsStr == null)
+			return Collections.emptySet();
+		Set<IInstallableUnit> ignored = new LinkedHashSet<>();
+		for (String bsn : skippedDepsStr.split(",")) {
+			IRequirement req = MetadataFactory.createRequirement("osgi.bundle", bsn.trim(), VersionRange.emptyRange,
+					null, false, false, true);
+			ignored.addAll(match(req, index.getInternalUnits()));
+			ignored.addAll(match(req, index.getExternalUnits()));
+			ignored.addAll(match(req, index.getPlatformUnits()));
+			ignored.addAll(match(req, reactor));
+		}
+		return ignored;
 	}
 
 	private void createRunnableRepository(Repository reactorRepo,

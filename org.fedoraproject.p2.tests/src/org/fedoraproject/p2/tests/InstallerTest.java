@@ -963,4 +963,16 @@ public class InstallerTest extends RepositoryTest {
 		assertTrue(Files.exists(plugins.resolve("org.lucene_3.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
 		assertFalse(Files.exists(plugins.resolve("org.lucene_5.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
 	}
+
+	@Test
+	public void ignoredDepsTest() throws Exception {
+		addReactorPlugin("A").importPackage("pkg1").addMfEntry("X-Fedora-IgnoreDeps", "B");
+		addExternalPlugin("B").exportPackage("pkg1");
+		expectPlugin("A");
+		expectProvides("A");
+		// These would be expected if dep on B was not ignored
+		//expectSymlink("B");
+		//expectRequires("B");
+		performTest();
+	}
 }

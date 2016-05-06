@@ -32,6 +32,7 @@ import org.eclipse.equinox.p2.publisher.eclipse.Feature;
 import org.eclipse.equinox.p2.publisher.eclipse.FeaturesAction;
 import org.eclipse.equinox.p2.repository.artifact.IArtifactRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
+import org.eclipse.osgi.framework.util.Headers;
 import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.fedoraproject.p2.P2Utils;
 
@@ -60,9 +61,10 @@ public class Director {
 				protected IInstallableUnit doCreateBundleIU(
 						BundleDescription bd, IArtifactKey key,
 						IPublisherInfo info) {
-					return P2Utils.setPath(
-							super.doCreateBundleIU(bd, key, info),
-							new File(bd.getLocation()));
+					IInstallableUnit iu = super.doCreateBundleIU(bd, key, info);
+					iu = P2Utils.setPath(iu, new File(bd.getLocation()));
+					iu = P2Utils.setManifest(iu, (Headers) bd.getUserObject());
+					return iu;
 				}
 			};
 			actions.add(action);
