@@ -196,7 +196,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 				P2Utils.dump("Dropin physical units", content);
 				P2Utils.dump("Dropin symlinks", symlinks);
 
-				Path installationPath = dropin.getPath().resolve("eclipse");
+				Path installationPath = dropin.getPath();
 				if (request.getBuildRoot() != null) {
 					Repository dropinRepo = Repository.createTemp();
 					Set<Path> dropinPaths = new LinkedHashSet<> (plugins);
