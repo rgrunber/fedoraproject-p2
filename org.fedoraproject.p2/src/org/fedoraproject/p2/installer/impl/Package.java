@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @author Mikolaj Izdebski
  */
 public class Package {
-	private final Logger logger = LoggerFactory.getLogger(Package.class);
+	private static final Logger logger = LoggerFactory.getLogger(Package.class);
 
 	private final Set<IInstallableUnit> virtual = new LinkedHashSet<>();
 
@@ -179,8 +179,29 @@ public class Package {
 		}
 
 		if (v.lowlink == v.index) {
+			Set<String> cycles = new LinkedHashSet<>();
+			if (!v.physical.isEmpty()) {
+				cycles.add(v.physical.keySet().iterator().next());
+			}
 			for (Package w; (w = S.pop()) != v; V.remove(w)) {
 				v.merge(w);
+				if (!w.physical.isEmpty()) {
+					cycles.add(w.physical.keySet().iterator().next());
+				}
+			}
+			if (cycles.size() > 1) {
+				logger.warn("###################################");
+				logger.warn("###################################");
+				logger.warn("Cycle detected among the following packages :");
+				StringBuffer cycleNames = new StringBuffer();
+				for (String name : cycles) {
+						cycleNames.append(",");
+						cycleNames.append(name);
+				}
+				logger.warn(cycleNames.substring(1));
+				logger.warn("Please review mappings and dependencies.");
+				logger.warn("###################################");
+				logger.warn("###################################");
 			}
 		}
 	}

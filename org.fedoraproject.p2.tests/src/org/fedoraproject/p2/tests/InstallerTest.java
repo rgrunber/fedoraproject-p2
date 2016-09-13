@@ -962,5 +962,18 @@ public class InstallerTest extends RepositoryTest {
 				.relativize(scl.getNoarchDropletDir()).resolve("main/eclipse/plugins"));
 		assertTrue(Files.exists(plugins.resolve("org.lucene_3.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
 		assertFalse(Files.exists(plugins.resolve("org.lucene_5.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
+
+	@Test
+	// For now, cycles in reactor content shouldn't fail
+	public void cyclicDepsInReactorPlugins() throws Exception {
+		addReactorPlugin("a").requireBundle("b").assignToTargetPackage("A");
+		addReactorPlugin("b").requireBundle("a").assignToTargetPackage("B");
+		expectPlugin("A", "a");
+		expectProvides("A", "a");
+		expectPlugin("B", "b");
+		expectProvides("B", "b");
+		expectRequires("A", "b");
+		expectRequires("B", "a");
+		performTest();
 	}
 }
