@@ -962,6 +962,7 @@ public class InstallerTest extends RepositoryTest {
 				.relativize(scl.getNoarchDropletDir()).resolve("main/eclipse/plugins"));
 		assertTrue(Files.exists(plugins.resolve("org.lucene_3.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
 		assertFalse(Files.exists(plugins.resolve("org.lucene_5.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
+	}
 
 	@Test
 	// For now, cycles in reactor content shouldn't fail
