@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2017 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,11 +12,8 @@ package org.fedoraproject.p2.osgi.impl;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.google.common.base.Joiner;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import org.eclipse.core.runtime.adaptor.EclipseStarter;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -30,8 +27,6 @@ import org.fedoraproject.p2.osgi.OSGiFramework;
 /**
  * @author Mikolaj Izdebski
  */
-@Named
-@Singleton
 public class DefaultOSGiFramework implements OSGiFramework {
 	private final Logger logger = LoggerFactory
 			.getLogger(DefaultOSGiFramework.class);
@@ -40,7 +35,6 @@ public class DefaultOSGiFramework implements OSGiFramework {
 
 	private BundleContext bundleContext;
 
-	@Inject
 	public DefaultOSGiFramework(OSGiConfigurator equinoxLocator) {
 		this.equinoxLocator = equinoxLocator;
 	}
@@ -54,11 +48,13 @@ public class DefaultOSGiFramework implements OSGiFramework {
 		}
 
 		properties.put("osgi.bundles",
-				Joiner.on(',').join(equinoxLocator.getBundles()));
+				equinoxLocator.getBundles().stream()
+					.map(path -> path.toString())
+					.collect(Collectors.joining(",")));
 
 		properties.put("osgi.parentClassloader", "fwk");
 		properties.put("org.osgi.framework.system.packages.extra",
-				Joiner.on(',').join(equinoxLocator.getExportedPackages()));
+				String.join(",", equinoxLocator.getExportedPackages()));
 
 		logger.info("Launching Equinox...");
 		System.setProperty("osgi.framework.useSystemProperties", "false");

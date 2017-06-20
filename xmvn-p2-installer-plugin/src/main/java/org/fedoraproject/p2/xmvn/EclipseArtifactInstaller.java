@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2016 Red Hat Inc.
+ * Copyright (c) 2014-2017 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,16 +20,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.fedoraproject.p2.installer.Dropin;
 import org.fedoraproject.p2.installer.EclipseArtifact;
 import org.fedoraproject.p2.installer.EclipseInstallationRequest;
 import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
-import org.fedoraproject.p2.osgi.OSGiServiceLocator;
+import org.fedoraproject.p2.installer.EclipseInstallerFactory;
 import org.fedoraproject.xmvn.artifact.Artifact;
 import org.fedoraproject.xmvn.artifact.DefaultArtifact;
 import org.fedoraproject.xmvn.config.PackagingRule;
@@ -45,14 +41,9 @@ import org.fedoraproject.xmvn.tools.install.SymbolicLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Named("eclipse")
-@Singleton
 public class EclipseArtifactInstaller implements ArtifactInstaller {
 	private final Logger logger = LoggerFactory
 			.getLogger(EclipseArtifactInstaller.class);
-
-	@Inject
-	private OSGiServiceLocator equinox;
 
 	private final EclipseInstallationRequest request = new EclipseInstallationRequest();
 
@@ -112,8 +103,8 @@ public class EclipseArtifactInstaller implements ArtifactInstaller {
 			Path tempRoot = Files.createTempDirectory("xmvn-root-");
 			request.setBuildRoot(tempRoot);
 
-			EclipseInstaller installer = equinox
-					.getService(EclipseInstaller.class);
+			EclipseInstaller installer = new EclipseInstallerFactory()
+					.createEmbeddedInstaller();
 			EclipseInstallationResult result = installer
 					.performInstallation(request);
 
