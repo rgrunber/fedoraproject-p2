@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014-2017 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.fedoraproject.p2.osgi.impl;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
@@ -22,12 +19,9 @@ import org.fedoraproject.p2.osgi.OSGiServiceLocator;
 /**
  * @author Mikolaj Izdebski
  */
-@Named
-@Singleton
 public class DefaultOSGiServiceLocator implements OSGiServiceLocator {
 	private final OSGiFramework framework;
 
-	@Inject
 	public DefaultOSGiServiceLocator(OSGiFramework framework) {
 		this.framework = framework;
 	}

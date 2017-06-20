@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014-2017 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,9 +26,6 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +42,6 @@ import org.fedoraproject.p2.osgi.OSGiConfigurator;
  * instead loads bundles contained withing the "tycho-bundles-external"
  * bootstrap zip-ball.
  */
-@Named
-@Singleton
 public class DefaultOSGiConfigurator implements OSGiConfigurator {
 	private final Logger logger = LoggerFactory
 			.getLogger(DefaultOSGiConfigurator.class);
@@ -59,7 +54,6 @@ public class DefaultOSGiConfigurator implements OSGiConfigurator {
 
 	private final Resolver resolver;
 
-	@Inject
 	public DefaultOSGiConfigurator(Resolver resolver) {
 		this.resolver = resolver;
 	}
