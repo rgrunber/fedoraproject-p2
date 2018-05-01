@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014-2018 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -79,7 +79,7 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 
 	private void addInternalPlugin(String scl, String id, String ver,
 			boolean expect) throws Exception {
-		addPlugin("usr/share/eclipse/dropins/dropin-name/eclipse/plugins", scl,
+		addPlugin("usr/share/eclipse/droplets/droplet-name/plugins", scl,
 				id, ver);
 		if (expect) {
 			visitor.visitInternalPlugin(id, ver);
@@ -184,9 +184,9 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 	}
 
 	// If a bundle both internal and external (i.e. it is symlinked into a
-	// dropin)
+	// droplet)
 	// Then the bundle should always be considered external since it is not the
-	// dropin that provides it
+	// droplet that provides it
 	@Test
 	public void shadowingIntExtSameSCL() throws Exception {
 		addInternalPlugin("devtoolset", "org.junit", "1.0.0", false);
@@ -195,9 +195,9 @@ public class CompoundBundleRepositoryTest extends RepositoryTest {
 	}
 
 	// If a bundle both internal and external in different SCLs (i.e. it is
-	// symlinked into a dropin from a dependency SCL)
+	// symlinked into a droplet from a dependency SCL)
 	// Then the bundle should always be considered external since it is not the
-	// dropin that provides it
+	// droplet that provides it
 	@Test
 	public void shadowingIntExtDifferentSCL() throws Exception {
 		addInternalPlugin("devtoolset", "org.junit", "1.0.0", false);

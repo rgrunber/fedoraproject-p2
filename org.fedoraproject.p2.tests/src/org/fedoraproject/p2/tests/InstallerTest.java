@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2016 Red Hat Inc.
+ * Copyright (c) 2014-2018 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,6 @@ import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -46,15 +45,15 @@ import org.fedoraproject.p2.installer.EclipseInstallationResult;
 import org.fedoraproject.p2.installer.EclipseInstaller;
 
 interface BuildrootVisitor {
-	void visitPlugin(String dropin, String id, String ver);
+	void visitPlugin(String droplet, String id, String ver);
 
-	void visitFeature(String dropin, String id, String ver);
+	void visitFeature(String droplet, String id, String ver);
 
-	void visitSymlink(String dropin, String id);
+	void visitSymlink(String droplet, String id);
 
-	void visitProvides(String dropin, String id, String ver);
+	void visitProvides(String droplet, String id, String ver);
 
-	void visitRequires(String dropin, String id);
+	void visitRequires(String droplet, String id);
 }
 
 /**
@@ -214,9 +213,9 @@ public class InstallerTest extends RepositoryTest {
 		collectPlugins(platformPlugins, scl.getEclipseRoot().resolve("plugins"));
 		collectFeatures(platformFeatures, scl.getEclipseRoot().resolve("features"));
 		collectPlugins(internalPlugins,
-				scl.getNoarchDropletDir().resolve("foo/eclipse/plugins"));
+				scl.getNoarchDropletDir().resolve("foo/plugins"));
 		collectFeatures(internalFeatures,
-				scl.getNoarchDropletDir().resolve("foo/eclipse/features"));
+				scl.getNoarchDropletDir().resolve("foo/features"));
 		collectPlugins(externalPlugins, scl.getBundleLocations().iterator()
 				.next());
 
@@ -225,10 +224,10 @@ public class InstallerTest extends RepositoryTest {
 
 		replay(visitor);
 		if (visitArchful) {
-			visitDropins(buildRoot.resolve(Paths.get("/").relativize(
+			visitDroplets(buildRoot.resolve(Paths.get("/").relativize(
 					scl.getArchDropletDir())));
 		}
-		visitDropins(buildRoot.resolve(Paths.get("/").relativize(
+		visitDroplets(buildRoot.resolve(Paths.get("/").relativize(
 				scl.getNoarchDropletDir())));
 		visitResult(result);
 		verify(visitor);
@@ -265,56 +264,48 @@ public class InstallerTest extends RepositoryTest {
 		return result;
 	}
 
-	private void visitDropins(Path dropins) throws Exception {
-		assertTrue(Files.isDirectory(dropins, LinkOption.NOFOLLOW_LINKS));
+	private void visitDroplets(Path droplets) throws Exception {
+		assertTrue(Files.isDirectory(droplets, LinkOption.NOFOLLOW_LINKS));
 
-		for (Path dropinPath : Files.newDirectoryStream(dropins)) {
-			assertTrue(Files.isDirectory(dropinPath, LinkOption.NOFOLLOW_LINKS));
-			String dropin = dropinPath.getFileName().toString();
+		for (Path dropletPath : Files.newDirectoryStream(droplets)) {
+			assertTrue(Files.isDirectory(dropletPath, LinkOption.NOFOLLOW_LINKS));
+			String droplet = dropletPath.getFileName().toString();
 
-			for (Path dropinSubdir : Files.newDirectoryStream(dropinPath)) {
-				assertTrue(Files.isDirectory(dropinSubdir,
-						LinkOption.NOFOLLOW_LINKS));
-				assertEquals("eclipse", dropinSubdir.getFileName().toString());
-
-				if (Files.exists(Paths.get(dropinSubdir.toString(), "plugins"))) {
-					assertTrue(Files.exists(Paths.get(dropinSubdir.toString(), "fragment.info")));
+			if (Files.exists(Paths.get(dropletPath.toString(), "plugins"))) {
+				assertTrue(Files.exists(Paths.get(dropletPath.toString(), "fragment.info")));
+			}
+			for (Path categoryPath : Files.newDirectoryStream(dropletPath)) {
+				if (categoryPath.getFileName().toString().equals("fragment.info")) {
+					continue;
 				}
-				for (Path categoryPath : Files.newDirectoryStream(dropinSubdir)) {
-				    if (categoryPath.getFileName().toString().equals("fragment.info")) {
-				        continue;
-				    }
-					assertTrue(Files.isDirectory(categoryPath,
-							LinkOption.NOFOLLOW_LINKS));
-					String cat = categoryPath.getFileName().toString();
-					boolean isPlugin = cat.equals("plugins");
-					boolean isFeature = cat.equals("features");
-					assertTrue(isPlugin ^ isFeature);
+				assertTrue(Files.isDirectory(categoryPath, LinkOption.NOFOLLOW_LINKS));
+				String cat = categoryPath.getFileName().toString();
+				boolean isPlugin = cat.equals("plugins");
+				boolean isFeature = cat.equals("features");
+				assertTrue(isPlugin ^ isFeature);
 
-					for (Path unit : Files.newDirectoryStream(categoryPath)) {
-						String name = unit.getFileName().toString();
-						boolean isDir = Files.isDirectory(unit);
-						boolean isLink = Files.isSymbolicLink(unit);
-						// Either dir-shaped or ends with .jar
-						assertTrue(isDir ^ name.endsWith(".jar"));
-						// While theoretically possible, symlinks to
-						// directory-shaped units are not expected
-						assertFalse(isLink && isDir);
-						// We never symlink features
-						assertFalse(isFeature && isLink);
-						int uscore = name.lastIndexOf("_");
-						String id = name.substring(0, uscore);
-						String ver = name.substring(uscore + 1).replaceAll(
-								"\\.jar$", "");
-						if (isLink)
-							visitor.visitSymlink(dropin, id);
-						else if (isPlugin)
-							visitor.visitPlugin(dropin, id, ver);
-						else if (isFeature)
-							visitor.visitFeature(dropin, id, ver);
-						else
-							fail();
-					}
+				for (Path unit : Files.newDirectoryStream(categoryPath)) {
+					String name = unit.getFileName().toString();
+					boolean isDir = Files.isDirectory(unit);
+					boolean isLink = Files.isSymbolicLink(unit);
+					// Either dir-shaped or ends with .jar
+					assertTrue(isDir ^ name.endsWith(".jar"));
+					// While theoretically possible, symlinks to
+					// directory-shaped units are not expected
+					assertFalse(isLink && isDir);
+					// We never symlink features
+					assertFalse(isFeature && isLink);
+					int uscore = name.lastIndexOf("_");
+					String id = name.substring(0, uscore);
+					String ver = name.substring(uscore + 1).replaceAll("\\.jar$", "");
+					if (isLink)
+						visitor.visitSymlink(droplet, id);
+					else if (isPlugin)
+						visitor.visitPlugin(droplet, id, ver);
+					else if (isFeature)
+						visitor.visitFeature(droplet, id, ver);
+					else
+						fail();
 				}
 			}
 		}
@@ -323,12 +314,12 @@ public class InstallerTest extends RepositoryTest {
 	private void visitResult(EclipseInstallationResult result) {
 		assertNotNull(result);
 		assertFalse(result.getDropins().isEmpty());
-		for (Dropin dropin : result.getDropins()) {
-			assertNotNull(dropin);
-			assertFalse(dropin.getOsgiProvides().isEmpty());
+		for (Dropin droplet : result.getDropins()) {
+			assertNotNull(droplet);
+			assertFalse(droplet.getOsgiProvides().isEmpty());
 			Set<String> requires = new LinkedHashSet<>();
-			for (EclipseArtifact provide : dropin.getOsgiProvides()) {
-				visitor.visitProvides(dropin.getId(), provide.getId(),
+			for (EclipseArtifact provide : droplet.getOsgiProvides()) {
+				visitor.visitProvides(droplet.getId(), provide.getId(),
 						provide.getVersion());
 				String reqStr = provide.getProperties().get("osgi.requires");
 				if (reqStr == null)
@@ -337,7 +328,7 @@ public class InstallerTest extends RepositoryTest {
 					requires.add(req);
 			}
 			for (String req : requires)
-				visitor.visitRequires(dropin.getId(), req);
+				visitor.visitRequires(droplet.getId(), req);
 		}
 	}
 
@@ -345,12 +336,12 @@ public class InstallerTest extends RepositoryTest {
 		return expectPlugin("main", plugin, "1.0.0");
 	}
 
-	public IExpectationSetters<Object> expectPlugin(String dropin, String plugin) {
-		return expectPlugin(dropin, plugin, "1.0.0");
+	public IExpectationSetters<Object> expectPlugin(String droplet, String plugin) {
+		return expectPlugin(droplet, plugin, "1.0.0");
 	}
 
-	public IExpectationSetters<Object> expectPlugin(String dropin, String plugin, String version) {
-		visitor.visitPlugin(dropin, plugin, version);
+	public IExpectationSetters<Object> expectPlugin(String droplet, String plugin, String version) {
+		visitor.visitPlugin(droplet, plugin, version);
 		return expectLastCall();
 	}
 
@@ -358,12 +349,12 @@ public class InstallerTest extends RepositoryTest {
 		return expectFeature("main", feature, "1.0.0");
 	}
 
-	public IExpectationSetters<Object> expectFeature(String dropin, String feature) {
-		return expectFeature(dropin, feature, "1.0.0");
+	public IExpectationSetters<Object> expectFeature(String droplet, String feature) {
+		return expectFeature(droplet, feature, "1.0.0");
 	}
 
-	public IExpectationSetters<Object> expectFeature(String dropin, String feature, String version) {
-		visitor.visitFeature(dropin, feature, version);
+	public IExpectationSetters<Object> expectFeature(String droplet, String feature, String version) {
+		visitor.visitFeature(droplet, feature, version);
 		return expectLastCall();
 	}
 
@@ -371,8 +362,8 @@ public class InstallerTest extends RepositoryTest {
 		return expectSymlink("main", plugin);
 	}
 
-	public IExpectationSetters<Object> expectSymlink(String dropin, String plugin) {
-		visitor.visitSymlink(dropin, plugin);
+	public IExpectationSetters<Object> expectSymlink(String droplet, String plugin) {
+		visitor.visitSymlink(droplet, plugin);
 		return expectLastCall();
 	}
 
@@ -380,8 +371,8 @@ public class InstallerTest extends RepositoryTest {
 		return expectRequires("main", req);
 	}
 
-	public IExpectationSetters<Object> expectRequires(String dropin, String req) {
-		visitor.visitRequires(dropin, req);
+	public IExpectationSetters<Object> expectRequires(String droplet, String req) {
+		visitor.visitRequires(droplet, req);
 		return expectLastCall();
 	}
 
@@ -389,12 +380,12 @@ public class InstallerTest extends RepositoryTest {
 		return expectProvides("main", prov, "1.0.0");
 	}
 
-	public IExpectationSetters<Object> expectProvides(String dropin, String prov) {
-		return expectProvides(dropin, prov, "1.0.0");
+	public IExpectationSetters<Object> expectProvides(String droplet, String prov) {
+		return expectProvides(droplet, prov, "1.0.0");
 	}
 
-	public IExpectationSetters<Object> expectProvides(String dropin, String prov, String version) {
-		visitor.visitProvides(dropin, prov, version);
+	public IExpectationSetters<Object> expectProvides(String droplet, String prov, String version) {
+		visitor.visitProvides(droplet, prov, version);
 		return expectLastCall();
 	}
 
@@ -428,7 +419,7 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 		Path dir = buildRoot.resolve(Paths.get("/")
 				.relativize(scl.getNoarchDropletDir())
-				.resolve("main/eclipse/plugins/foo_1.0.0"));
+				.resolve("main/plugins/foo_1.0.0"));
 		assertTrue(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS));
 	}
 
@@ -898,15 +889,15 @@ public class InstallerTest extends RepositoryTest {
 		performTest();
 		Path bundle = buildRoot.resolve(Paths.get("/")
 				.relativize(scl.getTestBundleDir())
-				.resolve("pkg-tests/eclipse/plugins/testA_1.0.0.jar"));
+				.resolve("pkg-tests/plugins/testA_1.0.0.jar"));
 		assertTrue(Files.exists(bundle, LinkOption.NOFOLLOW_LINKS));
 	}
 
-	// If at least one bundle in the dropin has a native component or uses
-	// native code then the dropin should be installed into the "archful"
-	// dropins location
+	// If at least one bundle in the droplet has a native component or uses
+	// native code then the droplet should be installed into the "archful"
+	// droplets location
 	@Test
-	public void archfulDropinInstallTest() throws Exception {
+	public void archfulDropletInstallTest() throws Exception {
 		addReactorPlugin("A");
 		addReactorPlugin("B").hasNative();
 		addReactorPlugin("A_A").assignToTargetPackage("noarch-subpkg");
@@ -921,12 +912,12 @@ public class InstallerTest extends RepositoryTest {
 		expectProvides("noarch-subpkg", "B_B");
 		performTest();
 		// check install locations
-		Path noarchDropin = buildRoot.resolve(Paths.get("/")
+		Path noarchDroplet = buildRoot.resolve(Paths.get("/")
 				.relativize(scl.getNoarchDropletDir()).resolve("noarch-subpkg"));
-		Path archfulDropin = buildRoot.resolve(Paths.get("/")
+		Path archfulDroplet = buildRoot.resolve(Paths.get("/")
 				.relativize(scl.getArchDropletDir()).resolve("main"));
-		assertTrue(Files.exists(noarchDropin, LinkOption.NOFOLLOW_LINKS));
-		assertTrue(Files.exists(archfulDropin, LinkOption.NOFOLLOW_LINKS));
+		assertTrue(Files.exists(noarchDroplet, LinkOption.NOFOLLOW_LINKS));
+		assertTrue(Files.exists(archfulDroplet, LinkOption.NOFOLLOW_LINKS));
 	}
 
 	// If a feature's external plug-ins have a cyclic dependency, we should be
@@ -959,7 +950,7 @@ public class InstallerTest extends RepositoryTest {
 		expectRequires("org.lucene");
 		performTest();
 		Path plugins = buildRoot.resolve(Paths.get("/")
-				.relativize(scl.getNoarchDropletDir()).resolve("main/eclipse/plugins"));
+				.relativize(scl.getNoarchDropletDir()).resolve("main/plugins"));
 		assertTrue(Files.exists(plugins.resolve("org.lucene_3.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
 		assertFalse(Files.exists(plugins.resolve("org.lucene_5.0.0.jar"), LinkOption.NOFOLLOW_LINKS));
 	}
