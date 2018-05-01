@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014, 2018 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -106,11 +106,13 @@ public class FedoraBundleIndex {
 					try {
 						Dictionary<String, String> manifest = BundlesAction.loadManifest(file);
 						if (manifest != null) {
-							id = ManifestElement.parseHeader("Bundle-SymbolicName",
-									manifest.get("Bundle-SymbolicName"))
-									[0].getValue();
-							version = manifest.get("Bundle-Version");
-							putInIndex(BundlesAction.createBundleArtifactKey(id, version), file);
+							String bsn = manifest.get("Bundle-SymbolicName");
+							if (bsn != null) {
+								id = ManifestElement.parseHeader("Bundle-SymbolicName", bsn)
+										[0].getValue();
+								version = manifest.get("Bundle-Version");
+								putInIndex(BundlesAction.createBundleArtifactKey(id, version), file);
+							}
 						}
 					} catch (IOException | BundleException | IllegalArgumentException e) {
 						// Skip bundle if invalid or improper arguments for artifact creation
@@ -126,11 +128,13 @@ public class FedoraBundleIndex {
 					File bundleDir = file.getParentFile().getParentFile();
 					Dictionary<String, String> manifest = BundlesAction.loadManifest(bundleDir);
 					if (manifest != null && "dir".equals(manifest.get("Eclipse-BundleShape"))) {
-						id = ManifestElement.parseHeader("Bundle-SymbolicName",
-								manifest.get("Bundle-SymbolicName"))
-								[0].getValue();
-						version = manifest.get("Bundle-Version");
-						putInIndex(BundlesAction.createBundleArtifactKey(id, version), bundleDir);
+						String bsn = manifest.get("Bundle-SymbolicName");
+						if (bsn != null) {
+							id = ManifestElement.parseHeader("Bundle-SymbolicName", bsn)
+									[0].getValue();
+							version = manifest.get("Bundle-Version");
+							putInIndex(BundlesAction.createBundleArtifactKey(id, version), bundleDir);
+						}
 					}
 				} catch (IOException | BundleException | IllegalArgumentException e) {
 					// Skip bundle if invalid or improper arguments for artifact creation
@@ -140,20 +144,19 @@ public class FedoraBundleIndex {
 	}
 
 	private void putInIndex (IArtifactKey key, File file) {
-	    boolean isSameFile = false;
-	    File prev = index.put(key, file);
-	    if (prev != null) {
-	        try {
-	            isSameFile = file.getCanonicalFile().equals(prev.getCanonicalFile());
-	        } catch (IOException e) {
-	        }
-	        if (!isSameFile) {
-	            logger.warn("Multiple artifacts detected for {}", key.toString());
-	            logger.warn("{} and {} have the same ID and version.", prev.getAbsolutePath(), file.getAbsolutePath());
-	            logger.warn("{} will be preferred.", file.getAbsolutePath());
-	        }
-	    }
-	    logger.debug("Artifact: {} File: {}", key.toString(), file.getAbsolutePath());
+		boolean isSameFile = false;
+		File prev = index.put(key, file);
+		if (prev != null) {
+			try {
+				isSameFile = file.getCanonicalFile().equals(prev.getCanonicalFile());
+			} catch (IOException e) {
+			}
+			if (!isSameFile) {
+				logger.warn("Multiple artifacts detected for {}", key.toString());
+				logger.warn("{} and {} have the same ID and version.", prev.getAbsolutePath(), file.getAbsolutePath());
+				logger.warn("{} will be preferred.", file.getAbsolutePath());
+			}
+		}
+		logger.debug("Artifact: {} File: {}", key.toString(), file.getAbsolutePath());
 	}
-
 }
