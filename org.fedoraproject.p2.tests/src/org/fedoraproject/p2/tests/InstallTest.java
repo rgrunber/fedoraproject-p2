@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014, 2018 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -78,6 +78,8 @@ public class InstallTest extends RepositoryTest {
 					break;
 				}
 			}
+			// This is the only IU with dir-shape in the dummy eclipse dir
+			assertEquals("org.eclipse.ui.themes", targetIU.getId());
 
 			if (targetIU != null) {
 				installUnit(targetIU, ECLIPSE_DIR);

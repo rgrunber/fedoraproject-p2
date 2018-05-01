@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014, 2018 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -77,7 +77,7 @@ public class ArtifactRepositoryTest extends RepositoryTest {
 	public void existsFeatureInRepository () {
 		boolean pass = false;
 		try {
-			IArtifactRepository repo = getArtifactRepoManager().loadRepository(new URI(JAVADIR), new NullProgressMonitor());
+			IArtifactRepository repo = getArtifactRepoManager().loadRepository(new URI(ECLIPSE_DIR), new NullProgressMonitor());
 			IQueryResult<IArtifactKey> res = repo.query(ArtifactKeyQuery.ALL_KEYS, new NullProgressMonitor());
 			Set<IArtifactKey> keys = res.toUnmodifiableSet();
 			assertTrue("Artifact Repository must not be empty", keys.size() > 0);

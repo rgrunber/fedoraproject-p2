@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 Red Hat Inc.
+ * Copyright (c) 2014, 2018 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,9 +35,8 @@ public class RepositoryTest {
 	static final String NAMESPACE = "fedora:";
 	// TODO: Create our own test repositories in resoures/ folder
 	static final String JAVADIR = NAMESPACE + "/usr/share/java";
-	static final String ECLIPSE_DIR = NAMESPACE + "/usr/lib"
-						+ (System.getProperty("os.arch").contains("64") ? "64" : "")
-						+ "/eclipse/plugins";
+	// A dummy eclipse directory containing features and plugins for testing
+	static final String ECLIPSE_DIR = NAMESPACE + Paths.get("./resources/eclipse").toAbsolutePath().normalize().toString();
 
 	private static BundleContext bc;
 	private static IProvisioningAgent agent;
