@@ -46,11 +46,11 @@ Platform units are what we use to refer to installable units that make up the Ec
 *Examples : org.eclipse.help.base, org.eclipse.equinox.p2.metadata (but all the p2 units are basically part of the platform), org.eclipse.ui.*
 
 
-Internal units are what we use to refer to installable units that are not part of the base platform, but that are Eclipse plugins and make functional contributions to the Eclipse workbench. Some might refer to these as 'dropin' units since one could make them available using the dropins/reconciler mechanism.
+Internal units are what we use to refer to installable units that are not part of the base platform, but that are Eclipse plugins and make functional contributions to the Eclipse workbench. Some might refer to these as 'droplets' since one could make them available using the droplets/reconciler mechanism and are located the directories specified by the 'p2.fragments' system property from the eclipse.ini file.
 
 *Examples : org.eclipse.egit.core, org.eclipse.cdt.ui, org.eclipse.jdt.core*
 
-External units are what we use to refer to installable units that are OSGi bundles, but that don't contribute functionality directly to the Eclipse workbench, except in that they're libraries. They could just as easily be used outside of Eclipse.
+External units are what we use to refer to installable units that are OSGi bundles, but that don't contribute functionality directly to the Eclipse workbench, except in that they're libraries. They could just as easily be used outside of Eclipse. These are located whereever your system normally keeps Java libraries, usually /usr/share/java.
 
 *Examples : org.apache.commons.io, org.tukaani.xz, org.sat4j.core*
 
@@ -61,7 +61,7 @@ FedoraMetadataRepository - A set of units in a directory. This might represent a
 FedoraBundleRepository : A grouping of platform, internal, and external units rooted at some location
 CompoundBundleRepository : A grouping of units from these rooted locations (eg. software collections)
 
-Example : One could have a CompoundBundleRepository that managed `/` and `/opt/rh/devtoolset-3/`, each of which would **generally** have platform units under usr/lib/eclipse, internal units under usr/share/eclipse/dropins, usr/lib/eclipse/dropins , and external units under usr/share/java, usr/lib/java  .
+Example : One could have a CompoundBundleRepository that managed `/` and `/opt/rh/devtoolset-3/`, each of which would **generally** have platform units under usr/lib/eclipse, internal units under usr/share/eclipse/droplets, usr/lib/eclipse/droplets , and external units under usr/share/java, usr/lib/java  .
 
 We say **generally** because org.sat4j.core, for example, is an external unit, but it can certainly be found inside the platform location (usr/lib/eclipse) since it is also a dependency of p2. It's easy enough to define that  platform/internal unit must not be present in a location reserved for external units.
 
