@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (C) 2014, Red Hat, Inc. and others
+   Copyright (C) 2014, 2018 Red Hat, Inc. and others
 
    All rights reserved. This program and the accompanying materials
    are made available under the terms of the Eclipse Public License v1.0
@@ -12,8 +12,8 @@
        Red Hat Incorporated - initial implementation
 -->
 
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fedoraproject.p2</groupId>
   <artifactId>fedoraproject-p2</artifactId>
@@ -23,9 +23,8 @@
   <name>Fedora Project p2 Parent</name>
 
   <properties>
-    <tycho-version>0.23.0</tycho-version>
+    <tycho-version>1.1.0</tycho-version>
     <xmvn-version>3.0.0</xmvn-version>
-    <equinox-version>3.10.100.v20150521-1310</equinox-version>
   </properties>
 
   <modules>
@@ -36,26 +35,23 @@
 
   <profiles>
     <profile>
-      <id>luna</id>
+      <id>oxygen</id>
       <properties>
-        <platform-repo>http://download.eclipse.org/releases/luna</platform-repo>
+        <equinox-version>3.12.1.v20170821-1548</equinox-version>
+        <platform-repo>http://download.eclipse.org/releases/oxygen</platform-repo>
+        <orbit-repo>http://download.eclipse.org/tools/orbit/downloads/drops/R20180330011457/repository/</orbit-repo>
       </properties>
     </profile>
     <profile>
-      <id>mars</id>
+      <id>photon</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <platform-repo>http://download.eclipse.org/releases/mars</platform-repo>
+        <equinox-version>3.13.0.v20171204-1916</equinox-version>
+        <platform-repo>http://download.eclipse.org/releases/photon</platform-repo>
+        <orbit-repo>http://download.eclipse.org/tools/orbit/downloads/drops/S20180302171354/repository/</orbit-repo>
       </properties>
-      <repositories>
-        <repository>
-          <id>orbit-repo</id>
-          <layout>p2</layout>
-          <url>http://download.eclipse.org/tools/orbit/downloads/drops/R20150519210750/repository/</url>
-        </repository>
-      </repositories>
     </profile>
   </profiles>
 
@@ -64,6 +60,11 @@
       <id>eclipse-repo</id>
       <layout>p2</layout>
       <url>${platform-repo}</url>
+    </repository>
+    <repository>
+      <id>orbit-repo</id>
+      <layout>p2</layout>
+      <url>${orbit-repo}</url>
     </repository>
   </repositories>
 
