@@ -23,7 +23,7 @@
   <name>Fedora Project p2 Parent</name>
 
   <properties>
-    <tycho-version>1.1.0</tycho-version>
+    <tycho-version>1.2.0</tycho-version>
     <xmvn-version>3.0.0</xmvn-version>
   </properties>
 
@@ -33,24 +33,38 @@
     <module>xmvn-p2-installer-plugin</module>
   </modules>
 
+  <!-- For list of Eclipse Platform releases, see https://wiki.eclipse.org/Simultaneous_Release -->
+  <!-- For list of Eclipse Orbit builds, see http://download.eclipse.org/tools/orbit/downloads/ -->
   <profiles>
     <profile>
       <id>oxygen</id>
       <properties>
-        <equinox-version>3.12.1.v20170821-1548</equinox-version>
-        <platform-repo>http://download.eclipse.org/releases/oxygen</platform-repo>
-        <orbit-repo>http://download.eclipse.org/tools/orbit/downloads/drops/R20180330011457/repository/</orbit-repo>
+        <platform-release>oxygen</platform-release>
+        <orbit-build>R20180330011457</orbit-build>
       </properties>
     </profile>
     <profile>
       <id>photon</id>
+      <properties>
+        <platform-release>photon</platform-release>
+        <orbit-build>R20180606145124</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2018-09</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <equinox-version>3.13.0.v20171204-1916</equinox-version>
-        <platform-repo>http://download.eclipse.org/releases/photon</platform-repo>
-        <orbit-repo>http://download.eclipse.org/tools/orbit/downloads/drops/S20180302171354/repository/</orbit-repo>
+        <platform-release>2018-09</platform-release>
+        <orbit-build>R20180905201904</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2018-12</id>
+      <properties>
+        <platform-release>2018-12</platform-release>
+        <orbit-build>S20181010170940</orbit-build>
       </properties>
     </profile>
   </profiles>
@@ -59,12 +73,12 @@
     <repository>
       <id>eclipse-repo</id>
       <layout>p2</layout>
-      <url>${platform-repo}</url>
+      <url>http://download.eclipse.org/releases/${platform-release}</url>
     </repository>
     <repository>
       <id>orbit-repo</id>
       <layout>p2</layout>
-      <url>${orbit-repo}</url>
+      <url>http://download.eclipse.org/tools/orbit/downloads/drops/${orbit-build}/repository/</url>
     </repository>
   </repositories>
 
