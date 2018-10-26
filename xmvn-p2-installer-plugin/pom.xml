@@ -30,6 +30,13 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho</artifactId>
+        <version>${tycho-version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>org.fedoraproject.xmvn</groupId>
         <artifactId>xmvn-parent</artifactId>
         <version>${xmvn-version}</version>
@@ -47,7 +54,6 @@
     <dependency>
       <groupId>org.eclipse.tycho</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
-      <version>${equinox-version}</version>
     </dependency>
     <dependency>
       <groupId>org.fedoraproject.xmvn</groupId>
