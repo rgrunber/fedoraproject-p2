@@ -29,7 +29,7 @@ public class EclipseInstallationRequest {
 
 	private String mainPackageId;
 
-	private boolean ignoreOptional = false;
+	private final Set<String> optionalDepsIgnored = new LinkedHashSet<>();
 
 	public Path getBuildRoot() {
 		return buildRoot;
@@ -63,11 +63,11 @@ public class EclipseInstallationRequest {
 		this.mainPackageId = mainPackageId;
 	}
 
-	public void setIgnoreOptional(boolean ignore) {
-		ignoreOptional = ignore;
+	public Set<String> getOptionalDepsIgnored() {
+		return optionalDepsIgnored;
 	}
 
-	public boolean ignoreOptional() {
-		return ignoreOptional;
+	public void addOptionalDepsIgnored(String iu) {
+		optionalDepsIgnored.add(iu);
 	}
 }

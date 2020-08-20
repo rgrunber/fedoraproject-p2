@@ -193,6 +193,10 @@ public class InstallerTest extends RepositoryTest {
 		return addFeature(id, ver, internalFeatures);
 	}
 
+	public void ignoreOptionalDeps(String iu) {
+		request.addOptionalDepsIgnored(iu);
+	}
+
 	public void performTest() throws Exception {
 		boolean visitArchful = false;
 		for (Plugin plugin : collectPlugins(reactorPlugins, reactor)) {
@@ -735,6 +739,38 @@ public class InstallerTest extends RepositoryTest {
 	public void optionalDependencyTest() throws Exception {
 		addExternalPlugin("X");
 		addReactorPlugin("A").requireBundle("X;optional=true");
+		expectPlugin("A");
+		expectSymlink("X");
+		expectRequires("X");
+		expectProvides("A");
+		performTest();
+	}
+
+	// Symlinks for optional dependencies that are specified as "ignored" should
+	// not be created.
+	@Test
+	public void optionalDependencyIgnoredTest() throws Exception {
+		ignoreOptionalDeps("B");
+		addExternalPlugin("X");
+		addExternalPlugin("Y");
+		addReactorPlugin("A").requireBundle("X;optional=true");
+		addReactorPlugin("B").requireBundle("Y;optional=true");
+		expectPlugin("A");
+		expectPlugin("B");
+		expectSymlink("X");
+		expectRequires("X");
+		expectProvides("A");
+		expectProvides("B");
+		performTest();
+	}
+
+	// As above but for optional dependencies of external units
+	@Test
+	public void optionalDependencyIgnoredExternalTest() throws Exception {
+		ignoreOptionalDeps("X");
+		addExternalPlugin("X").requireBundle("Y;optional=true");
+		addExternalPlugin("Y");
+		addReactorPlugin("A").requireBundle("X");
 		expectPlugin("A");
 		expectSymlink("X");
 		expectRequires("X");

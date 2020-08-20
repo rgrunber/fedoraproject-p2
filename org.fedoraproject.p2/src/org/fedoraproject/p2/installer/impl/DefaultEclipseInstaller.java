@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014-2016 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -73,7 +73,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 
 	private IFedoraBundleRepository index;
 
-	private boolean ignoreOptional;
+	private Set<String> ignoreOptional;
 
 	private Set<IInstallableUnit> unitCache;
 
@@ -107,7 +107,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			throw new RuntimeException("Reactor contains invalid plugin or feature");
 		}
 
-		ignoreOptional = request.ignoreOptional();
+		ignoreOptional = request.getOptionalDepsIgnored();
 
 		logger.info("Indexing system bundles and features...");
 		List<Path> sclConfs = request.getConfigFiles();
@@ -387,7 +387,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		return true;
 	}
 
-	private static Collection<IRequirement> getRequirements(IInstallableUnit iu, boolean ignoreOptional) {
+	private static Collection<IRequirement> getRequirements(IInstallableUnit iu, Set<String> ignoreOptional) {
 		List<IRequirement> requirements = new ArrayList<>(
 				iu.getRequirements());
 		requirements.addAll(iu.getMetaRequirements());
@@ -400,7 +400,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		for (Iterator<IRequirement> iterator = requirements.iterator(); iterator
 				.hasNext();) {
 			IRequirement req = iterator.next();
-			if (req.getMax() == 0 || (ignoreOptional && req.getMin() == 0))
+			if (req.getMax() == 0 || (ignoreOptional.contains(iu.getId()) && req.getMin() == 0))
 				iterator.remove();
 		}
 
