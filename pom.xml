@@ -52,9 +52,6 @@
     </profile>
     <profile>
       <id>2018-09</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <platform-release>2018-09</platform-release>
         <orbit-build>R20180905201904</orbit-build>
@@ -64,7 +61,59 @@
       <id>2018-12</id>
       <properties>
         <platform-release>2018-12</platform-release>
-        <orbit-build>S20181010170940</orbit-build>
+        <orbit-build>R20181128170323</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2019-03</id>
+      <properties>
+        <platform-release>2019-03</platform-release>
+        <orbit-build>R20190226160451</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2019-06</id>
+      <properties>
+        <platform-release>2019-06</platform-release>
+        <orbit-build>R20190602212107</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2019-09</id>
+      <properties>
+        <platform-release>2019-09</platform-release>
+        <orbit-build>R20190827152740</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2019-12</id>
+      <properties>
+        <platform-release>2019-12</platform-release>
+        <orbit-build>R20191126223242</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2020-03</id>
+      <properties>
+        <platform-release>2020-03</platform-release>
+        <orbit-build>R20200224183213</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2020-06</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <platform-release>2020-06</platform-release>
+        <orbit-build>R20200529191137</orbit-build>
+      </properties>
+    </profile>
+    <profile>
+      <id>2020-09</id>
+      <properties>
+        <platform-release>2020-09</platform-release>
+        <orbit-build>S20200817205214</orbit-build>
       </properties>
     </profile>
   </profiles>
