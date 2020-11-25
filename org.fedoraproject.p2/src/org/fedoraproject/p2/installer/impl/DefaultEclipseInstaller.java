@@ -211,13 +211,12 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 					for (IArtifactKey artifact : unit.getArtifacts()) {
 						EclipseArtifact provide = reactorMap.get(P2Utils.getPath(unit));
 						String type = provide.isFeature() ? "features" : "plugins";
-						String artifactName = artifact.getId() + "_"
-								+ artifact.getVersion();
+						StringBuilder artifactName = new StringBuilder(artifact.getId()).append("_").append(artifact.getVersion());
 						if (!P2Utils.isBundleShapeDir(unit)) {
-							artifactName += ".jar";
+							artifactName.append(".jar");
 						}
 						Path path = installationPath.resolve(type).resolve(
-								artifactName);
+								artifactName.toString());
 						if (provide.getInstalledPath() != null)
 							throw new RuntimeException(
 									"One provide has multiple artifacts: "
