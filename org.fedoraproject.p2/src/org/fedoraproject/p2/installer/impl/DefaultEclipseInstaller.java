@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2015 Red Hat Inc.
+ * Copyright (c) 2014, 2020 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -99,7 +98,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		reactor.removeAll(reactor.stream()
                 .filter(u -> u.getId().endsWith("translated_host_properties"))
                 .collect(Collectors.toSet()));
-		Set<Path> reactorPaths = reactor.stream().map(u -> P2Utils.getPath(u)).collect(Collectors.toSet());
+		Set<Path> reactorPaths = reactor.stream().map(P2Utils::getPath).collect(Collectors.toSet());
 		request.getArtifacts().stream().filter(a -> !reactorPaths.contains(a.getPath()))
 				.forEach(a -> logger.error("Not a valid {}: {}", a.isFeature() ? "feature" : "plugin", a.getPath()));
 		if (reactor.stream().collect(Collectors.summingInt(u -> u.getArtifacts().size()))
@@ -113,7 +112,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 		List<Path> sclConfs = request.getConfigFiles();
 		if (sclConfs.isEmpty())
 			sclConfs = EclipseSystemLayout.getSclConfFiles();
-		List<SCL> scls = sclConfs.stream().map(c -> new SCL(c)).collect(Collectors.toList());
+		List<SCL> scls = sclConfs.stream().map(SCL::new).collect(Collectors.toList());
 		index = new CompoundBundleRepository(scls);
 
 		SCL currentScl = scls.iterator().next();
@@ -201,7 +200,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 					Repository dropinRepo = Repository.createTemp();
 					Set<Path> dropinPaths = new LinkedHashSet<> (plugins);
 					dropinPaths.addAll(
-							symlinks.stream().map(u -> P2Utils.getPath(u))
+							symlinks.stream().map(P2Utils::getPath)
 									.collect(Collectors.toSet()));
 					Director.publish(dropinRepo, dropinPaths, features);
 					createRunnableRepository(dropinRepo, request
@@ -243,7 +242,7 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
                                         .collect(Collectors.toSet()));
 						if (!requires.isEmpty()) {
 							provide.setProperty("osgi.requires", requires
-									.stream().map(u -> P2Utils.toString(u))
+									.stream().map(P2Utils::toString)
 									.collect(Collectors.joining(",")));
 						}
 					}
@@ -350,17 +349,14 @@ public class DefaultEclipseInstaller implements EclipseInstaller {
 			}
 		}
 		if (match == null) {
-            Collections.sort(matches, new Comparator<IInstallableUnit>() {
-                @Override
-                public int compare(IInstallableUnit u, IInstallableUnit v) {
-                    int vRet = u.getVersion().compareTo(v.getVersion());
-                    if (vRet == 0) {
-                        return u.getProvidedCapabilities().size() <= v.getProvidedCapabilities().size() ? -1 : 1;
-                    } else {
-                        return -vRet;
-                    }
-                }
-            });
+            Collections.sort(matches, (u, v) -> {
+			    int vRet = u.getVersion().compareTo(v.getVersion());
+			    if (vRet == 0) {
+			        return u.getProvidedCapabilities().size() <= v.getProvidedCapabilities().size() ? -1 : 1;
+			    } else {
+			        return -vRet;
+			    }
+			});
             match = matches.get(0);
         }
 

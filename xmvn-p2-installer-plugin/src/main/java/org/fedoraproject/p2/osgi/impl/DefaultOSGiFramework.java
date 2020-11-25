@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014-2017 Red Hat Inc.
+ * Copyright (c) 2014, 2020 Red Hat Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.fedoraproject.p2.osgi.impl;
 
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public class DefaultOSGiFramework implements OSGiFramework {
 
 		properties.put("osgi.bundles",
 				equinoxLocator.getBundles().stream()
-					.map(path -> path.toString())
+					.map(Path::toString)
 					.collect(Collectors.joining(",")));
 
 		properties.put("osgi.parentClassloader", "fwk");
