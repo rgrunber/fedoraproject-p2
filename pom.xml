@@ -101,9 +101,6 @@
     </profile>
     <profile>
       <id>2020-06</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <platform-release>2020-06</platform-release>
         <orbit-build>R20200529191137</orbit-build>
@@ -111,6 +108,9 @@
     </profile>
     <profile>
       <id>2020-09</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <platform-release>2020-09</platform-release>
         <orbit-build>S20200817205214</orbit-build>
