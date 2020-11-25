@@ -37,62 +37,6 @@
   <!-- For list of Eclipse Orbit builds, see http://download.eclipse.org/tools/orbit/downloads/ -->
   <profiles>
     <profile>
-      <id>oxygen</id>
-      <properties>
-        <platform-release>oxygen</platform-release>
-        <orbit-build>R20180330011457</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>photon</id>
-      <properties>
-        <platform-release>photon</platform-release>
-        <orbit-build>R20180606145124</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>2018-09</id>
-      <properties>
-        <platform-release>2018-09</platform-release>
-        <orbit-build>R20180905201904</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>2018-12</id>
-      <properties>
-        <platform-release>2018-12</platform-release>
-        <orbit-build>R20181128170323</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>2019-03</id>
-      <properties>
-        <platform-release>2019-03</platform-release>
-        <orbit-build>R20190226160451</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>2019-06</id>
-      <properties>
-        <platform-release>2019-06</platform-release>
-        <orbit-build>R20190602212107</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>2019-09</id>
-      <properties>
-        <platform-release>2019-09</platform-release>
-        <orbit-build>R20190827152740</orbit-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>2019-12</id>
-      <properties>
-        <platform-release>2019-12</platform-release>
-        <orbit-build>R20191126223242</orbit-build>
-      </properties>
-    </profile>
-    <profile>
       <id>2020-03</id>
       <properties>
         <platform-release>2020-03</platform-release>
