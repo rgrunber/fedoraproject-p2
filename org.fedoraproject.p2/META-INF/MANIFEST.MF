@@ -19,3 +19,4 @@ Export-Package: org.fedoraproject.p2,
  org.fedoraproject.p2.installer
 Service-Component: OSGI-INF/component.xml
 Import-Package: org.slf4j;resolution:=optional
+Automatic-Module-Name: org.fedoraproject.p2
