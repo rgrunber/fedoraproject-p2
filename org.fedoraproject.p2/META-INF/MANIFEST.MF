@@ -4,7 +4,7 @@ Bundle-Name: Fedora Project P2 Repository
 Bundle-SymbolicName: org.fedoraproject.p2;singleton:=true
 Bundle-Version: 0.0.1.qualifier
 Bundle-Vendor: Fedora
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.equinox.p2.metadata,
  org.eclipse.equinox.p2.repository,
@@ -19,3 +19,4 @@ Export-Package: org.fedoraproject.p2,
  org.fedoraproject.p2.installer
 Service-Component: OSGI-INF/component.xml
 Import-Package: org.slf4j;resolution:=optional
+Automatic-Module-Name: org.fedoraproject.p2

@@ -59,7 +59,8 @@ class CliRequest {
 
 	public CliRequest(String[] args) {
 		try {
-			JCommander jcomm = new JCommander(this, args);
+			JCommander jcomm = new JCommander(this);
+			jcomm.parse(args);
 			jcomm.setProgramName(P2InstallerApp.class.getName());
 
 			if (help) {

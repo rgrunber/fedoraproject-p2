@@ -103,12 +103,12 @@ public class InstallTest extends RepositoryTest {
 	private void checkUnitInstallation (IInstallableUnit targetIU) {
 		try {
 			// See org.eclipse.equinox.internal.p2.artifact.repository.simple.Mapper
-			String fileName = targetIU.getId() + "_" + targetIU.getVersion();
+			StringBuilder fileName = new StringBuilder(targetIU.getId()).append("_").append(targetIU.getVersion());
 			if (! P2Utils.isBundleShapeDir(targetIU)) {
-				fileName += ".jar";
+				fileName.append(".jar");
 			}
 
-			File targetLoc = new File(installLoc + File.separator + "plugins" + File.separator + fileName);
+			File targetLoc = new File(installLoc + File.separator + "plugins" + File.separator + fileName.toString());
 			assertTrue(targetLoc.exists());
 			File sysLoc = P2Utils.getPath(targetIU).toFile();
 			assertEquals("Possible corruption : " + sysLoc.getAbsolutePath() + " and " + targetLoc.getAbsolutePath()
