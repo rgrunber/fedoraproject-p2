@@ -71,7 +71,6 @@ public class DefaultOSGiFramework implements OSGiFramework {
 		}
 
 		tryActivateBundle(context, "org.apache.felix.scr");
-		tryActivateBundle(context, "org.eclipse.equinox.ds");
 		tryActivateBundle(context, "org.eclipse.equinox.registry");
 		tryActivateBundle(context, "org.eclipse.core.net");
 
