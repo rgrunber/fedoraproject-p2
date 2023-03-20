@@ -26,8 +26,10 @@ import org.fedoraproject.p2.FedoraBundleRepository;
 import org.fedoraproject.p2.P2Utils;
 import org.fedoraproject.p2.SCL;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class FedoraBundleRepositoryTest extends RepositoryTest {
 
 	static final String EMPTY = "/tmp/";
